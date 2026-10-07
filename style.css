@@ -205,3 +205,8 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid 
 .holenav { display: flex; justify-content: space-between; gap: 10px; margin: 10px 0 4px; }
 .holenav .btn:first-child { flex: 0 0 auto; min-width: 72px; }
 .holenav .btn { flex: 1; }
+.round.boll { display: block; }
+.bollhead { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+.bollhead .arrow { margin-left: auto; font-size: 24px; color: var(--gold); }
+.who { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.who .chip { text-decoration: none; color: var(--cream); }

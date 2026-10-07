@@ -1,8 +1,8 @@
-// THT golfapp (v0.2.0) – statistik och inmatning.
+// THT golfapp (v0.3.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum } from './lib.js';
-import { renderMata } from './mata.js';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell } from './lib.js?v=0.3.0';
+import { renderMata } from './mata.js?v=0.3.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -18,9 +18,11 @@ function route() {
   document.querySelectorAll('.tabs a').forEach((a) => a.classList.toggle('active', a.dataset.route === tab));
   window.onresize = null;
   window.scrollTo(0, 0);
-  if (page === 'alltime') return renderAlltime().catch(showError);
-  if (page === 'mata') return renderMata([arg, ...rest]).catch(showError);
-  return renderYear(arg ? Number(arg) : null).catch(showError);
+  const id = nyNav();
+  const fel = (e) => { if (aktuell(id)) showError(e); };
+  if (page === 'alltime') return renderAlltime().catch(fel);
+  if (page === 'mata') return renderMata([arg, ...rest]).catch(fel);
+  return renderYear(arg ? Number(arg) : null).catch(fel);
 }
 window.addEventListener('hashchange', route);
 
@@ -31,6 +33,7 @@ function showError(e) {
 
 // ---------- år ----------
 async function renderYear(artal) {
+  const myNav = nuNav();
   const thts = await api('tht?select=nr,artal,ort&order=artal');
   const medData = await api('v_tht_resultat?select=artal');
   const arMedData = new Set(medData.map((r) => r.artal));
@@ -40,7 +43,7 @@ async function renderYear(artal) {
   if (!tht) { location.hash = '#/'; return; }
   const idx = lista.findIndex((t) => t.artal === artal);
 
-  app.innerHTML = `<p class="muted center">Laddar ${artal} …</p>`;
+  if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar ${artal} …</p>`;
   const [res, rundor, kurva, delt, pris] = await Promise.all([
     api(`v_tht_resultat?tht_nr=eq.${tht.nr}&order=placering`),
     api(`v_runda?tht_nr=eq.${tht.nr}&select=person_id,ordning,poang,slag,antal_hal`),
@@ -55,7 +58,7 @@ async function renderYear(artal) {
   const topp = res.slice(0, 3);
   const tieNote = res.length > 1 && res[0].poang === res[1].poang ? `<p class="hint">Lika poäng – lägst spel-HCP vinner.</p>` : '';
 
-  app.innerHTML = `
+  if (!aktuell(myNav)) return; app.innerHTML = `
     <div class="yearbar">
       <button id="prev" aria-label="Föregående år" ${idx <= 0 ? 'disabled' : ''}>‹</button>
       <select id="ar" aria-label="Välj år">
@@ -239,7 +242,8 @@ const KOLUMNER = [
 let sortKey = 'segrar', sortAsc = false;
 
 async function renderAlltime() {
-  app.innerHTML = `<p class="muted center">Laddar …</p>`;
+  const myNav = nuNav();
+  if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
   const [res, rundor] = await Promise.all([
     api('v_tht_resultat?select=person_id,fornamn,artal,placering,poang'),
     api('v_runda?select=person_id,fornamn,poang,slag,antal_hal,puttar,hal_med_puttar'),
@@ -269,7 +273,7 @@ async function renderAlltime() {
       const c = typeof va === 'string' ? va.localeCompare(vb, 'sv') : va - vb;
       return sortAsc ? c : -c;
     });
-    app.innerHTML = `
+    if (!aktuell(myNav)) return; app.innerHTML = `
       <h1>All-time</h1>
       <p class="sub">${new Set(res.map((r) => r.artal)).size} THT med resultat · ${rundor.filter((r) => r.antal_hal > 0).length} rundor</p>
       <div class="tablewrap"><table>

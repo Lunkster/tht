@@ -6,6 +6,13 @@ const AUTH_EMAIL = 'h.lundqvist+tht@gmail.com'; // delat konto – koden är lö
 const SESSION_KEY = 'tht-session';
 
 const cache = new Map();
+
+// Navigering: varje ny sida får ett nummer. En sida som laddar klart efter att man
+// hunnit gå vidare får inte skriva över den nya sidan.
+let navCount = 0;
+export const nyNav = () => ++navCount;
+export const nuNav = () => navCount;
+export const aktuell = (id) => id === navCount;
 export const clearCache = () => cache.clear();
 
 // ---------- läsa ----------

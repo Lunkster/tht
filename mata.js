@@ -1,15 +1,15 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang } from './lib.js';
+import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.3.0';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
 
 export async function renderMata(args) {
   if (!isLoggedIn()) return renderLogin(args);
-  const [did, boll, hal] = args.map((a) => (a === undefined || a === '' ? null : Number(a)));
+  const [did, boll, hal, pid] = args.map((a) => (a === undefined || a === '' ? null : Number(a)));
   if (!did) return renderValjDeltavling();
-  if (!boll) return renderBollar(did);
-  return renderHal(did, boll, hal || null);
+  if (boll == null) return renderBollar(did);           // boll 0 = rundor utan bollnummer (äldre år)
+  return renderHal(did, boll, hal || null, pid || null);
 }
 
 // ---------- inloggning ----------
@@ -34,15 +34,18 @@ function renderLogin(args) {
 
 // ---------- 1. välj deltävling ----------
 async function renderValjDeltavling() {
-  app.innerHTML = `<p class="muted center">Laddar …</p>`;
+  const myNav = nuNav();
+  if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
   const delt = await api('deltavling?select=id,ordning,namn,datum,tht_nr,tht(artal,ort),banversion(bana(namn))&order=datum.desc', { fresh: true });
   const idag = new Date().toISOString().slice(0, 10);
-  const senaste = delt[0]?.tht_nr;
-  const lista = delt.filter((d) => d.tht_nr === senaste).sort((a, b) => a.ordning - b.ordning);
-  const t = lista[0]?.tht;
-  app.innerHTML = `
+  const thts = [...new Map(delt.map((d) => [d.tht_nr, d.tht])).entries()]; // nyast först
+  const valt = Number(sessionStorage.getItem('mata-tht')) || thts[0]?.[0];
+  const lista = delt.filter((d) => d.tht_nr === valt).sort((a, b) => a.ordning - b.ordning);
+  if (!aktuell(myNav)) return; app.innerHTML = `
     <div class="row-between"><h1>Mata in</h1><button class="link" id="logout">Logga ut</button></div>
-    <p class="sub">${t ? `${esc(t.ort)} ${t.artal}` : 'Ingen tävling upplagd'}</p>
+    <div class="yearbar"><select id="matatht" aria-label="Välj THT">
+      ${thts.map(([nr, t]) => `<option value="${nr}" ${nr === valt ? 'selected' : ''}>THT ${nr} · ${esc(t.ort)} ${t.artal}</option>`).join('')}
+    </select></div>
     <div class="rounds">
       ${lista.map((d) => `
         <a class="round link-card ${d.datum === idag ? 'today' : ''}" href="#/mata/${d.id}">
@@ -51,13 +54,15 @@ async function renderValjDeltavling() {
           <div class="win"><span class="arrow">›</span></div>
         </a>`).join('')}
     </div>
-    <p class="hint">Nya tävlingar och deltävlingar läggs upp av admin (kommer i appen senare).</p>`;
+    <p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp av admin (kommer i appen senare).</p>`;
   document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
+  document.getElementById('matatht').onchange = (e) => { try { sessionStorage.setItem('mata-tht', e.target.value); } catch { /* */ } renderValjDeltavling(); };
 }
 
 // ---------- 2. bollar i deltävlingen ----------
 async function renderBollar(did) {
-  app.innerHTML = `<p class="muted center">Laddar …</p>`;
+  const myNav = nuNav();
+  if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
   const [[d], rundor, personer] = await Promise.all([
     api(`deltavling?id=eq.${did}&select=id,ordning,namn,datum,tht_nr,banversion(bana(namn))`, { fresh: true }),
     api(`runda?deltavling_id=eq.${did}&select=id,person_id,spel_hcp,boll_nr&order=boll_nr`, { fresh: true }),
@@ -69,18 +74,20 @@ async function renderBollar(did) {
   const iBoll = Object.fromEntries(rundor.map((r) => [r.person_id, r.boll_nr]));
   const lediga = personer.filter((p) => p.aktiv && !(p.id in iBoll));
 
-  app.innerHTML = `
+  if (!aktuell(myNav)) return; app.innerHTML = `
     <a class="back" href="#/mata">‹ Deltävlingar</a>
     <h1>R${d.ordning} · ${esc(d.namn)}</h1>
     <p class="sub">${esc(d.banversion?.bana?.namn ?? '')} · ${datum(d.datum)}</p>
 
     <div class="rounds">
       ${Object.keys(bollar).length ? Object.entries(bollar).map(([nr, rs]) => `
-        <a class="round link-card" href="#/mata/${did}/${nr}">
-          <div><div class="rn">Boll ${nr}</div>
-          <div class="meta">${rs.map((r) => `${esc(pnamn[r.person_id])} (${r.spel_hcp})`).join(' · ')}</div></div>
-          <div class="win"><span class="arrow">›</span></div>
-        </a>`).join('') : '<p class="muted">Inga bollar ännu.</p>'}
+        <div class="round boll">
+          <a class="link-card bollhead" href="#/mata/${did}/${nr}"><span class="rn">${nr === '0' ? 'Utan boll' : 'Boll ' + nr}</span><span class="dim small">hela bollen</span><span class="arrow">›</span></a>
+          <div class="who">${rs.map((r) => `<a class="chip" href="#/mata/${did}/${nr}/0/${r.person_id}">${esc(pnamn[r.person_id])} <span class="dim">${r.spel_hcp}</span></a>`).join('')}</div>
+        </div>`).join('') : '<p class="muted">Inga bollar ännu.</p>'}
+    </div>
+    <p class="hint">Tryck på en boll för att mata in för alla i den, eller på ett namn för att mata in eller rätta bara den spelaren.</p>
+    <div>
     </div>
 
     <h2>Ny boll</h2>
@@ -132,20 +139,22 @@ async function renderBollar(did) {
 }
 
 // ---------- 3. hål för hål ----------
-async function renderHal(did, boll, halNr) {
-  app.innerHTML = `<p class="muted center">Laddar …</p>`;
+async function renderHal(did, boll, halNr, pid = null) {
+  const myNav = nuNav();
+  if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
   const [[d], rundor, personer] = await Promise.all([
     api(`deltavling?id=eq.${did}&select=id,ordning,namn,banversion_id,tee_id,banversion(bana(namn))`),
-    api(`runda?deltavling_id=eq.${did}&boll_nr=eq.${boll}&select=id,person_id,spel_hcp&order=id`, { fresh: true }),
+    api(`runda?deltavling_id=eq.${did}&${pid ? `person_id=eq.${pid}` : boll ? `boll_nr=eq.${boll}` : 'boll_nr=is.null'}&select=id,person_id,spel_hcp&order=id`, { fresh: true }),
     api('person?select=id,fornamn'),
   ]);
-  if (!rundor.length) { location.hash = `#/mata/${did}`; return; }
+  if (!rundor.length) return renderBollar(did);
   const [hal, langd, scores] = await Promise.all([
     api(`hal?banversion_id=eq.${d.banversion_id}&select=id,nr,par,hcp_index&order=nr`),
     d.tee_id ? api(`hal_langd?tee_id=eq.${d.tee_id}&select=hal_id,langd`) : Promise.resolve([]),
     api(`score?runda_id=in.(${rundor.map((r) => r.id).join(',')})&select=runda_id,hal_nr,slag,puttar`, { fresh: true }),
   ]);
   const pnamn = Object.fromEntries(personer.map((p) => [p.id, p.fornamn]));
+  const base = `#/mata/${did}/${boll}`, suf = pid ? `/${pid}` : '';
   const lmap = Object.fromEntries(langd.map((l) => [l.hal_id, l.langd]));
   const S = {}; // `${runda}-${hal}` -> {slag, puttar}
   scores.forEach((s) => { S[`${s.runda_id}-${s.hal_nr}`] = { slag: s.slag, puttar: s.puttar }; });
@@ -154,7 +163,7 @@ async function renderHal(did, boll, halNr) {
   const klar = (nr) => rundor.every((r) => S[`${r.id}-${nr}`]?.slag != null);
   if (!halNr) halNr = (hal.find((h) => !klar(h.nr)) ?? hal[hal.length - 1]).nr;
   const h = hal.find((x) => x.nr === halNr);
-  if (!h) { app.innerHTML = '<div class="err">Banan saknar håldata.</div>'; return; }
+  if (!h) { if (!aktuell(myNav)) return; app.innerHTML = '<div class="err">Banan saknar håldata.</div>'; return; }
 
   const totalt = (r) => hal.reduce((a, x) => a + (poang(S[`${r.id}-${x.nr}`]?.slag, x.par, x.hcp_index, r.spel_hcp) ?? 0), 0);
   const spelade = (r) => hal.filter((x) => S[`${r.id}-${x.nr}`]?.slag != null).length;
@@ -169,14 +178,14 @@ async function renderHal(did, boll, halNr) {
       <button class="sbtn" data-d="1" aria-label="${f === 'slag' ? 'Ett slag till' : 'En putt till'}">+</button>
     </div>`;
 
-  app.innerHTML = `
+  if (!aktuell(myNav)) return; app.innerHTML = `
     <div class="holetop">
-      <a class="back" href="#/mata/${did}">‹ Boll ${boll}</a>
+      <a class="back" href="#/mata/${did}">‹ ${pid ? esc(pnamn[pid]) : boll ? 'Boll ' + boll : 'Utan boll'}</a>
       <div class="holehead"><span class="holenr">Hål ${h.nr}</span>
         <span class="holeinfo">Par ${h.par} · Index ${h.hcp_index}${lmap[h.id] ? ` · ${lmap[h.id]} m` : ''}</span></div>
     </div>
     <nav class="holes" aria-label="Hål">
-      ${hal.map((x) => `<a href="#/mata/${did}/${boll}/${x.nr}" class="${x.nr === halNr ? 'cur' : ''} ${klar(x.nr) ? 'done' : ''}" aria-label="Hål ${x.nr}${klar(x.nr) ? ', klart' : ''}">${x.nr}</a>`).join('')}
+      ${hal.map((x) => `<a href="${base}/${x.nr}${suf}" class="${x.nr === halNr ? 'cur' : ''} ${klar(x.nr) ? 'done' : ''}" aria-label="Hål ${x.nr}${klar(x.nr) ? ', klart' : ''}">${x.nr}</a>`).join('')}
     </nav>
 
     <div class="players">
@@ -196,8 +205,8 @@ async function renderHal(did, boll, halNr) {
     </div>
 
     <div class="holenav">
-      ${halNr > 1 ? `<a class="btn" href="#/mata/${did}/${boll}/${halNr - 1}">‹ ${halNr - 1}</a>` : '<span></span>'}
-      ${halNr < hal.length ? `<a class="btn primary" href="#/mata/${did}/${boll}/${halNr + 1}">Hål ${halNr + 1} ›</a>` : `<a class="btn primary" href="#/ar">Klart – se resultat</a>`}
+      ${halNr > 1 ? `<a class="btn" href="${base}/${halNr - 1}${suf}">‹ ${halNr - 1}</a>` : '<span></span>'}
+      ${halNr < hal.length ? `<a class="btn primary" href="${base}/${halNr + 1}${suf}">Hål ${halNr + 1} ›</a>` : `<a class="btn primary" href="#/mata/${did}">Klart</a>`}
     </div>
     <p class="hint">Dämpad siffra = inte ifyllt (förslag: par resp. 2 puttar). Tryck på siffran för att bekräfta, eller + / −. Under 1 slag resp. 0 puttar blir fältet tomt igen. Tomma puttar räknas inte. Siffran inom parentes är totalpoängen.</p>
 
@@ -207,7 +216,7 @@ async function renderHal(did, boll, halNr) {
   app.querySelector('.players').addEventListener('click', async (e) => {
     const card = e.target.closest('.pcard'); if (!card) return;
     const rid = Number(card.dataset.r); const r = rundor.find((x) => x.id === rid);
-    if (e.target.closest('.hcpbtn')) return andraHcp(r, did, boll, halNr);
+    if (e.target.closest('.hcpbtn')) return andraHcp(r, did, boll, halNr, pid);
     const btn = e.target.closest('.sbtn, .sval'); if (!btn) return;
     const step = btn.closest('.step'); const f = step.dataset.f; const delta = Number(btn.dataset.d);
     const k = `${rid}-${h.nr}`; const v = { ...(S[k] || { slag: null, puttar: null }) };
@@ -266,13 +275,13 @@ async function forsokIgen() {
 window.addEventListener('online', forsokIgen);
 setInterval(() => { if (pending.size) forsokIgen(); }, 15000);
 
-async function andraHcp(r, did, boll, hal) {
+async function andraHcp(r, did, boll, hal, pid) {
   const nytt = window.prompt('Spel-HCP för rundan (heltal):', '');
   if (nytt === null || nytt.trim() === '') return;
   if (!Number.isInteger(Number(nytt))) { alert('Skriv ett heltal.'); return; }
   try {
     await write('PATCH', `runda?id=eq.${r.id}`, { spel_hcp: Number(nytt) }, 'return=minimal');
-    renderHal(did, boll, hal);
+    renderHal(did, boll, hal, pid);
   } catch (err) { alert(`Kunde inte spara: ${err.message}`); }
 }
 
