@@ -1,5 +1,5 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, esc, fmt, datum, extraslag, poang } from './lib.js';
+import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang } from './lib.js';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
@@ -159,8 +159,8 @@ async function renderHal(did, boll, halNr) {
   const totalt = (r) => hal.reduce((a, x) => a + (poang(S[`${r.id}-${x.nr}`]?.slag, x.par, x.hcp_index, r.spel_hcp) ?? 0), 0);
   const spelade = (r) => hal.filter((x) => S[`${r.id}-${x.nr}`]?.slag != null).length;
 
-  const slagVal = [...Array(6)].map((_, i) => h.par - 2 + i).filter((v) => v >= 1);
-  const fler = [...Array(6)].map((_, i) => h.par + 4 + i);
+  const slagVal = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const fler = [11, 12, 13, 14, 15];
 
   app.innerHTML = `
     <a class="back" href="#/mata/${did}">‹ Boll ${boll} · R${d.ordning} ${esc(d.banversion?.bana?.namn ?? '')}</a>
@@ -175,23 +175,22 @@ async function renderHal(did, boll, halNr) {
     <div class="players">
       ${rundor.map((r) => {
         const k = `${r.id}-${h.nr}`; const v = S[k] || {};
-        const ex = extraslag(r.spel_hcp, h.hcp_index);
         const p = poang(v.slag, h.par, h.hcp_index, r.spel_hcp);
         return `<section class="pcard" data-r="${r.id}">
           <header>
             <div><div class="pname">${esc(pnamn[r.person_id])}</div>
-              <button class="hcpbtn" data-r="${r.id}" aria-label="Ändra spel-HCP">HCP ${r.spel_hcp} · ${ex > 0 ? '+' + ex : ex} slag</button></div>
+              <button class="hcpbtn" data-r="${r.id}" aria-label="Ändra spel-HCP">Spel-HCP ${r.spel_hcp}</button></div>
             <div class="ppts"><span class="big">${p ?? '–'}</span><span class="dim"> p</span>
               <div class="dim small">tot ${totalt(r)} p · ${spelade(r)}/18</div></div>
           </header>
           <div class="lbl">Slag</div>
           <div class="nums" data-f="slag">
-            ${slagVal.map((n) => `<button class="num ${v.slag === n ? 'on' : ''} ${n === h.par ? 'par' : ''}" data-v="${n}">${n}</button>`).join('')}
-            <button class="num more ${v.slag > h.par + 3 ? 'on' : ''}" data-more="1">${v.slag > h.par + 3 ? v.slag : '…'}</button>
+            ${slagVal.map((n) => `<button class="num ${v.slag === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}
           </div>
-          <div class="nums extra" data-f="slag" hidden>
+          <div class="nums extra" data-f="slag" ${v.slag > 10 ? '' : 'hidden'}>
             ${fler.map((n) => `<button class="num ${v.slag === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}
           </div>
+          <button class="link small morebtn" data-more="1">${v.slag > 10 ? '' : 'Fler än 10 slag'}</button>
           <div class="lbl">Puttar</div>
           <div class="nums" data-f="puttar">
             ${[0, 1, 2, 3, 4].map((n) => `<button class="num ${v.puttar === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}
@@ -215,8 +214,8 @@ async function renderHal(did, boll, halNr) {
     const card = e.target.closest('.pcard'); if (!card) return;
     const rid = Number(card.dataset.r); const r = rundor.find((x) => x.id === rid);
     if (e.target.closest('.hcpbtn')) return andraHcp(r, did, boll, halNr);
+    if (e.target.closest('.morebtn')) { const ex = card.querySelector('.nums.extra'); ex.hidden = !ex.hidden; return; }
     const b = e.target.closest('.num'); if (!b) return;
-    if (b.dataset.more) { card.querySelector('.nums.extra').hidden = !card.querySelector('.nums.extra').hidden; return; }
     const f = b.closest('.nums').dataset.f; const n = Number(b.dataset.v);
     const k = `${rid}-${h.nr}`; const v = { ...(S[k] || { slag: null, puttar: null }) };
     v[f] = v[f] === n ? null : n;
@@ -224,12 +223,9 @@ async function renderHal(did, boll, halNr) {
     // uppdatera kortet direkt
     card.querySelectorAll(`.nums[data-f="${f}"] .num[data-v]`).forEach((x) => x.classList.toggle('on', Number(x.dataset.v) === v[f]));
     if (f === 'slag') {
-      const more = card.querySelector('.num.more');
-      more.classList.toggle('on', v.slag > h.par + 3); more.textContent = v.slag > h.par + 3 ? v.slag : '…';
       card.querySelector('.big').textContent = poang(v.slag, h.par, h.hcp_index, r.spel_hcp) ?? '–';
       card.querySelector('.small').textContent = `tot ${totalt(r)} p · ${spelade(r)}/18`;
       app.querySelector(`.holes a:nth-child(${h.nr})`).classList.toggle('done', klar(h.nr));
-      if (v.slag > h.par + 3) card.querySelector('.nums.extra').hidden = true;
     }
     await spara(rid, h.nr, v, card.querySelector('.status'));
     visaStallning(did, d.ordning);
