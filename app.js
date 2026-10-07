@@ -1,40 +1,25 @@
-// THT golfapp – statistik (v0.1.0)
-// Läser direkt från Supabase-vyerna. Ingen inloggning behövs för att läsa.
+// THT golfapp (v0.2.0) – statistik och inmatning.
+// Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-const SUPABASE_URL = 'https://nlvgisjssbjethumvgdz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_3wzcVvDgcoupfWSqAis4eg_bz2e6jiG'; // publik nyckel, skyddet är RLS
+import { api, esc, fmt, datum } from './lib.js';
+import { renderMata } from './mata.js';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
 const CREAM = '#f2e8d5', CREAM2 = '#c9bfa9', CREAM3 = '#8f8676', LINE = '#3a3530';
 
 const app = document.getElementById('app');
-const cache = new Map();
-
-// ---------- data ----------
-async function api(path) {
-  if (cache.has(path)) return cache.get(path);
-  const p = fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    headers: { apikey: SUPABASE_KEY, Accept: 'application/json' },
-  }).then(async (r) => {
-    if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
-    return r.json();
-  });
-  cache.set(path, p);
-  try { return await p; } catch (e) { cache.delete(path); throw e; }
-}
-
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmt = (v, d = 0) => (v === null || v === undefined || Number.isNaN(v)) ? '–' : Number(v).toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d });
-const datum = (d) => new Date(d + 'T12:00:00').toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
 
 // ---------- routing ----------
 function route() {
   const h = location.hash.replace(/^#\/?/, '');
-  const [page, arg] = h.split('/');
-  document.querySelectorAll('.tabs a').forEach((a) => a.classList.toggle('active', a.dataset.route === (page === 'alltime' ? 'alltime' : 'ar')));
+  const [page, arg, ...rest] = h.split('/');
+  const tab = page === 'alltime' || page === 'mata' ? page : 'ar';
+  document.querySelectorAll('.tabs a').forEach((a) => a.classList.toggle('active', a.dataset.route === tab));
   window.onresize = null;
+  window.scrollTo(0, 0);
   if (page === 'alltime') return renderAlltime().catch(showError);
+  if (page === 'mata') return renderMata([arg, ...rest]).catch(showError);
   return renderYear(arg ? Number(arg) : null).catch(showError);
 }
 window.addEventListener('hashchange', route);
@@ -96,7 +81,7 @@ async function renderYear(artal) {
       <thead><tr>
         <th>#</th><th class="l">Spelare</th><th>Poäng</th>
         ${ordningar.map((o) => `<th class="hide-sm">R${o}</th>`).join('')}
-        <th>Slag</th><th class="hide-sm">Puttar/r</th><th class="hide-sm">Spel-HCP</th>
+        <th>Slag</th><th class="hide-sm">Puttar/hål</th><th class="hide-sm">Spel-HCP</th>
       </tr></thead>
       <tbody>
         ${res.map((r) => `<tr>
@@ -105,7 +90,7 @@ async function renderYear(artal) {
           <td><strong>${fmt(r.poang)}</strong></td>
           ${ordningar.map((o) => { const x = perRunda[r.person_id]?.[o]; return `<td class="hide-sm ${x ? '' : 'dim'}">${x ? fmt(x.poang) : '–'}</td>`; }).join('')}
           <td>${fmt(r.slag)}</td>
-          <td class="hide-sm">${fmt(r.puttar_per_runda, 1)}</td>
+          <td class="hide-sm">${fmt(r.puttar_per_hal, 2)}</td>
           <td class="hide-sm">${fmt(r.snitt_spel_hcp, 1)}</td>
         </tr>`).join('')}
       </tbody>
@@ -247,6 +232,7 @@ const KOLUMNER = [
   { k: 'rundor', t: 'Rundor', sm: true },
   { k: 'snittPoang', t: 'Poäng/runda', d: 1 },
   { k: 'snittSlag', t: 'Slag/runda', d: 1, asc: true },
+  { k: 'puttarHal', t: 'Puttar/hål', d: 2, asc: true, sm: true },
   { k: 'bastaRunda', t: 'Bästa runda', sm: true },
   { k: 'totalPoang', t: 'Poäng totalt', sm: true },
 ];
@@ -256,10 +242,10 @@ async function renderAlltime() {
   app.innerHTML = `<p class="muted center">Laddar …</p>`;
   const [res, rundor] = await Promise.all([
     api('v_tht_resultat?select=person_id,fornamn,artal,placering,poang'),
-    api('v_runda?select=person_id,fornamn,poang,slag,antal_hal'),
+    api('v_runda?select=person_id,fornamn,poang,slag,antal_hal,puttar,hal_med_puttar'),
   ]);
   const p = {};
-  const get = (r) => (p[r.person_id] ??= { fornamn: r.fornamn, tht: 0, segrar: 0, pall: 0, rundor: 0, pSum: 0, sSum: 0, sN: 0, bastaRunda: null, totalPoang: 0, vinstAr: [] });
+  const get = (r) => (p[r.person_id] ??= { fornamn: r.fornamn, tht: 0, segrar: 0, pall: 0, rundor: 0, pSum: 0, sSum: 0, sN: 0, putt: 0, puttN: 0, bastaRunda: null, totalPoang: 0, vinstAr: [] });
   res.forEach((r) => {
     const x = get(r); x.tht++;
     if (r.placering === 1) { x.segrar++; x.vinstAr.push(r.artal); }
@@ -268,10 +254,11 @@ async function renderAlltime() {
   rundor.filter((r) => r.antal_hal > 0).forEach((r) => {
     const x = get(r); x.rundor++; x.pSum += r.poang; x.totalPoang += r.poang;
     if (r.antal_hal === 18) { x.sSum += r.slag; x.sN++; }
+    x.putt += r.puttar ?? 0; x.puttN += r.hal_med_puttar ?? 0;
     if (x.bastaRunda === null || r.poang > x.bastaRunda) x.bastaRunda = r.poang;
   });
   const rows = Object.values(p).filter((x) => x.rundor > 0).map((x) => ({
-    ...x, snittPoang: x.pSum / x.rundor, snittSlag: x.sN ? x.sSum / x.sN : null,
+    ...x, snittPoang: x.pSum / x.rundor, snittSlag: x.sN ? x.sSum / x.sN : null, puttarHal: x.puttN ? x.putt / x.puttN : null,
   }));
   const vinnare = res.filter((r) => r.placering === 1).sort((a, b) => b.artal - a.artal);
 
@@ -289,7 +276,7 @@ async function renderAlltime() {
         <thead><tr>${KOLUMNER.map((c) => `<th class="sortable ${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''} ${sortKey === c.k ? 'sorted' : ''}" data-k="${c.k}" aria-sort="${sortKey === c.k ? (sortAsc ? 'ascending' : 'descending') : 'none'}">${c.t}${sortKey === c.k ? (sortAsc ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
         <tbody>${rows.map((r) => `<tr>${KOLUMNER.map((c) => `<td class="${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''}">${c.l ? esc(r[c.k]) : fmt(r[c.k], c.d || 0)}</td>`).join('')}</tr>`).join('')}</tbody>
       </table></div>
-      <p class="hint">Tryck på en rubrik för att sortera. Slag/runda räknas bara på rundor med alla 18 hål, med tak par + 5.</p>
+      <p class="hint">Tryck på en rubrik för att sortera. Slag/runda räknas bara på rundor med alla 18 hål, med tak par + 5. Puttar/hål räknas inte på strukna hål (par + 5 eller mer).</p>
 
       <h2>Vinnare</h2>
       <div class="tablewrap"><table>
