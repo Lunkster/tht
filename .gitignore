@@ -1,0 +1,5 @@
+# Personuppgifter och genererade filer ska inte in i repot
+migrering/ut/
+*.sql.gz
+Dump*.sql
+.env
