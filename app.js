@@ -276,7 +276,7 @@ async function renderAlltime() {
         <thead><tr>${KOLUMNER.map((c) => `<th class="sortable ${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''} ${sortKey === c.k ? 'sorted' : ''}" data-k="${c.k}" aria-sort="${sortKey === c.k ? (sortAsc ? 'ascending' : 'descending') : 'none'}">${c.t}${sortKey === c.k ? (sortAsc ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
         <tbody>${rows.map((r) => `<tr>${KOLUMNER.map((c) => `<td class="${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''}">${c.l ? esc(r[c.k]) : fmt(r[c.k], c.d || 0)}</td>`).join('')}</tr>`).join('')}</tbody>
       </table></div>
-      <p class="hint">Tryck på en rubrik för att sortera. Slag/runda räknas bara på rundor med alla 18 hål, med tak par + 5. Puttar/hål räknas inte på strukna hål (par + 5 eller mer).</p>
+      <p class="hint">Tryck på en rubrik för att sortera. Slag/runda räknas bara på rundor med alla 18 hål, med tak par + 5. Puttar/hål är snittet av alla ifyllda puttar – tomma hål räknas inte.</p>
 
       <h2>Vinnare</h2>
       <div class="tablewrap"><table>

@@ -1,0 +1,4 @@
+-- 2026-10-08: rättning av 03. Alla ifyllda puttar (0 och uppåt) räknas i snittet,
+-- tomt räknas bort. Antal slag avgör inte. Enda ändringen: i v_score är
+--   puttar_raknas = s.puttar
+-- (tidigare: bara om slag < par + 5). v_runda och v_tht_resultat oförändrade.

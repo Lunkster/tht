@@ -196,7 +196,6 @@ async function renderHal(did, boll, halNr) {
           <div class="nums" data-f="puttar">
             ${[0, 1, 2, 3, 4].map((n) => `<button class="num ${v.puttar === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}
           </div>
-          <div class="strek dim small" ${v.slag >= h.par + 5 ? '' : 'hidden'}>Struket hål – puttar räknas inte i snittet</div>
           <div class="status" aria-live="polite">${pending.has(k) ? '<span class="warn">Ej sparat – försöker igen</span>' : ''}</div>
         </section>`;
       }).join('')}
@@ -206,7 +205,7 @@ async function renderHal(did, boll, halNr) {
       ${halNr > 1 ? `<a class="btn" href="#/mata/${did}/${boll}/${halNr - 1}">‹ Hål ${halNr - 1}</a>` : '<span></span>'}
       ${halNr < hal.length ? `<a class="btn primary" href="#/mata/${did}/${boll}/${halNr + 1}">Hål ${halNr + 1} ›</a>` : `<a class="btn primary" href="#/ar">Klart – se resultat</a>`}
     </div>
-    <p class="hint">Fyll i när hålet är spelat. Allt sparas direkt. Tryck på en vald siffra igen för att ta bort den.</p>
+    <p class="hint">Fyll i när hålet är spelat. Allt sparas direkt. Tryck på en vald siffra igen för att ta bort den. Lämna puttar tomt om de inte ska räknas.</p>
 
     <h2>Ställning R${d.ordning}</h2>
     <div id="stallning" class="tablewrap"><p class="muted center">Laddar …</p></div>`;
@@ -231,7 +230,6 @@ async function renderHal(did, boll, halNr) {
       card.querySelector('.small').textContent = `tot ${totalt(r)} p · ${spelade(r)}/18`;
       app.querySelector(`.holes a:nth-child(${h.nr})`).classList.toggle('done', klar(h.nr));
       if (v.slag > h.par + 3) card.querySelector('.nums.extra').hidden = true;
-      card.querySelector('.strek').hidden = !(v.slag >= h.par + 5);
     }
     await spara(rid, h.nr, v, card.querySelector('.status'));
     visaStallning(did, d.ordning);
