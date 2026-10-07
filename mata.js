@@ -159,76 +159,77 @@ async function renderHal(did, boll, halNr) {
   const totalt = (r) => hal.reduce((a, x) => a + (poang(S[`${r.id}-${x.nr}`]?.slag, x.par, x.hcp_index, r.spel_hcp) ?? 0), 0);
   const spelade = (r) => hal.filter((x) => S[`${r.id}-${x.nr}`]?.slag != null).length;
 
-  const slagVal = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const fler = [11, 12, 13, 14, 15];
+  const START = { slag: h.par, puttar: 2 }; // förslag som visas dämpat tills man bekräftar
+  const MIN = { slag: 1, puttar: 0 }, MAX = { slag: 20, puttar: 10 };
+  const stepper = (f, v) => `
+    <div class="step" data-f="${f}">
+      <button class="sbtn" data-d="-1" aria-label="${f === 'slag' ? 'Ett slag mindre' : 'En putt mindre'}">−</button>
+      <button class="sval ${v[f] == null ? 'tom' : ''}" data-d="0" aria-label="${f === 'slag' ? 'Slag' : 'Puttar'}: ${v[f] ?? 'inte ifyllt, tryck för ' + START[f]}">
+        <span class="slbl">${f === 'slag' ? 'Slag' : 'Puttar'}</span><span class="snum">${v[f] ?? START[f]}</span></button>
+      <button class="sbtn" data-d="1" aria-label="${f === 'slag' ? 'Ett slag till' : 'En putt till'}">+</button>
+    </div>`;
 
   app.innerHTML = `
-    <a class="back" href="#/mata/${did}">‹ Boll ${boll} · R${d.ordning} ${esc(d.banversion?.bana?.namn ?? '')}</a>
+    <div class="holetop">
+      <a class="back" href="#/mata/${did}">‹ Boll ${boll}</a>
+      <div class="holehead"><span class="holenr">Hål ${h.nr}</span>
+        <span class="holeinfo">Par ${h.par} · Index ${h.hcp_index}${lmap[h.id] ? ` · ${lmap[h.id]} m` : ''}</span></div>
+    </div>
     <nav class="holes" aria-label="Hål">
       ${hal.map((x) => `<a href="#/mata/${did}/${boll}/${x.nr}" class="${x.nr === halNr ? 'cur' : ''} ${klar(x.nr) ? 'done' : ''}" aria-label="Hål ${x.nr}${klar(x.nr) ? ', klart' : ''}">${x.nr}</a>`).join('')}
     </nav>
-    <div class="holehead">
-      <div class="holenr">Hål ${h.nr}</div>
-      <div class="holeinfo">Par ${h.par} · Index ${h.hcp_index}${lmap[h.id] ? ` · ${lmap[h.id]} m` : ''}</div>
-    </div>
 
     <div class="players">
       ${rundor.map((r) => {
         const k = `${r.id}-${h.nr}`; const v = S[k] || {};
         const p = poang(v.slag, h.par, h.hcp_index, r.spel_hcp);
         return `<section class="pcard" data-r="${r.id}">
-          <header>
-            <div><div class="pname">${esc(pnamn[r.person_id])}</div>
-              <button class="hcpbtn" data-r="${r.id}" aria-label="Ändra spel-HCP">Spel-HCP ${r.spel_hcp}</button></div>
-            <div class="ppts"><span class="big">${p ?? '–'}</span><span class="dim"> p</span>
-              <div class="dim small">tot ${totalt(r)} p · ${spelade(r)}/18</div></div>
-          </header>
-          <div class="lbl">Slag</div>
-          <div class="nums" data-f="slag">
-            ${slagVal.map((n) => `<button class="num ${v.slag === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}
+          <div class="prow">
+            <span class="pname">${esc(pnamn[r.person_id])}</span>
+            <button class="hcpbtn" aria-label="Ändra spel-HCP">HCP ${r.spel_hcp}</button>
+            <span class="status" aria-live="polite">${pending.has(k) ? '<span class="warn">Ej sparat</span>' : ''}</span>
+            <span class="ppts"><span class="big">${p ?? '–'}</span> p <span class="dim small">(${totalt(r)})</span></span>
           </div>
-          <div class="nums extra" data-f="slag" ${v.slag > 10 ? '' : 'hidden'}>
-            ${fler.map((n) => `<button class="num ${v.slag === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}
-          </div>
-          <button class="link small morebtn" data-more="1">${v.slag > 10 ? '' : 'Fler än 10 slag'}</button>
-          <div class="lbl">Puttar</div>
-          <div class="nums" data-f="puttar">
-            ${[0, 1, 2, 3, 4].map((n) => `<button class="num ${v.puttar === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}
-          </div>
-          <div class="status" aria-live="polite">${pending.has(k) ? '<span class="warn">Ej sparat – försöker igen</span>' : ''}</div>
+          <div class="steps">${stepper('slag', v)}${stepper('puttar', v)}</div>
         </section>`;
       }).join('')}
     </div>
 
     <div class="holenav">
-      ${halNr > 1 ? `<a class="btn" href="#/mata/${did}/${boll}/${halNr - 1}">‹ Hål ${halNr - 1}</a>` : '<span></span>'}
+      ${halNr > 1 ? `<a class="btn" href="#/mata/${did}/${boll}/${halNr - 1}">‹ ${halNr - 1}</a>` : '<span></span>'}
       ${halNr < hal.length ? `<a class="btn primary" href="#/mata/${did}/${boll}/${halNr + 1}">Hål ${halNr + 1} ›</a>` : `<a class="btn primary" href="#/ar">Klart – se resultat</a>`}
     </div>
-    <p class="hint">Fyll i när hålet är spelat. Allt sparas direkt. Tryck på en vald siffra igen för att ta bort den. Lämna puttar tomt om de inte ska räknas.</p>
+    <p class="hint">Dämpad siffra = inte ifyllt (förslag: par resp. 2 puttar). Tryck på siffran för att bekräfta, eller + / −. Under 1 slag resp. 0 puttar blir fältet tomt igen. Tomma puttar räknas inte. Siffran inom parentes är totalpoängen.</p>
 
     <h2>Ställning R${d.ordning}</h2>
     <div id="stallning" class="tablewrap"><p class="muted center">Laddar …</p></div>`;
 
-  // klick på siffror
   app.querySelector('.players').addEventListener('click', async (e) => {
     const card = e.target.closest('.pcard'); if (!card) return;
     const rid = Number(card.dataset.r); const r = rundor.find((x) => x.id === rid);
     if (e.target.closest('.hcpbtn')) return andraHcp(r, did, boll, halNr);
-    if (e.target.closest('.morebtn')) { const ex = card.querySelector('.nums.extra'); ex.hidden = !ex.hidden; return; }
-    const b = e.target.closest('.num'); if (!b) return;
-    const f = b.closest('.nums').dataset.f; const n = Number(b.dataset.v);
+    const btn = e.target.closest('.sbtn, .sval'); if (!btn) return;
+    const step = btn.closest('.step'); const f = step.dataset.f; const delta = Number(btn.dataset.d);
     const k = `${rid}-${h.nr}`; const v = { ...(S[k] || { slag: null, puttar: null }) };
-    v[f] = v[f] === n ? null : n;
+    if (v[f] == null) v[f] = START[f] + delta;      // första tryck: utgå från förslaget
+    else if (delta === 0) return;                    // redan ifyllt – inget att bekräfta
+    else v[f] += delta;
+    if (v[f] < MIN[f]) v[f] = null;                  // under minsta värdet = tomt
+    if (v[f] > MAX[f]) v[f] = MAX[f];
     S[k] = v;
-    // uppdatera kortet direkt
-    card.querySelectorAll(`.nums[data-f="${f}"] .num[data-v]`).forEach((x) => x.classList.toggle('on', Number(x.dataset.v) === v[f]));
+    const sv = step.querySelector('.sval');
+    sv.classList.toggle('tom', v[f] == null);
+    sv.querySelector('.snum').textContent = v[f] ?? START[f];
     if (f === 'slag') {
       card.querySelector('.big').textContent = poang(v.slag, h.par, h.hcp_index, r.spel_hcp) ?? '–';
-      card.querySelector('.small').textContent = `tot ${totalt(r)} p · ${spelade(r)}/18`;
+      card.querySelector('.ppts .small').textContent = `(${totalt(r)})`;
       app.querySelector(`.holes a:nth-child(${h.nr})`).classList.toggle('done', klar(h.nr));
     }
-    await spara(rid, h.nr, v, card.querySelector('.status'));
-    visaStallning(did, d.ordning);
+    clearTimeout(card._t);
+    card._t = setTimeout(async () => {               // vänta lite så att flera tryck blir ett anrop
+      await spara(rid, h.nr, S[k], card.querySelector('.status'));
+      visaStallning(did, d.ordning);
+    }, 500);
   });
 
   visaStallning(did, d.ordning);
@@ -237,15 +238,15 @@ async function renderHal(did, boll, halNr) {
 async function spara(runda_id, hal_nr, v, statusEl) {
   const k = `${runda_id}-${hal_nr}`;
   pending.set(k, { runda_id, hal_nr, slag: v.slag, puttar: v.puttar });
-  statusEl.innerHTML = '<span class="dim">Sparar …</span>';
+  statusEl.innerHTML = '<span class="dim">…</span>';
   try {
     await sparaEn(pending.get(k));
     pending.delete(k);
-    statusEl.innerHTML = '<span class="ok">Sparat ✓</span>';
+    statusEl.innerHTML = '<span class="ok" aria-label="Sparat">✓</span>';
     setTimeout(() => { if (statusEl.isConnected && !pending.has(k)) statusEl.innerHTML = ''; }, 1500);
   } catch (err) {
-    if (err.status === 401) { statusEl.innerHTML = '<span class="warn">Inloggningen har gått ut – ladda om och logga in</span>'; return; }
-    statusEl.innerHTML = '<span class="warn">Ej sparat – försöker igen när nätet är tillbaka</span>';
+    if (err.status === 401) { statusEl.innerHTML = '<span class="warn">Logga in igen</span>'; return; }
+    statusEl.innerHTML = '<span class="warn">Ej sparat</span>';
   }
 }
 
@@ -260,7 +261,7 @@ async function forsokIgen() {
   for (const [k, x] of [...pending]) {
     try { await sparaEn(x); pending.delete(k); } catch { return; }
   }
-  if (location.hash.startsWith('#/mata/')) document.querySelectorAll('.status .warn').forEach((el) => { el.outerHTML = '<span class="ok">Sparat ✓</span>'; });
+  if (location.hash.startsWith('#/mata/')) document.querySelectorAll('.status .warn').forEach((el) => { el.outerHTML = '<span class="ok">✓</span>'; });
 }
 window.addEventListener('online', forsokIgen);
 setInterval(() => { if (pending.size) forsokIgen(); }, 15000);
