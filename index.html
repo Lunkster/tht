@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#121110">
+  <title>THT – The Helkväll Tour</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="#/" class="brand" aria-label="Till startsidan">
+      <img src="logo.svg" alt="The Helkväll Tour" class="logo">
+    </a>
+    <nav class="tabs" aria-label="Huvudmeny">
+      <a href="#/" data-route="ar">År</a>
+      <a href="#/alltime" data-route="alltime">All-time</a>
+    </nav>
+  </header>
+
+  <main id="app" aria-live="polite">
+    <p class="muted center">Laddar …</p>
+  </main>
+
+  <footer class="foot">
+    <span id="version">v0.1.0</span> · data från Supabase
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

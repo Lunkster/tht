@@ -3,7 +3,7 @@
 Webbapp för den årliga THT-tävlingen: resultatinmatning (live och i efterhand), statistik och bandata.
 
 - **Databas:** Supabase-projektet `tht` (eu-north-1, ref `nlvgisjssbjethumvgdz`)
-- **Frontend:** statisk webbapp på GitHub Pages (inte påbörjad)
+- **Frontend:** statisk webbapp på GitHub Pages – https://lunkster.github.io/tht/ (`index.html`, `app.js`, `style.css`, `logo.svg`, inga beroenden)
 - **Dokumentation:** Obsidian `Projekt/THT/` – [[THT golfapp]] och [[THT-krav]]
 
 ## Struktur

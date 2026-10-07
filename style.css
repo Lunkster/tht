@@ -1,0 +1,141 @@
+/* THT – färger från en stout-burk: svart, krämvitt skum, guld */
+:root {
+  color-scheme: dark;
+  --stout:        #121110;   /* bakgrund */
+  --stout-2:      #1c1a17;   /* kort */
+  --stout-3:      #26231f;   /* rad-hover, ram */
+  --cream:        #f2e8d5;   /* primär text */
+  --cream-2:      #c9bfa9;   /* sekundär text */
+  --cream-3:      #8f8676;   /* dämpad text */
+  --gold:         #c9a24a;   /* accent */
+  --gold-2:       #e3c278;
+  --line:         #3a3530;
+  --muted-series: rgba(242, 232, 213, 0.22);
+  /* dataserier (validerade mot mörk yta, alla par) */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--stout); color: var(--cream); }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px; line-height: 1.45;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+a { color: var(--gold-2); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 16px; background: var(--stout);
+  border-bottom: 2px solid var(--gold);
+}
+.brand { display: flex; align-items: center; }
+.logo { height: 60px; width: auto; display: block; }
+.tabs { display: flex; gap: 4px; }
+.tabs a {
+  color: var(--cream-2); text-decoration: none; font-weight: 600;
+  padding: 10px 14px; border-radius: 999px; min-height: 44px; display: inline-flex; align-items: center;
+}
+.tabs a.active { background: var(--gold); color: var(--stout); }
+
+main { flex: 1; width: 100%; max-width: 960px; margin: 0 auto; padding: 16px; }
+.foot { text-align: center; color: var(--cream-3); font-size: 13px; padding: 16px; }
+
+h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; font-weight: 700; margin: 0 0 8px; }
+h1 { font-size: 26px; }
+h2 { font-size: 20px; color: var(--gold-2); margin-top: 28px; }
+.muted { color: var(--cream-3); }
+.center { text-align: center; }
+.sub { color: var(--cream-2); margin: 0 0 16px; }
+
+/* årsväljare */
+.yearbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.yearbar select {
+  flex: 1; min-height: 44px; font-size: 17px; font-weight: 600;
+  background: var(--stout-2); color: var(--cream); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 0 12px;
+}
+.yearbar button {
+  min-width: 44px; min-height: 44px; font-size: 20px;
+  background: var(--stout-2); color: var(--cream); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.yearbar button:disabled { opacity: .35; }
+
+/* vinnarkort */
+.podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 4px; }
+.pod {
+  background: var(--stout-2); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px; text-align: center;
+}
+.pod.first { border-color: var(--gold); }
+.pod .place { font-size: 13px; color: var(--cream-3); }
+.pod .name { font-family: Georgia, serif; font-size: 20px; font-weight: 700; }
+.pod.first .name { color: var(--gold-2); }
+.pod .pts { font-size: 15px; color: var(--cream-2); font-variant-numeric: tabular-nums; }
+
+/* tabeller */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--stout-2); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--stout-3); }
+th { font-size: 13px; color: var(--cream-3); font-weight: 600; background: var(--stout-2); position: sticky; top: 0; }
+th.sortable { cursor: pointer; user-select: none; }
+th.sorted { color: var(--gold-2); }
+td.l, th.l { text-align: left; }
+tbody tr:hover { background: var(--stout-3); }
+tbody tr:last-child td { border-bottom: none; }
+td.win { color: var(--gold-2); font-weight: 700; }
+.dim { color: var(--cream-3); }
+
+/* graf */
+.chartcard { background: var(--stout-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
+.chartbox { position: relative; height: 340px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
+.seg button {
+  background: transparent; color: var(--cream-2); border: 0; padding: 8px 14px; min-height: 40px; font-weight: 600; font-size: 14px;
+}
+.seg button.on { background: var(--gold); color: var(--stout); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px;
+  border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--cream-2); font-size: 14px;
+}
+.chip .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted-series); }
+.chip.on { color: var(--cream); border-color: var(--cream-3); }
+.hint { font-size: 13px; color: var(--cream-3); margin: 6px 0 0; }
+
+/* deltävlingar */
+.rounds { display: grid; gap: 8px; }
+.round {
+  background: var(--stout-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px;
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 12px;
+}
+.round .rn { font-family: Georgia, serif; font-weight: 700; }
+.round .meta { color: var(--cream-3); font-size: 14px; }
+.round .win { text-align: right; }
+.round .extra { grid-column: 1 / -1; font-size: 14px; color: var(--cream-2); }
+
+.err { background: #3a1d17; border: 1px solid #7a3326; padding: 12px; border-radius: var(--radius); }
+
+@media (max-width: 520px) {
+  .logo { height: 50px; }
+  h1 { font-size: 22px; }
+  .pod .name { font-size: 17px; }
+  .chartbox { height: 300px; }
+  .hide-sm { display: none; }
+}
+
+.chartbox svg { display: block; touch-action: pan-y; }
+.tip {
+  position: absolute; z-index: 2; pointer-events: none; min-width: 150px;
+  background: #26231f; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+  font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,.4);
+}
+.tt-title { color: var(--cream-3); margin-bottom: 4px; }
+.tt-row { display: flex; align-items: center; gap: 6px; color: var(--cream-3); }
+.tt-row.on { color: var(--cream); font-weight: 600; }
+.tt-row b { margin-left: auto; padding-left: 12px; font-variant-numeric: tabular-nums; }
+.tt-row .dot { width: 8px; height: 8px; border-radius: 50%; }
