@@ -351,3 +351,33 @@ textarea.prosa { font-family: inherit; font-size: 16px; }
 .okort.redigera { display: block; border-color: var(--gold); }
 .round .meta a { color: var(--gold-2); }
 .btn.fara { border-color: #7a3326; color: #f0b4a6; margin-left: auto; }
+
+/* ---------- scorekort i efterhand ---------- */
+.sk-lank { margin-top: 12px; }
+.sk-kort { margin-bottom: 12px; }
+.sk-topp { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; margin-bottom: 8px; }
+.sk-hcp { display: grid; gap: 2px; font-size: 12px; color: var(--cream-3); }
+.sk-hcp input { width: 64px; min-height: 40px; text-align: center; }
+.sk-tot { text-align: center; min-width: 52px; }
+.sk-tot span { display: block; font-family: Georgia, serif; font-size: 26px; font-weight: 700; color: var(--gold-2); line-height: 1; }
+.sk-tot small { color: var(--cream-3); font-size: 11px; }
+.sk-halva { margin-top: 6px; }
+.sk-rad { display: grid; grid-template-columns: 40px repeat(9, 1fr) 34px; gap: 3px; align-items: center; }
+.sk-rad > span, .sk-rad > b { text-align: center; font-size: 13px; font-variant-numeric: tabular-nums; }
+.sk-rad > span:first-child { text-align: left; color: var(--cream-3); font-size: 12px; }
+.sk-huvud > span { color: var(--cream-3); }
+.sk-par > span { color: var(--cream-2); }
+.sk-poang > span { color: var(--gold-2); min-height: 18px; }
+.sk-sum { color: var(--cream); }
+.sk-rad input {
+  width: 100%; min-width: 0; min-height: 38px; padding: 0; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums;
+  background: var(--stout); color: var(--cream); border: 1px solid var(--line); border-radius: 6px;
+}
+.sk-putt input { min-height: 32px; font-size: 15px; color: var(--cream-2); }
+.sk-rad input.fel { border-color: #c0533e; background: #3a1d17; }
+.sk-kort .hint:empty { display: none; }
+.felmsg { color: #f0b4a6; }
+@media (min-width: 900px) {
+  .sk-kort { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .sk-topp, .sk-kort > .hint { grid-column: 1 / -1; }
+}

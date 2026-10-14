@@ -1,11 +1,14 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.10.0';
+import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.11.0';
+
+import { renderScorekort } from './scorekort.js?v=0.11.0';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
 
 export async function renderMata(args) {
   if (!isLoggedIn()) return renderLogin(args);
+  if (args[1] === 'kort') return renderScorekort(Number(args[0]));
   const [did, boll, hal, pid] = args.map((a) => (a === undefined || a === '' ? null : Number(a)));
   if (!did) return renderValjDeltavling();
   if (boll == null) return renderBollar(did);           // boll 0 = rundor utan bollnummer (äldre år)
@@ -92,6 +95,7 @@ async function renderBollar(did) {
         </div>`).join('') : '<p class="muted">Inga bollar ännu.</p>'}
     </div>
     <p class="hint">Tryck på en boll för att mata in för alla i den, eller på ett namn för att mata in eller rätta bara den spelaren.</p>
+    <a class="round link-card sk-lank" href="#/mata/${did}/kort"><div><div class="rn">Scorekort i efterhand</div><div class="meta">Hela rundor från scorekorten – 18 hål per spelare på en gång</div></div><div class="win"><span class="arrow">›</span></div></a>
     <div>
     </div>
 
