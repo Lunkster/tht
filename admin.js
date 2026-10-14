@@ -1,9 +1,10 @@
-// Admin: grunddata som läggs upp sällan – spelare, banor, THT och priser nu, övernattningar senare.
-import { api, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.9.1';
-import { visaLogin } from './mata.js?v=0.9.1';
-import { renderBanor } from './admin-banor.js?v=0.9.1';
-import { renderTht } from './admin-tht.js?v=0.9.1';
-import { renderPriser } from './admin-priser.js?v=0.9.1';
+// Admin: grunddata som läggs upp sällan – spelare, banor, THT, priser och övernattningar.
+import { api, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.10.0';
+import { visaLogin } from './mata.js?v=0.10.0';
+import { renderBanor } from './admin-banor.js?v=0.10.0';
+import { renderTht } from './admin-tht.js?v=0.10.0';
+import { renderPriser } from './admin-priser.js?v=0.10.0';
+import { renderOvernattning } from './admin-overnattning.js?v=0.10.0';
 
 const app = document.getElementById('app');
 
@@ -12,7 +13,7 @@ const SEKTIONER = [
   { id: 'banor', t: 'Banor', d: 'Ny bana, ombyggnad (ny version), tee:er och hål – klistra in scorekort' },
   { id: 'tht', t: 'THT och deltävlingar', d: 'Ny THT med ort och startdatum, deltävlingar med bana, version och tee' },
   { id: 'priser', t: 'Närmast hål och longest drive', d: 'Hål och vinnare per deltävling' },
-  { id: 'overnattning', t: 'Övernattningar', d: 'Plats, nätter och organisatör', kommer: true },
+  { id: 'overnattning', t: 'Övernattningar', d: 'Plats, nätter, organisatör och koordinater per THT' },
 ];
 
 export async function renderAdmin([sida, ...rest]) {
@@ -21,6 +22,7 @@ export async function renderAdmin([sida, ...rest]) {
   if (sida === 'banor') return renderBanor(rest);
   if (sida === 'tht') return renderTht(rest);
   if (sida === 'priser') return renderPriser();
+  if (sida === 'overnattning') return renderOvernattning();
   return renderMeny();
 }
 

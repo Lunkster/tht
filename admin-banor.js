@@ -1,7 +1,7 @@
 // Admin: banor. Lista → bana (namn, plats, versioner) → banversion (tee:er och 18 hål).
 // Inget tas bort (RLS tillåter inte delete här) – allt rättas genom att ändra.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.9.1';
-import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.9.1';
+import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.10.0';
+import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.10.0';
 
 const app = document.getElementById('app');
 const idag = () => new Date().toISOString().slice(0, 10);
@@ -23,7 +23,7 @@ function felText(e) {
 }
 
 // Koordinater: tillåt "59.58, 15.24" inklistrat i lat-fältet.
-function kopplaKoordinater(latId, lonId) {
+export function kopplaKoordinater(latId, lonId) {
   const lat = document.getElementById(latId), lon = document.getElementById(lonId);
   lat.addEventListener('input', () => {
     const m = lat.value.match(/^\s*(-?\d+[.,]\d+)\s*[,;\s]\s*(-?\d+[.,]\d+)\s*$/);

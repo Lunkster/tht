@@ -346,3 +346,8 @@ textarea.prosa { font-family: inherit; font-size: 16px; }
 .priskort .adm-knappar { margin-top: 10px; }
 .prisrad .hint:empty { display: none; }
 .prisrad .hint { color: var(--gold-2); }
+
+/* ---------- admin: övernattningar ---------- */
+.okort.redigera { display: block; border-color: var(--gold); }
+.round .meta a { color: var(--gold-2); }
+.btn.fara { border-color: #7a3326; color: #f0b4a6; margin-left: auto; }
