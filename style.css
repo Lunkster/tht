@@ -335,3 +335,14 @@ input[type=date] { color-scheme: dark; }
 .dfalt { grid-template-columns: 90px 1fr !important; }
 .dkort.redigera { display: block; border-color: var(--gold); }
 textarea.prosa { font-family: inherit; font-size: 16px; }
+
+/* ---------- admin: priser ---------- */
+.priskort { display: block; }
+.pris-rubrik { margin-bottom: 6px; }
+.prisrad { border: 0; padding: 0; margin: 10px 0 0; }
+.prisrad legend { font-weight: 600; padding: 0; margin-bottom: 4px; color: var(--cream-2); }
+.prisfalt { display: grid; grid-template-columns: 1fr; gap: 6px; }
+@media (min-width: 560px) { .prisfalt { grid-template-columns: 180px 1fr; } }
+.priskort .adm-knappar { margin-top: 10px; }
+.prisrad .hint:empty { display: none; }
+.prisrad .hint { color: var(--gold-2); }
