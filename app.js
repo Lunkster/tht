@@ -1,8 +1,8 @@
-// THT golfapp (v0.3.0) – statistik och inmatning.
+// THT golfapp (v0.4.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell } from './lib.js?v=0.3.0';
-import { renderMata } from './mata.js?v=0.3.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell } from './lib.js?v=0.4.0';
+import { renderMata } from './mata.js?v=0.4.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -14,13 +14,15 @@ const app = document.getElementById('app');
 function route() {
   const h = location.hash.replace(/^#\/?/, '');
   const [page, arg, ...rest] = h.split('/');
-  const tab = page === 'alltime' || page === 'mata' ? page : 'ar';
+  const tab = ['alltime', 'mata', 'leaderboard'].includes(page) ? page : 'ar';
+  clearInterval(lbTimer);
   document.querySelectorAll('.tabs a').forEach((a) => a.classList.toggle('active', a.dataset.route === tab));
   window.onresize = null;
   window.scrollTo(0, 0);
   const id = nyNav();
   const fel = (e) => { if (aktuell(id)) showError(e); };
   if (page === 'alltime') return renderAlltime().catch(fel);
+  if (page === 'leaderboard') return renderLeaderboard(id).catch(fel);
   if (page === 'mata') return renderMata([arg, ...rest]).catch(fel);
   return renderYear(arg ? Number(arg) : null).catch(fel);
 }
@@ -79,6 +81,37 @@ async function renderYear(artal) {
     </div>
     ${tieNote}
 
+    ${resultatOchGraf(res, ordningar, perRunda)}
+
+    <h2>Deltävlingar</h2>
+    <div class="rounds">
+      ${delt.map((d) => {
+        const vinnare = rundor.filter((r) => r.ordning === d.ordning).sort((a, b) => (b.poang ?? -1) - (a.poang ?? -1))[0];
+        const vNamn = vinnare ? res.find((r) => r.person_id === vinnare.person_id)?.fornamn : null;
+        const nh = pris.find((p) => p.deltavling_id === d.id && p.typ === 'narmast');
+        const ld = pris.find((p) => p.deltavling_id === d.id && p.typ === 'longest');
+        const extra = [nh && `Närmast hål${d.narmast_hal ? ' (' + d.narmast_hal + ')' : ''}: ${esc(nh.person.fornamn)}`,
+                       ld && `Longest drive${d.longest_hal ? ' (' + d.longest_hal + ')' : ''}: ${esc(ld.person.fornamn)}`].filter(Boolean).join(' · ');
+        return `<div class="round">
+          <div><div class="rn">R${d.ordning} · ${esc(d.namn)}</div>
+          <div class="meta">${esc(d.banversion?.bana?.namn ?? '')} · ${datum(d.datum)}</div></div>
+          <div class="win">${vNamn ? `<div class="rn">${esc(vNamn)}</div><div class="meta">${fmt(vinnare.poang)} p</div>` : '<div class="meta">Inga resultat</div>'}</div>
+          ${extra ? `<div class="extra">${extra}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  document.getElementById('ar').onchange = (e) => { location.hash = `#/ar/${e.target.value}`; };
+  document.getElementById('prev').onclick = () => { location.hash = `#/ar/${lista[idx - 1].artal}`; };
+  document.getElementById('next').onclick = () => { location.hash = `#/ar/${lista[idx + 1].artal}`; };
+
+  drawKurva(res, kurva, ordningar.length);
+}
+
+
+// Resultattabell + THT-grafen, används av både årssidan och leaderboarden.
+function resultatOchGraf(res, ordningar, perRunda) {
+  return `
     <h2>Resultat</h2>
     <div class="tablewrap"><table>
       <thead><tr>
@@ -108,42 +141,20 @@ async function renderYear(artal) {
       <div class="chartbox" id="kurvabox"><div class="tip" id="kurvatip" hidden></div></div>
       <div class="chips" id="chips"></div>
       <p class="hint" id="charthint"></p>
-    </div>
-
-    <h2>Deltävlingar</h2>
-    <div class="rounds">
-      ${delt.map((d) => {
-        const vinnare = rundor.filter((r) => r.ordning === d.ordning).sort((a, b) => (b.poang ?? -1) - (a.poang ?? -1))[0];
-        const vNamn = vinnare ? res.find((r) => r.person_id === vinnare.person_id)?.fornamn : null;
-        const nh = pris.find((p) => p.deltavling_id === d.id && p.typ === 'narmast');
-        const ld = pris.find((p) => p.deltavling_id === d.id && p.typ === 'longest');
-        const extra = [nh && `Närmast hål${d.narmast_hal ? ' (' + d.narmast_hal + ')' : ''}: ${esc(nh.person.fornamn)}`,
-                       ld && `Longest drive${d.longest_hal ? ' (' + d.longest_hal + ')' : ''}: ${esc(ld.person.fornamn)}`].filter(Boolean).join(' · ');
-        return `<div class="round">
-          <div><div class="rn">R${d.ordning} · ${esc(d.namn)}</div>
-          <div class="meta">${esc(d.banversion?.bana?.namn ?? '')} · ${datum(d.datum)}</div></div>
-          <div class="win">${vNamn ? `<div class="rn">${esc(vNamn)}</div><div class="meta">${fmt(vinnare.poang)} p</div>` : '<div class="meta">Inga resultat</div>'}</div>
-          ${extra ? `<div class="extra">${extra}</div>` : ''}
-        </div>`;
-      }).join('')}
     </div>`;
-
-  document.getElementById('ar').onchange = (e) => { location.hash = `#/ar/${e.target.value}`; };
-  document.getElementById('prev').onclick = () => { location.hash = `#/ar/${lista[idx - 1].artal}`; };
-  document.getElementById('next').onclick = () => { location.hash = `#/ar/${lista[idx + 1].artal}`; };
-
-  drawKurva(res, kurva, ordningar.length);
 }
 
 // ---------- THT-grafen (egen SVG, inga beroenden) ----------
-function drawKurva(res, kurva, antalRundor) {
+function drawKurva(res, kurva, antalRundor, state = {}) {
   const namn = Object.fromEntries(res.map((r) => [r.person_id, r.fornamn]));
   const perP = {};
   kurva.forEach((k) => (perP[k.person_id] ??= []).push(k));
   const ordning = res.map((r) => r.person_id).filter((pid) => perP[pid]);
   const maxHal = Math.max(...kurva.map((k) => k.hal_i_tht));
-  let mode = 'hcp';
-  let valda = ordning.slice(0, 3);
+  let mode = state.mode || 'hcp';
+  let valda = state.valda ? state.valda.filter((p) => ordning.includes(p)) : ordning.slice(0, 3);
+  const spara = () => { state.mode = mode; state.valda = valda; };
+  document.querySelectorAll('.seg button').forEach((x) => x.classList.toggle('on', x.dataset.mode === mode));
   const box = document.getElementById('kurvabox');
   const chipsEl = document.getElementById('chips');
   const tip = document.getElementById('kurvatip');
@@ -215,22 +226,72 @@ function drawKurva(res, kurva, antalRundor) {
     const pid = Number(b.dataset.pid);
     if (valda.includes(pid)) valda = valda.filter((v) => v !== pid);
     else { valda.push(pid); if (valda.length > 3) valda.shift(); }
-    render();
+    spara(); render();
   };
   document.querySelectorAll('.seg button').forEach((b) => b.onclick = () => {
     mode = b.dataset.mode;
     document.querySelectorAll('.seg button').forEach((x) => x.classList.toggle('on', x === b));
-    render();
+    spara(); render();
   });
   window.onresize = () => document.getElementById('kurvabox') && render();
   render();
+}
+
+// ---------- leaderboard (senaste THT, uppdateras automatiskt) ----------
+let lbTimer = null;
+const lbState = {};
+const LB_INTERVALL = 30_000;
+
+async function renderLeaderboard(navId) {
+  app.innerHTML = '<p class="muted center">Laddar leaderboard …</p>';
+  const senaste = await api('deltavling?select=tht_nr&order=tht_nr.desc&limit=1', { fresh: true });
+  if (!aktuell(navId)) return;
+  if (!senaste.length) { app.innerHTML = '<p class="muted center">Ingen THT inlagd ännu.</p>'; return; }
+  const nr = senaste[0].tht_nr;
+  const [tht] = await api(`tht?nr=eq.${nr}&select=nr,artal,ort`, { fresh: true });
+  if (!aktuell(navId)) return;
+  app.innerHTML = `
+    <h1>${esc(tht.ort)} ${tht.artal}</h1>
+    <p class="sub">THT ${tht.nr} · Leaderboard · <span id="lbtid">–</span></p>
+    <div id="lb"></div>`;
+
+  let senastJson = null;
+  async function hamta() {
+    const f = { fresh: true };
+    const [res, rundor, kurva, delt] = await Promise.all([
+      api(`v_tht_resultat?tht_nr=eq.${nr}&order=placering`, f),
+      api(`v_runda?tht_nr=eq.${nr}&select=person_id,ordning,poang,slag,antal_hal`, f),
+      api(`v_tht_kurva?tht_nr=eq.${nr}&order=hal_i_tht&select=person_id,hal_i_tht,poang_ack,poang_ack_mot_hcp`, f),
+      api(`deltavling?tht_nr=eq.${nr}&order=ordning&select=ordning`, f),
+    ]);
+    if (!aktuell(navId)) return;
+    const tid = document.getElementById('lbtid');
+    if (tid) tid.textContent = 'uppdaterad ' + new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    const json = JSON.stringify([res, rundor, kurva]);
+    if (json === senastJson) return; // inget nytt – rita inte om
+    senastJson = json;
+    const lb = document.getElementById('lb');
+    if (!res.length) { lb.innerHTML = '<p class="muted center">Inga resultat ännu – leaderboarden fylls på när första hålet är inmatat.</p>'; return; }
+    const ordningar = delt.map((d) => d.ordning);
+    const perRunda = {};
+    rundor.forEach((r) => { (perRunda[r.person_id] ??= {})[r.ordning] = r; });
+    const tieNote = res.length > 1 && res[0].poang === res[1].poang ? '<p class="hint">Lika poäng – lägst spel-HCP vinner.</p>' : '';
+    lb.innerHTML = tieNote + resultatOchGraf(res, ordningar, perRunda);
+    if (kurva.length) drawKurva(res, kurva, ordningar.length, lbState);
+  }
+  await hamta();
+  lbTimer = setInterval(() => {
+    if (!aktuell(navId)) { clearInterval(lbTimer); return; }
+    if (document.visibilityState === 'visible') hamta().catch((e) => console.warn('Leaderboard:', e));
+  }, LB_INTERVALL);
 }
 
 // ---------- all-time ----------
 const KOLUMNER = [
   { k: 'fornamn', t: 'Spelare', l: true },
   { k: 'tht', t: 'THT' },
-  { k: 'segrar', t: 'Segrar' },
+  { k: 'segrar', t: 'Segrar', title: 'Vunna THT' },
+  { k: 'dSegrar', t: 'Deltävl.', title: 'Vunna deltävlingar' },
   { k: 'pall', t: 'Pall', sm: true },
   { k: 'rundor', t: 'Rundor', sm: true },
   { k: 'snittPoang', t: 'Poäng/runda', d: 1 },
@@ -246,10 +307,10 @@ async function renderAlltime() {
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
   const [res, rundor] = await Promise.all([
     api('v_tht_resultat?select=person_id,fornamn,artal,placering,poang'),
-    api('v_runda?select=person_id,fornamn,poang,slag,antal_hal,puttar,hal_med_puttar'),
+    api('v_runda?select=person_id,fornamn,poang,slag,antal_hal,puttar,hal_med_puttar,placering'),
   ]);
   const p = {};
-  const get = (r) => (p[r.person_id] ??= { fornamn: r.fornamn, tht: 0, segrar: 0, pall: 0, rundor: 0, pSum: 0, sSum: 0, sN: 0, putt: 0, puttN: 0, bastaRunda: null, totalPoang: 0, vinstAr: [] });
+  const get = (r) => (p[r.person_id] ??= { fornamn: r.fornamn, tht: 0, segrar: 0, dSegrar: 0, pall: 0, rundor: 0, pSum: 0, sSum: 0, sN: 0, putt: 0, puttN: 0, bastaRunda: null, totalPoang: 0, vinstAr: [] });
   res.forEach((r) => {
     const x = get(r); x.tht++;
     if (r.placering === 1) { x.segrar++; x.vinstAr.push(r.artal); }
@@ -257,6 +318,7 @@ async function renderAlltime() {
   });
   rundor.filter((r) => r.antal_hal > 0).forEach((r) => {
     const x = get(r); x.rundor++; x.pSum += r.poang; x.totalPoang += r.poang;
+    if (r.placering === 1) x.dSegrar++;
     if (r.antal_hal === 18) { x.sSum += r.slag; x.sN++; }
     x.putt += r.puttar ?? 0; x.puttN += r.hal_med_puttar ?? 0;
     if (x.bastaRunda === null || r.poang > x.bastaRunda) x.bastaRunda = r.poang;
@@ -277,10 +339,10 @@ async function renderAlltime() {
       <h1>All-time</h1>
       <p class="sub">${new Set(res.map((r) => r.artal)).size} THT med resultat · ${rundor.filter((r) => r.antal_hal > 0).length} rundor</p>
       <div class="tablewrap"><table>
-        <thead><tr>${KOLUMNER.map((c) => `<th class="sortable ${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''} ${sortKey === c.k ? 'sorted' : ''}" data-k="${c.k}" aria-sort="${sortKey === c.k ? (sortAsc ? 'ascending' : 'descending') : 'none'}">${c.t}${sortKey === c.k ? (sortAsc ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
+        <thead><tr>${KOLUMNER.map((c) => `<th class="sortable ${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''} ${sortKey === c.k ? 'sorted' : ''}" data-k="${c.k}" ${c.title ? `title="${c.title}"` : ''} aria-sort="${sortKey === c.k ? (sortAsc ? 'ascending' : 'descending') : 'none'}">${c.t}${sortKey === c.k ? (sortAsc ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
         <tbody>${rows.map((r) => `<tr>${KOLUMNER.map((c) => `<td class="${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''}">${c.l ? esc(r[c.k]) : fmt(r[c.k], c.d || 0)}</td>`).join('')}</tr>`).join('')}</tbody>
       </table></div>
-      <p class="hint">Tryck på en rubrik för att sortera. Slag/runda räknas bara på rundor med alla 18 hål, med tak par + 5. Puttar/hål är snittet av alla ifyllda puttar – tomma hål räknas inte.</p>
+      <p class="hint">Tryck på en rubrik för att sortera. Segrar = vunna THT, Deltävl. = vunna deltävlingar (lika poäng → lägst spel-HCP). Slag/runda räknas bara på rundor med alla 18 hål, med tak par + 5. Puttar/hål är snittet av alla ifyllda puttar – tomma hål räknas inte.</p>
 
       <h2>Vinnare</h2>
       <div class="tablewrap"><table>
