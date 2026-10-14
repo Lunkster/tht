@@ -1,6 +1,6 @@
 // Admin: närmast hål och longest drive – hål och vinnare per deltävling (även i efterhand).
-// Vinnare tas aldrig bort, bara byts (pris har en rad per deltävling och typ).
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.9.0';
+// En vinnare per deltävling och typ. "Ingen vinnare" tar bort raden – ibland blir priset inte av.
+import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.9.1';
 
 const app = document.getElementById('app');
 const TYPER = [
@@ -49,7 +49,7 @@ export async function renderPriser(meddelande = '') {
     const vald = vinnare(d.id, T.typ);
     const o = (p) => `<option value="${p.id}" ${p.id === vald ? 'selected' : ''}>${esc(p.fornamn)} ${esc(p.efternamn)}</option>`;
     return `<select id="p-${T.typ}-${d.id}" aria-label="${T.t}, vinnare">
-      <option value="" ${vald ? 'disabled' : ''}>${vald ? '' : 'Ingen vinnare ännu'}</option>
+      <option value="">${vald ? 'Ingen vinnare (blev inte av)' : 'Ingen vinnare'}</option>
       ${spelade.length ? `<optgroup label="Spelade deltävlingen">${spelade.map(o).join('')}</optgroup><optgroup label="Övriga">${ovriga.map(o).join('')}</optgroup>` : ovriga.map(o).join('')}
     </select>`;
   };
@@ -61,7 +61,7 @@ export async function renderPriser(meddelande = '') {
       ${medDelt.map((t) => `<option value="${t.nr}" ${t.nr === valt ? 'selected' : ''}>THT ${t.nr} · ${esc(t.ort)} ${t.artal}</option>`).join('')}
     </select></div>
     ${meddelande ? `<p class="ok" role="status">${esc(meddelande)}</p>` : ''}
-    <p class="sub">Hålet kan läggas in före rundan och vinnaren efteråt. En vinnare kan bytas men inte tas bort.</p>
+    <p class="sub">Hålet kan läggas in före rundan och vinnaren efteråt. Blev ett pris inte av: välj "Ingen vinnare" och tomt hål.</p>
     <div class="rounds">
       ${delt.map((d) => `
         <form class="round priskort" id="pf-${d.id}" novalidate>
@@ -97,6 +97,9 @@ export async function renderPriser(meddelande = '') {
       knapp.disabled = true; msg.textContent = 'Sparar …';
       try {
         if (TYPER.some((T) => halVal[T.kol] !== d[T.kol])) await write('PATCH', `deltavling?id=eq.${d.id}`, halVal, 'return=minimal');
+        for (const v of nyaVinnare.filter((x) => !x.person_id && vinnare(d.id, x.typ))) {
+          await write('DELETE', `pris?deltavling_id=eq.${d.id}&typ=eq.${v.typ}`, undefined, 'return=minimal');
+        }
         const rader = nyaVinnare.filter((v) => v.person_id && v.person_id !== vinnare(d.id, v.typ)).map((v) => ({ deltavling_id: d.id, ...v }));
         if (rader.length) await write('POST', 'pris?on_conflict=deltavling_id,typ', rader, 'resolution=merge-duplicates,return=minimal');
         renderPriser(`R${d.ordning} är sparad.`);
