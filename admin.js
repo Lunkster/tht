@@ -1,20 +1,22 @@
-// Admin: grunddata som läggs upp sällan – spelare nu, banor/THT/priser/övernattningar senare.
-import { api, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.6.0';
-import { visaLogin } from './mata.js?v=0.6.0';
+// Admin: grunddata som läggs upp sällan – spelare och banor nu, THT/priser/övernattningar senare.
+import { api, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.7.0';
+import { visaLogin } from './mata.js?v=0.7.0';
+import { renderBanor } from './admin-banor.js?v=0.7.0';
 
 const app = document.getElementById('app');
 
 const SEKTIONER = [
   { id: 'spelare', t: 'Spelare', d: 'Lägg till spelare, ändra namn och HCP, aktiv/inaktiv' },
-  { id: 'banor', t: 'Banor', d: 'Bana, banversion, tee:er och hål', kommer: true },
+  { id: 'banor', t: 'Banor', d: 'Ny bana, ombyggnad (ny version), tee:er och hål – klistra in scorekort' },
   { id: 'tht', t: 'THT och deltävlingar', d: 'Ny THT med ort och datum, deltävlingar', kommer: true },
   { id: 'priser', t: 'Närmast hål och longest drive', d: 'Hål och vinnare per deltävling', kommer: true },
   { id: 'overnattning', t: 'Övernattningar', d: 'Plats, nätter och organisatör', kommer: true },
 ];
 
-export async function renderAdmin([sida]) {
-  if (!isLoggedIn()) return visaLogin('Admin', () => renderAdmin([sida]));
+export async function renderAdmin([sida, ...rest]) {
+  if (!isLoggedIn()) return visaLogin('Admin', () => renderAdmin([sida, ...rest]));
   if (sida === 'spelare') return renderSpelare();
+  if (sida === 'banor') return renderBanor(rest);
   return renderMeny();
 }
 
