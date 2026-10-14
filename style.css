@@ -328,3 +328,10 @@ input[type=date] { color-scheme: dark; }
 }
 .sparbar .hint { margin: 0; flex: 1; }
 .sparbar .btn { min-width: 120px; }
+
+/* ---------- admin: THT ---------- */
+.form .hint:empty { display: none; }
+.form .varn a { color: var(--gold-2); }
+.dfalt { grid-template-columns: 90px 1fr !important; }
+.dkort.redigera { display: block; border-color: var(--gold); }
+textarea.prosa { font-family: inherit; font-size: 16px; }

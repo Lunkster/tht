@@ -1,7 +1,7 @@
 // Admin: banor. Lista → bana (namn, plats, versioner) → banversion (tee:er och 18 hål).
 // Inget tas bort (RLS tillåter inte delete här) – allt rättas genom att ändra.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.7.0';
-import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.7.0';
+import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.8.0';
+import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.8.0';
 
 const app = document.getElementById('app');
 const idag = () => new Date().toISOString().slice(0, 10);
@@ -73,7 +73,7 @@ async function renderNyBana() {
       <label>Namn<input type="text" id="namn" required autocomplete="off" placeholder="t.ex. Lindesberga GK"></label>
       <p class="hint" id="liknande"></p>
       <div class="adm-falt tva">
-        <label>Latitud <span class="muted">(valfritt)</span><input type="text" inputmode="decimal" id="lat" placeholder="59.5848 – eller klistra in båda"></label>
+        <label><span>Latitud <span class="muted">(valfritt)</span></span><input type="text" inputmode="decimal" id="lat" placeholder="59.5848 – eller klistra in båda"></label>
         <label>Longitud<input type="text" inputmode="decimal" id="lon" placeholder="15.2433"></label>
       </div>
       <div class="adm-checks">
@@ -82,7 +82,7 @@ async function renderNyBana() {
       </div>
       <div class="adm-falt tva">
         <label>Version giltig från<input type="date" id="giltig" value="${idag()}" required></label>
-        <label>Första tee <span class="muted">(valfritt)</span><input type="text" id="tee" value="gul" autocomplete="off"></label>
+        <label><span>Första tee <span class="muted">(valfritt)</span></span><input type="text" id="tee" value="gul" autocomplete="off"></label>
       </div>
       <p class="hint">Efter att banan skapats fyller du i hålen – gärna genom att klistra in scorekortet.</p>
       <p class="hint" id="msg" role="status"></p>
@@ -150,7 +150,7 @@ async function renderBana(bid, meddelande = '') {
               ${versioner.map((v) => `<option value="${v.id}">Versionen från ${esc(v.giltig_fran)}</option>`).join('')}
             </select></label>
         </div>
-        <label>Kommentar <span class="muted">(valfritt)</span><input type="text" id="vkomm" placeholder="t.ex. hål 3–5 ombyggda" autocomplete="off"></label>
+        <label><span>Kommentar <span class="muted">(valfritt)</span></span><input type="text" id="vkomm" placeholder="t.ex. hål 3–5 ombyggda" autocomplete="off"></label>
         <p class="hint" id="vmsg" role="status"></p>
         <div class="adm-knappar"><button class="btn primary" type="submit">Skapa version</button></div>
       </form>
