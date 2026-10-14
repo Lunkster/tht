@@ -1,8 +1,9 @@
-// THT golfapp (v0.5.0) – statistik och inmatning.
+// THT golfapp (v0.6.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell } from './lib.js?v=0.5.0';
-import { renderMata } from './mata.js?v=0.5.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell } from './lib.js?v=0.6.0';
+import { renderMata } from './mata.js?v=0.6.0';
+import { renderAdmin } from './admin.js?v=0.6.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -24,6 +25,7 @@ function route() {
   if (page === 'alltime') return renderAlltime().catch(fel);
   if (page === 'leaderboard') return renderLeaderboard(id).catch(fel);
   if (page === 'mata') return renderMata([arg, ...rest]).catch(fel);
+  if (page === 'admin') return renderAdmin([arg, ...rest]).catch(fel);
   if (page === 'ar') return renderYear(arg ? Number(arg) : null).catch(fel);
   return renderStart(id).catch(fel);
 }

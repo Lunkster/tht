@@ -1,5 +1,5 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.5.0';
+import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.6.0';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
@@ -14,8 +14,13 @@ export async function renderMata(args) {
 
 // ---------- inloggning ----------
 function renderLogin(args) {
+  visaLogin('Mata in', () => renderMata(args));
+}
+
+// Inloggningsformulär, används även av admin-sidorna.
+export function visaLogin(titel, klar) {
   app.innerHTML = `
-    <h1>Mata in</h1>
+    <h1>${esc(titel)}</h1>
     <p class="sub">Skriv THT-koden. Telefonen kommer ihåg den.</p>
     <form id="login" class="card form">
       <label for="kod">Kod</label>
@@ -27,7 +32,7 @@ function renderLogin(args) {
     e.preventDefault();
     const msg = document.getElementById('loginmsg');
     msg.textContent = 'Loggar in …';
-    if (await login(document.getElementById('kod').value)) renderMata(args);
+    if (await login(document.getElementById('kod').value)) klar();
     else msg.textContent = 'Fel kod – försök igen.';
   };
 }
@@ -54,7 +59,7 @@ async function renderValjDeltavling() {
           <div class="win"><span class="arrow">›</span></div>
         </a>`).join('')}
     </div>
-    <p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp av admin (kommer i appen senare).</p>`;
+    <p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp under <a href="#/admin">Admin</a>.</p>`;
   document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
   document.getElementById('matatht').onchange = (e) => { try { sessionStorage.setItem('mata-tht', e.target.value); } catch { /* */ } renderValjDeltavling(); };
 }
