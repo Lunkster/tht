@@ -1,8 +1,8 @@
-// THT golfapp (v0.4.0) – statistik och inmatning.
+// THT golfapp (v0.5.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell } from './lib.js?v=0.4.0';
-import { renderMata } from './mata.js?v=0.4.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell } from './lib.js?v=0.5.0';
+import { renderMata } from './mata.js?v=0.5.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -14,8 +14,8 @@ const app = document.getElementById('app');
 function route() {
   const h = location.hash.replace(/^#\/?/, '');
   const [page, arg, ...rest] = h.split('/');
-  const tab = ['alltime', 'mata', 'leaderboard'].includes(page) ? page : 'ar';
-  clearInterval(lbTimer);
+  const tab = page || 'start';
+  clearInterval(lbTimer); clearInterval(startTimer);
   document.querySelectorAll('.tabs a').forEach((a) => a.classList.toggle('active', a.dataset.route === tab));
   window.onresize = null;
   window.scrollTo(0, 0);
@@ -24,7 +24,8 @@ function route() {
   if (page === 'alltime') return renderAlltime().catch(fel);
   if (page === 'leaderboard') return renderLeaderboard(id).catch(fel);
   if (page === 'mata') return renderMata([arg, ...rest]).catch(fel);
-  return renderYear(arg ? Number(arg) : null).catch(fel);
+  if (page === 'ar') return renderYear(arg ? Number(arg) : null).catch(fel);
+  return renderStart(id).catch(fel);
 }
 window.addEventListener('hashchange', route);
 
@@ -42,7 +43,7 @@ async function renderYear(artal) {
   const lista = thts.filter((t) => arMedData.has(t.artal));
   if (!artal) artal = lista[lista.length - 1].artal;
   const tht = thts.find((t) => t.artal === artal);
-  if (!tht) { location.hash = '#/'; return; }
+  if (!tht) { location.hash = '#/ar'; return; }
   const idx = lista.findIndex((t) => t.artal === artal);
 
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar ${artal} …</p>`;
@@ -235,6 +236,96 @@ function drawKurva(res, kurva, antalRundor, state = {}) {
   });
   window.onresize = () => document.getElementById('kurvabox') && render();
   render();
+}
+
+// ---------- startsida ----------
+let startTimer = null;
+const isoDag = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const plusDagar = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return isoDag(d); };
+const datumLang = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
+
+async function renderStart(navId) {
+  const [thts, delt] = await Promise.all([
+    api('tht?select=nr,artal,ort,start&order=nr', { fresh: true }),
+    api('deltavling?select=tht_nr,datum', { fresh: true }),
+  ]);
+  if (!aktuell(navId)) return;
+
+  // Första och sista dag per THT: planerat startdatum eller deltävlingarnas datum.
+  const dagar = {};
+  delt.forEach((d) => { if (d.datum) (dagar[d.tht_nr] ??= []).push(d.datum); });
+  const idag = isoDag(new Date());
+  const period = thts.map((t) => {
+    const ds = (dagar[t.nr] || []).sort();
+    const fran = t.start || ds[0] || null;
+    const till = ds.length ? ds[ds.length - 1] : (fran ? plusDagar(fran, 2) : null);
+    return { ...t, fran, till: till && till < fran ? fran : till };
+  }).filter((t) => t.fran);
+  const pagar = period.find((t) => t.fran <= idag && idag <= t.till);
+  const nasta = period.filter((t) => t.fran > idag).sort((a, b) => a.fran.localeCompare(b.fran))[0];
+  const senast = period.filter((t) => t.till < idag).sort((a, b) => b.till.localeCompare(a.till))[0];
+  const ar1 = thts.length ? Math.min(...thts.map((t) => t.artal)) : 1998;
+
+  const datumspann = (t) => {
+    if (t.fran === t.till) return datumLang(t.fran);
+    const [a, b] = [new Date(t.fran + 'T12:00:00'), new Date(t.till + 'T12:00:00')];
+    const forsta = a.getMonth() === b.getMonth() ? a.getDate() : a.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' });
+    return `${forsta}–${datumLang(t.till)}`;
+  };
+
+  let huvud;
+  if (pagar) {
+    const dag = Math.round((new Date(idag) - new Date(pagar.fran)) / 864e5) + 1;
+    huvud = `<div class="nasta live">
+      <div class="kicker"><span class="dot" aria-hidden="true"></span> Pågår nu · dag ${dag}</div>
+      <div class="nasta-ort">${esc(pagar.ort || 'THT ' + pagar.nr)}</div>
+      <div class="nasta-meta">THT ${pagar.nr} · ${datumspann(pagar)}</div>
+      <div class="cta"><a class="btn" href="#/leaderboard">Leaderboard</a><a class="btn ghost" href="#/mata">Mata in</a></div>
+    </div>`;
+  } else if (nasta) {
+    huvud = `<div class="nasta">
+      <div class="kicker">Nästa THT</div>
+      <div class="nasta-ort">${esc(nasta.ort || 'Ort ej bestämd')}</div>
+      <div class="nasta-meta">THT ${nasta.nr} · ${datumspann(nasta)}</div>
+      <div class="nedrakning" role="timer" aria-live="off">
+        ${['dagar', 'tim', 'min', 'sek'].map((e) => `<div class="enhet"><span class="tal" data-e="${e}">–</span><span class="etikett">${e}</span></div>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    huvud = `<div class="nasta tom">
+      <div class="kicker">Nästa THT</div>
+      <div class="nasta-ort">Inte bestämd ännu</div>
+      <div class="nasta-meta">Nedräkningen startar när nästa THT har ett datum.</div>
+    </div>`;
+  }
+
+  app.innerHTML = `
+    <section class="hero">
+      <img src="logo.svg" alt="" class="hero-logo" aria-hidden="true">
+      <h1 class="sr-only">The Helkväll Tour</h1>
+      <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
+    </section>
+    ${huvud}
+    ${senast && !pagar ? `<p class="senast">Senast: <a href="#/ar/${senast.artal}">${esc(senast.ort)} ${senast.artal}</a></p>` : ''}
+    <nav class="genvagar" aria-label="Genvägar">
+      <a href="#/leaderboard"><strong>Leaderboard</strong><span>Senaste THT, live</span></a>
+      <a href="#/ar"><strong>År för år</strong><span>Resultat och grafen per THT</span></a>
+      <a href="#/alltime"><strong>All-time</strong><span>Segrar och statistik sedan ${ar1}</span></a>
+      <a href="#/mata"><strong>Mata in</strong><span>Slag och puttar per hål</span></a>
+    </nav>`;
+
+  if (nasta && !pagar) {
+    const mal = new Date(nasta.fran + 'T00:00:00').getTime();
+    const tick = () => {
+      if (!aktuell(navId)) { clearInterval(startTimer); return; }
+      let ms = mal - Date.now();
+      if (ms <= 0) { clearInterval(startTimer); route(); return; }
+      const v = { dagar: Math.floor(ms / 864e5), tim: Math.floor(ms / 36e5) % 24, min: Math.floor(ms / 6e4) % 60, sek: Math.floor(ms / 1e3) % 60 };
+      app.querySelectorAll('.nedrakning .tal').forEach((el) => { el.textContent = el.dataset.e === 'dagar' ? v.dagar : String(v[el.dataset.e]).padStart(2, '0'); });
+    };
+    tick();
+    startTimer = setInterval(tick, 1000);
+  }
 }
 
 // ---------- leaderboard (senaste THT, uppdateras automatiskt) ----------

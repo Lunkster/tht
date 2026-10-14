@@ -218,3 +218,41 @@ input:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid 
   .tabs a { padding: 8px 8px; font-size: 14px; }
   .topbar .logo { height: 34px; }
 }
+
+/* ---------- startsida ---------- */
+.hero { text-align: center; padding: 28px 0 8px; position: relative; }
+.hero-logo { width: min(280px, 72vw); height: auto; display: block; margin: 0 auto 12px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.hero-sub { color: var(--gold-2); text-transform: uppercase; letter-spacing: 0.18em; font-size: 13px; margin: 6px 0 0; }
+
+.nasta {
+  margin: 24px auto 0; max-width: 560px; text-align: center;
+  background: linear-gradient(180deg, var(--stout-2), var(--stout));
+  border: 1px solid var(--gold); border-radius: 16px; padding: 22px 16px 20px;
+  box-shadow: inset 0 1px 0 rgba(227, 194, 120, 0.25);
+}
+.nasta.tom { border-color: var(--line); }
+.kicker { color: var(--gold); text-transform: uppercase; letter-spacing: 0.16em; font-size: 12px; font-weight: 700; }
+.nasta-ort { font-family: Georgia, "Times New Roman", serif; font-size: clamp(26px, 6vw, 36px); font-weight: 700; margin-top: 4px; }
+.nasta-meta { color: var(--cream-2); margin-top: 2px; }
+.nedrakning { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
+.enhet { background: var(--stout); border: 1px solid var(--line); border-radius: 10px; padding: 10px 4px 8px; }
+.tal { display: block; font-family: Georgia, "Times New Roman", serif; font-size: clamp(26px, 8vw, 40px); font-weight: 700; color: var(--gold-2); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.etikett { display: block; color: var(--cream-3); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+.live .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--gold-2); margin-right: 4px; vertical-align: 1px; animation: puls 1.6s ease-in-out infinite; }
+@keyframes puls { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .live .dot { animation: none; } }
+.cta { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 999px; background: var(--gold); color: var(--stout); font-weight: 700; text-decoration: none; }
+.btn.ghost { background: transparent; color: var(--cream); border: 1px solid var(--cream-3); }
+
+.senast { text-align: center; color: var(--cream-3); margin: 14px 0 0; }
+.genvagar { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 560px; margin: 28px auto 8px; }
+.genvagar a {
+  display: flex; flex-direction: column; gap: 2px; padding: 14px; min-height: 76px;
+  background: var(--stout-2); border: 1px solid var(--line); border-radius: var(--radius);
+  color: var(--cream); text-decoration: none;
+}
+.genvagar a:hover, .genvagar a:focus-visible { border-color: var(--gold); }
+.genvagar strong { font-family: Georgia, "Times New Roman", serif; font-size: 18px; }
+.genvagar span { color: var(--cream-3); font-size: 14px; }
