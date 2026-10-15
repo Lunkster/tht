@@ -416,3 +416,42 @@ input.datum.fel { border-color: #c0533e; background: #3a1d17; }
 .avsluta .hint { grid-column: 1 / -1; margin: 0; }
 .avsluta .hint:empty { display: none; }
 .avsluta .meta { color: var(--cream-3); font-size: 14px; }
+
+/* Startsidan: dynamisk logga (90 % av bredden) och guldplakett med regerande mästare */
+.hero-logo { width: 90%; max-width: 560px; }
+@media (max-width: 600px) { .hero-logo { width: 90%; max-width: none; } }
+.plakett {
+  display: block; width: fit-content; max-width: 100%; margin: 16px auto 0; padding: 6px 22px 7px;
+  text-align: center; text-decoration: none; border-radius: 4px;
+  background: linear-gradient(180deg, #f0d98f 0%, #d4ae55 38%, #b08b33 52%, #c9a24a 70%, #e6c977 100%);
+  border: 1px solid #8a6a22;
+  box-shadow: inset 0 1px 0 rgba(255, 247, 214, 0.7), inset 0 -1px 0 rgba(60, 40, 5, 0.35), 0 2px 8px rgba(0, 0, 0, 0.55);
+  color: #3b2a07; font-family: Georgia, "Times New Roman", serif;
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.55), 0 -1px 0 rgba(60, 40, 5, 0.35);
+}
+.plakett-rubrik { display: block; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.85; }
+.plakett-namn { display: block; font-size: 15px; font-weight: 700; letter-spacing: 0.04em; line-height: 1.25; }
+.plakett-sep { opacity: 0.6; padding: 0 2px; }
+.plakett:hover, .plakett:focus-visible { filter: brightness(1.06); }
+
+/* ---------- personsida ---------- */
+a.namn { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(242, 232, 213, 0.35); }
+a.namn:hover, a.namn:focus-visible { color: var(--gold-2); border-bottom-color: var(--gold-2); }
+td.win a.namn, .pod a.namn { border-bottom-color: rgba(227, 194, 120, 0.5); }
+.sp-topp { align-items: flex-start; }
+.sp-topp select { width: auto; min-height: 40px; }
+.sp-nyckel { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+@media (min-width: 720px) { .sp-nyckel { grid-template-columns: repeat(4, 1fr); } }
+.sp-tile { background: var(--stout-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+.sp-v { font-family: Georgia, serif; font-size: 26px; font-weight: 700; color: var(--cream); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.sp-t { color: var(--cream-2); font-size: 13px; font-weight: 600; margin-top: 2px; }
+.sp-d { color: var(--cream-3); font-size: 12px; margin-top: 2px; }
+.sp-chart { height: 220px; }
+.sp-staplar { display: grid; gap: 6px; }
+.sp-rad { display: grid; grid-template-columns: 96px 1fr 64px; gap: 8px; align-items: center; font-size: 13px; }
+.sp-etikett { color: var(--cream-2); }
+.sp-stapel { height: 14px; background: transparent; }
+.sp-stapel span { display: block; height: 100%; min-width: 2px; background: #3987e5; border-radius: 0 4px 4px 0; }
+.sp-antal { text-align: right; font-variant-numeric: tabular-nums; color: var(--cream); }
+.sp-antal small { color: var(--cream-3); margin-left: 6px; }
+.sp-partyp { margin-top: 10px; }

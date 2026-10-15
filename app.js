@@ -1,9 +1,10 @@
-// THT golfapp (v0.13.1) – statistik och inmatning.
+// THT golfapp (v0.14.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.13.1';
-import { renderMata } from './mata.js?v=0.13.1';
-import { renderAdmin } from './admin.js?v=0.13.1';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.14.0';
+import { renderMata } from './mata.js?v=0.14.0';
+import { renderAdmin } from './admin.js?v=0.14.0';
+import { renderSpelare } from './spelare.js?v=0.14.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -26,6 +27,7 @@ function route() {
   if (page === 'leaderboard') return renderLeaderboard(id).catch(fel);
   if (page === 'mata') return renderMata([arg, ...rest]).catch(fel);
   if (page === 'admin') return renderAdmin([arg, ...rest]).catch(fel);
+  if (page === 'spelare' && arg) return renderSpelare(Number(arg)).catch(fel);
   if (page === 'ar') return renderYear(arg ? Number(arg) : null).catch(fel);
   return renderStart(id).catch(fel);
 }
@@ -89,7 +91,7 @@ async function renderYear(artal) {
       ${[1, 0, 2].map((i) => topp[i] ? `
         <div class="pod ${i === 0 ? 'first' : ''}">
           <div class="place">${i + 1}:a</div>
-          <div class="name">${esc(topp[i].fornamn)}</div>
+          <div class="name"><a class="namn" href="#/spelare/${topp[i].person_id}">${esc(topp[i].fornamn)}</a></div>
           <div class="pts">${fmt(topp[i].poang)} p</div>
         </div>` : '<div></div>').join('')}
     </div>
@@ -109,7 +111,7 @@ async function renderYear(artal) {
         return `<div class="round">
           <div><div class="rn">R${d.ordning} · ${esc(d.namn)}</div>
           <div class="meta">${esc(d.banversion?.bana?.namn ?? '')} · ${datum(d.datum)}</div></div>
-          <div class="win">${vNamn ? `<div class="rn">${esc(vNamn)}</div><div class="meta">${fmt(vinnare.poang)} p${tht.klar ? '' : ' · leder'}</div>` : '<div class="meta">Inga resultat</div>'}</div>
+          <div class="win">${vNamn ? `<div class="rn"><a class="namn" href="#/spelare/${vinnare.person_id}">${esc(vNamn)}</a></div><div class="meta">${fmt(vinnare.poang)} p${tht.klar ? '' : ' · leder'}</div>` : '<div class="meta">Inga resultat</div>'}</div>
           ${extra ? `<div class="extra">${extra}</div>` : ''}
         </div>`;
       }).join('')}
@@ -127,7 +129,7 @@ async function renderYear(artal) {
 // Visas så länge THT:n inte är avslutad – då utses ingen vinnare.
 function pagarRuta(res) {
   const ledare = res.filter((r) => r.placering === 1);
-  return `<div class="pagar"><strong>Pågår</strong> – ingen vinnare utses förrän THT:n är avslutad.${ledare.length ? ` Leder just nu: ${ledare.map((r) => esc(r.fornamn)).join(', ')} (${fmt(ledare[0].poang)} p).` : ''}</div>`;
+  return `<div class="pagar"><strong>Pågår</strong> – ingen vinnare utses förrän THT:n är avslutad.${ledare.length ? ` Leder just nu: ${ledare.map((r) => `<a class="namn" href="#/spelare/${r.person_id}">${esc(r.fornamn)}</a>`).join(', ')} (${fmt(ledare[0].poang)} p).` : ''}</div>`;
 }
 
 function resultatOchGraf(res, ordningar, perRunda, klar = true) {
@@ -148,7 +150,7 @@ function resultatOchGraf(res, ordningar, perRunda, klar = true) {
       <tbody>
         ${res.map((r) => `<tr>
           <td>${r.placering}</td>
-          <td class="l ${klar && r.placering === 1 ? 'win' : ''}">${esc(r.fornamn)}</td>
+          <td class="l ${klar && r.placering === 1 ? 'win' : ''}"><a class="namn" href="#/spelare/${r.person_id}">${esc(r.fornamn)}</a></td>
           <td><strong>${fmt(r.poang)}</strong></td>
           <td class="${motHcp(r) > 0 ? 'plus' : ''}">${motHcpText(r)}</td>
           ${ordningar.map((o) => { const x = perRunda[r.person_id]?.[o]; return `<td class="hide-sm ${x ? '' : 'dim'}">${x ? fmt(x.poang) : '–'}</td>`; }).join('')}
@@ -278,7 +280,7 @@ const datumLang = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('sv-SE
 
 async function renderStart(navId) {
   const [thts, delt] = await Promise.all([
-    api('tht?select=nr,artal,ort,start&order=nr', { fresh: true }),
+    api('tht?select=nr,artal,ort,start,klar&order=nr', { fresh: true }),
     api('deltavling?select=tht_nr,datum', { fresh: true }),
   ]);
   if (!aktuell(navId)) return;
@@ -297,6 +299,10 @@ async function renderStart(navId) {
   const nasta = period.filter((t) => t.fran > idag).sort((a, b) => a.fran.localeCompare(b.fran))[0];
   const senast = period.filter((t) => t.till < idag).sort((a, b) => b.till.localeCompare(a.till))[0];
   const ar1 = thts.length ? Math.min(...thts.map((t) => t.artal)) : 1998;
+  // Regerande mästare = vinnaren i senast avslutade THT.
+  const senastKlar = thts.filter((t) => t.klar).sort((a, b) => b.artal - a.artal)[0];
+  const mastare = senastKlar ? await api(`v_tht_resultat?tht_nr=eq.${senastKlar.nr}&placering=eq.1&select=fornamn,poang`, { fresh: true }).catch(() => []) : [];
+  if (!aktuell(navId)) return;
 
   const datumspann = (t) => {
     if (t.fran === t.till) return datumLang(t.fran);
@@ -338,7 +344,10 @@ async function renderStart(navId) {
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>
     ${huvud}
-    ${senast && !pagar ? `<p class="senast">Senast: <a href="#/ar/${senast.artal}">${esc(senast.ort)} ${senast.artal}</a></p>` : ''}`;
+    ${senastKlar && mastare.length ? `<a class="plakett" href="#/ar/${senastKlar.artal}">
+      <span class="plakett-rubrik">Regerande mästare</span>
+      <span class="plakett-namn">${mastare.map((m) => esc(m.fornamn)).join(' & ')} <span class="plakett-sep">·</span> ${esc(senastKlar.ort)} ${senastKlar.artal}</span>
+    </a>` : (senast && !pagar ? `<p class="senast">Senast: <a href="#/ar/${senast.artal}">${esc(senast.ort)} ${senast.artal}</a></p>` : '')}`;
 
   if (nasta && !pagar) {
     const mal = new Date(nasta.fran + 'T00:00:00').getTime();
@@ -430,7 +439,7 @@ async function renderAlltime() {
   // Vinnare utses först när THT:n är avslutad (Admin → THT → Avsluta).
   const klarAr = new Set(thtKlar.filter((t) => t.klar).map((t) => t.artal));
   const p = {};
-  const get = (r) => (p[r.person_id] ??= { fornamn: r.fornamn, tht: 0, segrar: 0, dSegrar: 0, pall: 0, rundor: 0, pSum: 0, sSum: 0, sN: 0, putt: 0, puttN: 0, bastaRunda: null, totalPoang: 0, vinstAr: [] });
+  const get = (r) => (p[r.person_id] ??= { id: r.person_id, fornamn: r.fornamn, tht: 0, segrar: 0, dSegrar: 0, pall: 0, rundor: 0, pSum: 0, sSum: 0, sN: 0, putt: 0, puttN: 0, bastaRunda: null, totalPoang: 0, vinstAr: [] });
   res.forEach((r) => {
     const x = get(r); x.tht++;
     if (klarAr.has(r.artal) && r.placering === 1) { x.segrar++; x.vinstAr.push(r.artal); }
@@ -453,7 +462,8 @@ async function renderAlltime() {
     rows.sort((a, b) => {
       const va = a[sortKey], vb = b[sortKey];
       if (va === null) return 1; if (vb === null) return -1;
-      const c = typeof va === 'string' ? va.localeCompare(vb, 'sv') : va - vb;
+      let c = typeof va === 'string' ? va.localeCompare(vb, 'sv') : va - vb;
+      if (c === 0 && sortKey === 'segrar') c = a.dSegrar - b.dSegrar;   // lika THT-segrar → deltävlingssegrar avgör
       return sortAsc ? c : -c;
     });
     if (!aktuell(myNav)) return; app.innerHTML = `
@@ -461,14 +471,14 @@ async function renderAlltime() {
       <p class="sub">${new Set(res.map((r) => r.artal)).size} THT med resultat · ${rundor.filter((r) => r.antal_hal > 0).length} rundor</p>
       <div class="tablewrap"><table>
         <thead><tr>${KOLUMNER.map((c) => `<th class="sortable ${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''} ${sortKey === c.k ? 'sorted' : ''}" data-k="${c.k}" ${c.title ? `title="${c.title}"` : ''} aria-sort="${sortKey === c.k ? (sortAsc ? 'ascending' : 'descending') : 'none'}">${c.t}${sortKey === c.k ? (sortAsc ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
-        <tbody>${rows.map((r) => `<tr>${KOLUMNER.map((c) => `<td class="${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''}">${c.l ? esc(r[c.k]) : fmt(r[c.k], c.d || 0)}</td>`).join('')}</tr>`).join('')}</tbody>
+        <tbody>${rows.map((r) => `<tr>${KOLUMNER.map((c) => `<td class="${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''}">${c.k === 'fornamn' ? `<a class="namn" href="#/spelare/${r.id}">${esc(r.fornamn)}</a>` : c.l ? esc(r[c.k]) : fmt(r[c.k], c.d || 0)}</td>`).join('')}</tr>`).join('')}</tbody>
       </table></div>
       <p class="hint">Tryck på en rubrik för att sortera. Segrar = vunna THT, Deltävl. = vunna deltävlingar (lika poäng → lägst spel-HCP). Slag/runda räknas bara på rundor med alla 18 hål, med tak par + 5. Puttar/hål är snittet av alla ifyllda puttar – tomma hål räknas inte.${pagar.length ? ` Segrar och pall räknas inte för ${pagar.join(', ')} förrän THT:n är avslutad.` : ''}</p>
 
       <h2>Vinnare</h2>
       <div class="tablewrap"><table>
         <thead><tr><th class="l">År</th><th class="l">Vinnare</th><th>Poäng</th></tr></thead>
-        <tbody>${vinnare.map((v) => `<tr><td class="l"><a href="#/ar/${v.artal}">${v.artal}</a></td><td class="l win">${esc(v.fornamn)}</td><td>${fmt(v.poang)}</td></tr>`).join('')}</tbody>
+        <tbody>${vinnare.map((v) => `<tr><td class="l"><a href="#/ar/${v.artal}">${v.artal}</a></td><td class="l win"><a class="namn" href="#/spelare/${v.person_id}">${esc(v.fornamn)}</a></td><td>${fmt(v.poang)}</td></tr>`).join('')}</tbody>
       </table></div>`;
     app.querySelectorAll('th.sortable').forEach((th) => th.onclick = () => {
       const c = KOLUMNER.find((x) => x.k === th.dataset.k);
