@@ -1,6 +1,6 @@
 // Scorekort i efterhand: hela rundor per spelare – 18 slag (och valfritt puttar) på en gång.
 // Samma tabeller och regler som Mata in: runda + score, poäng räknas på samma sätt som vyn v_score.
-import { api, write, esc, datum, poang, nuNav, aktuell } from './lib.js?v=0.12.0';
+import { api, write, esc, datum, poang, nuNav, aktuell } from './lib.js?v=0.12.1';
 
 const app = document.getElementById('app');
 const HAL = Array.from({ length: 18 }, (_, i) => i + 1);
@@ -55,7 +55,7 @@ export async function renderScorekort(did, meddelande = '') {
     return `<section class="card sk-kort" id="kort-${k.key}">
       <div class="sk-topp">
         <div><div class="rn">${esc(p?.fornamn ?? '?')} <span class="dim">${esc(p?.efternamn ?? '')}</span></div>
-        <div class="meta">${k.runda_id ? (k.boll_nr ? 'Boll ' + k.boll_nr : 'Utan boll') : 'Ny runda'}</div></div>
+        <label class="sk-boll"><span class="meta">${k.runda_id ? '' : 'Ny runda · '}Boll</span>${bollSelect(k)}</label></div>
         <label class="sk-hcp">Spel-HCP<input type="text" inputmode="numeric" id="hcp-${k.key}" value="${k.spel_hcp ?? ''}" maxlength="3"></label>
         <div class="sk-tot"><span id="tot-${k.key}">–</span><small>poäng</small></div>
       </div>
@@ -64,13 +64,24 @@ export async function renderScorekort(did, meddelande = '') {
     </section>`;
   };
 
+  // Bollval per spelare: utan boll, befintliga bollar (med vilka som är i dem) och en ny boll.
+  const bollSelect = (k) => {
+    const nr = [...new Set(kort.map((x) => x.boll_nr).filter((b) => b != null))].sort((a, b) => a - b);
+    const ny = (nr.length ? Math.max(...nr) : 0) + 1;
+    const vem = (b) => kort.filter((x) => x.boll_nr === b && x.key !== k.key).map((x) => pMap[x.person_id]?.fornamn).filter(Boolean).join(', ');
+    return `<select id="boll-${k.key}" aria-label="Boll för ${esc(pMap[k.person_id]?.fornamn ?? '')}">
+      <option value="" ${k.boll_nr == null ? 'selected' : ''}>Utan boll</option>
+      ${nr.map((b) => `<option value="${b}" ${b === k.boll_nr ? 'selected' : ''}>Boll ${b}${vem(b) ? ' – ' + esc(vem(b)) : ''}</option>`).join('')}
+      <option value="${ny}">Ny boll (${ny})</option>
+    </select>`;
+  };
   const ledigaPersoner = () => personer.filter((p) => !kort.some((k) => k.person_id === p.id));
   app.innerHTML = `
     <a class="back" href="#/mata/${did}">‹ R${d.ordning} · bollar</a>
     <h1>Scorekort · R${d.ordning} ${esc(d.namn)}</h1>
     <p class="sub">${esc(d.banversion?.bana?.namn ?? '')} · ${datum(d.datum)} ${d.tht?.artal ?? ''}</p>
     ${meddelande ? `<p class="ok" role="status">${esc(meddelande)}</p>` : ''}
-    <p class="hint">Skriv slagen hål för hål – markören hoppar vidare själv (för 10 eller fler: skriv båda siffrorna). Hela raden kan också klistras in från Excel i första rutan. Puttar är valfritt.</p>
+    <p class="hint">Skriv slagen hål för hål – markören hoppar vidare själv (för 10 eller fler: skriv båda siffrorna). Hela raden kan också klistras in från Excel i första rutan. Puttar är valfritt. Boll väljs under namnet.</p>
     <div id="korten">${kort.map(kortHtml).join('')}</div>
     <div class="card form sk-ny">
       <div class="adm-falt tva">
@@ -88,6 +99,7 @@ export async function renderScorekort(did, meddelande = '') {
   const statusRad = () => { document.getElementById('sparmsg').textContent = andrade.size ? `${andrade.size} scorekort ej sparade` : ''; };
   const las = (k) => ({
     hcp: heltal(document.getElementById(`hcp-${k.key}`).value),
+    boll: document.getElementById(`boll-${k.key}`).value === '' ? null : Number(document.getElementById(`boll-${k.key}`).value),
     hal: Object.fromEntries(HAL.map((n) => [n, {
       slag: heltal(app.querySelector(`.sk-slag[data-k="${k.key}"][data-h="${n}"]`).value),
       puttar: heltal(app.querySelector(`.sk-puttar[data-k="${k.key}"][data-h="${n}"]`).value),
@@ -194,12 +206,12 @@ export async function renderScorekort(did, meddelande = '') {
       for (const { k, v } of data) {
         msg.textContent = `Sparar ${pMap[k.person_id]?.fornamn ?? ''} …`;
         if (!k.runda_id) {
-          const [r] = await write('POST', 'runda', { deltavling_id: did, person_id: k.person_id, spel_hcp: v.hcp });
+          const [r] = await write('POST', 'runda', { deltavling_id: did, person_id: k.person_id, spel_hcp: v.hcp, boll_nr: v.boll });
           k.runda_id = r.id;
-        } else if (v.hcp !== k.spel_hcp) {
-          await write('PATCH', `runda?id=eq.${k.runda_id}`, { spel_hcp: v.hcp }, 'return=minimal');
+        } else if (v.hcp !== k.spel_hcp || v.boll !== k.boll_nr) {
+          await write('PATCH', `runda?id=eq.${k.runda_id}`, { spel_hcp: v.hcp, boll_nr: v.boll }, 'return=minimal');
         }
-        k.spel_hcp = v.hcp;
+        k.spel_hcp = v.hcp; k.boll_nr = v.boll;
         const upsert = HAL.filter((n) => v.hal[n].slag !== null && (v.hal[n].slag !== k.orig[n]?.slag || v.hal[n].puttar !== (k.orig[n]?.puttar ?? null)))
           .map((n) => ({ runda_id: k.runda_id, hal_nr: n, slag: v.hal[n].slag, puttar: v.hal[n].puttar }));
         if (upsert.length) await write('POST', 'score?on_conflict=runda_id,hal_nr', upsert, 'resolution=merge-duplicates,return=minimal');

@@ -1,7 +1,7 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.12.0';
+import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.12.1';
 
-import { renderScorekort } from './scorekort.js?v=0.12.0';
+import { renderScorekort } from './scorekort.js?v=0.12.1';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
@@ -95,7 +95,7 @@ async function renderBollar(did) {
         </div>`).join('') : '<p class="muted">Inga bollar ännu.</p>'}
     </div>
     <p class="hint">Tryck på en boll för att mata in för alla i den, eller på ett namn för att mata in eller rätta bara den spelaren.</p>
-    <a class="round link-card sk-lank" href="#/mata/${did}/kort"><div><div class="rn">Scorekort i efterhand</div><div class="meta">Hela rundor från scorekorten – 18 hål per spelare på en gång</div></div><div class="win"><span class="arrow">›</span></div></a>
+    <a class="round link-card sk-lank" href="#/mata/${did}/kort"><div><div class="rn">Scorekort i efterhand</div><div class="meta">Hela rundor från scorekorten – 18 hål per spelare på en gång. Här byter du också boll.</div></div><div class="win"><span class="arrow">›</span></div></a>
     <div>
     </div>
 

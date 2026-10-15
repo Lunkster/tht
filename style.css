@@ -386,3 +386,5 @@ textarea.prosa { font-family: inherit; font-size: 16px; }
 td.plus { color: var(--gold-2); }
 input.datum { font-variant-numeric: tabular-nums; }
 input.datum.fel { border-color: #c0533e; background: #3a1d17; }
+.sk-boll { display: grid; gap: 2px; margin-top: 4px; }
+.sk-boll select { min-height: 36px; padding: 4px 8px; font-size: 14px; width: auto; max-width: 100%; }

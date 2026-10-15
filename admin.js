@@ -1,10 +1,10 @@
 // Admin: grunddata som läggs upp sällan – spelare, banor, THT, priser och övernattningar.
-import { api, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.12.0';
-import { visaLogin } from './mata.js?v=0.12.0';
-import { renderBanor } from './admin-banor.js?v=0.12.0';
-import { renderTht } from './admin-tht.js?v=0.12.0';
-import { renderPriser } from './admin-priser.js?v=0.12.0';
-import { renderOvernattning } from './admin-overnattning.js?v=0.12.0';
+import { api, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.12.1';
+import { visaLogin } from './mata.js?v=0.12.1';
+import { renderBanor } from './admin-banor.js?v=0.12.1';
+import { renderTht } from './admin-tht.js?v=0.12.1';
+import { renderPriser } from './admin-priser.js?v=0.12.1';
+import { renderOvernattning } from './admin-overnattning.js?v=0.12.1';
 
 const app = document.getElementById('app');
 
