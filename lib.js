@@ -86,7 +86,19 @@ async function session(required) {
 // ---------- hjälp ----------
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const fmt = (v, d = 0) => (v === null || v === undefined || Number.isNaN(v)) ? '–' : Number(v).toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d });
-export const datum = (d) => new Date(d + 'T12:00:00').toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+export const datum = (d) => d ?? '';   // datum visas alltid som ÅÅÅÅ-MM-DD (så lagras de också)
+
+// Datum skrivs som ÅÅÅÅ-MM-DD. Tillåter även 20260904 och 2026-9-4. Tomt → null, ogiltigt → NaN.
+export function tolkaDatum(txt) {
+  const t = String(txt ?? '').trim();
+  if (!t) return null;
+  const m = t.match(/^(\d{4})[-./ ]?(\d{1,2})[-./ ]?(\d{1,2})$/);
+  if (!m) return NaN;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return NaN;
+  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
 
 // Samma regler som vyn v_score: extraslag fungerar även för plus-hcp, tak par + 5.
 export function extraslag(spelHcp, index) {

@@ -1,9 +1,9 @@
-// THT golfapp (v0.11.0) – statistik och inmatning.
+// THT golfapp (v0.12.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell } from './lib.js?v=0.11.0';
-import { renderMata } from './mata.js?v=0.11.0';
-import { renderAdmin } from './admin.js?v=0.11.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.12.0';
+import { renderMata } from './mata.js?v=0.12.0';
+import { renderAdmin } from './admin.js?v=0.12.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -31,6 +31,16 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 
+// Alla datumfält: skriv om till ÅÅÅÅ-MM-DD när man lämnar fältet (20260904 → 2026-09-04), markera ogiltiga.
+document.addEventListener('focusout', (e) => {
+  const el = e.target;
+  if (!el.matches?.('input.datum')) return;
+  const v = tolkaDatum(el.value);
+  if (typeof v === 'string') el.value = v;
+  el.classList.toggle('fel', Number.isNaN(v));
+  if (typeof v === 'string' || v === null) el.dispatchEvent(new Event('change', { bubbles: true }));
+});
+
 function showError(e) {
   console.error(e);
   app.innerHTML = `<div class="err"><strong>Kunde inte hämta data.</strong><br><span class="muted">${esc(e.message)}</span></div>`;
@@ -51,7 +61,7 @@ async function renderYear(artal) {
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar ${artal} …</p>`;
   const [res, rundor, kurva, delt, pris] = await Promise.all([
     api(`v_tht_resultat?tht_nr=eq.${tht.nr}&order=placering`),
-    api(`v_runda?tht_nr=eq.${tht.nr}&select=person_id,ordning,poang,slag,antal_hal`),
+    api(`v_runda?tht_nr=eq.${tht.nr}&select=person_id,ordning,poang,slag,antal_hal,spel_hcp`),
     api(`v_tht_kurva?tht_nr=eq.${tht.nr}&order=hal_i_tht&select=person_id,hal_i_tht,poang_ack,poang_ack_mot_hcp`),
     api(`deltavling?tht_nr=eq.${tht.nr}&order=ordning&select=id,ordning,namn,datum,narmast_hal,longest_hal,banversion(bana(namn))`),
     api(`pris?select=deltavling_id,typ,person(fornamn)`),
@@ -114,11 +124,17 @@ async function renderYear(artal) {
 
 // Resultattabell + THT-grafen, används av både årssidan och leaderboarden.
 function resultatOchGraf(res, ordningar, perRunda) {
+  const rundorFor = (r) => Object.values(perRunda[r.person_id] ?? {});
+  // Poäng mot handicap = poäng − 2 per spelat hål (samma mått som "Mot handicap" i grafen).
+  const motHcp = (r) => { const hal = rundorFor(r).reduce((a, x) => a + (x.antal_hal ?? 0), 0); return hal ? r.poang - 2 * hal : null; };
+  const motHcpText = (r) => { const v = motHcp(r); return v === null ? '–' : v > 0 ? `+${v}` : v < 0 ? `−${-v}` : '±0'; };
+  // Spel-HCP är alltid ett heltal – visa senaste rundans i stället för årets snitt.
+  const senasteHcp = (r) => { const rs = rundorFor(r).filter((x) => x.spel_hcp != null).sort((a, b) => b.ordning - a.ordning); return rs[0]?.spel_hcp ?? Math.round(r.snitt_spel_hcp); };
   return `
     <h2>Resultat</h2>
     <div class="tablewrap"><table>
       <thead><tr>
-        <th>#</th><th class="l">Spelare</th><th>Poäng</th>
+        <th>#</th><th class="l">Spelare</th><th>Poäng</th><th title="Poäng mot handicap: poäng minus 2 per spelat hål">Mot HCP</th>
         ${ordningar.map((o) => `<th class="hide-sm">R${o}</th>`).join('')}
         <th>Slag</th><th class="hide-sm">Puttar/hål</th><th class="hide-sm">Spel-HCP</th>
       </tr></thead>
@@ -127,10 +143,11 @@ function resultatOchGraf(res, ordningar, perRunda) {
           <td>${r.placering}</td>
           <td class="l ${r.placering === 1 ? 'win' : ''}">${esc(r.fornamn)}</td>
           <td><strong>${fmt(r.poang)}</strong></td>
+          <td class="${motHcp(r) > 0 ? 'plus' : ''}">${motHcpText(r)}</td>
           ${ordningar.map((o) => { const x = perRunda[r.person_id]?.[o]; return `<td class="hide-sm ${x ? '' : 'dim'}">${x ? fmt(x.poang) : '–'}</td>`; }).join('')}
           <td>${fmt(r.slag)}</td>
           <td class="hide-sm">${fmt(r.puttar_per_hal, 2)}</td>
-          <td class="hide-sm">${fmt(r.snitt_spel_hcp, 1)}</td>
+          <td class="hide-sm">${fmt(senasteHcp(r))}</td>
         </tr>`).join('')}
       </tbody>
     </table></div>
@@ -353,7 +370,7 @@ async function renderLeaderboard(navId) {
     const f = { fresh: true };
     const [res, rundor, kurva, delt] = await Promise.all([
       api(`v_tht_resultat?tht_nr=eq.${nr}&order=placering`, f),
-      api(`v_runda?tht_nr=eq.${nr}&select=person_id,ordning,poang,slag,antal_hal`, f),
+      api(`v_runda?tht_nr=eq.${nr}&select=person_id,ordning,poang,slag,antal_hal,spel_hcp`, f),
       api(`v_tht_kurva?tht_nr=eq.${nr}&order=hal_i_tht&select=person_id,hal_i_tht,poang_ack,poang_ack_mot_hcp`, f),
       api(`deltavling?tht_nr=eq.${nr}&order=ordning&select=ordning`, f),
     ]);

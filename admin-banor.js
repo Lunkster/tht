@@ -1,7 +1,7 @@
 // Admin: banor. Lista → bana (namn, plats, versioner) → banversion (tee:er och 18 hål).
 // Inget tas bort (RLS tillåter inte delete här) – allt rättas genom att ändra.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.11.0';
-import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.11.0';
+import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.12.0';
+import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.12.0';
 
 const app = document.getElementById('app');
 const idag = () => new Date().toISOString().slice(0, 10);
@@ -81,7 +81,7 @@ async function renderNyBana() {
         <label><input type="checkbox" id="ratt"> Fullständiga rättigheter</label>
       </div>
       <div class="adm-falt tva">
-        <label>Version giltig från<input type="date" id="giltig" value="${idag()}" required></label>
+        <label>Version giltig från<input type="text" inputmode="numeric" class="datum" placeholder="ÅÅÅÅ-MM-DD" maxlength="10" autocomplete="off" id="giltig" value="${idag()}" required></label>
         <label><span>Första tee <span class="muted">(valfritt)</span></span><input type="text" id="tee" value="gul" autocomplete="off"></label>
       </div>
       <p class="hint">Efter att banan skapats fyller du i hålen – gärna genom att klistra in scorekortet.</p>
@@ -100,10 +100,10 @@ async function renderNyBana() {
     e.preventDefault();
     const msg = document.getElementById('msg');
     const namn = namnEl.value.trim(), lat = tal(document.getElementById('lat').value), lon = tal(document.getElementById('lon').value);
-    const giltig = document.getElementById('giltig').value, tee = document.getElementById('tee').value.trim();
+    const giltig = tolkaDatum(document.getElementById('giltig').value), tee = document.getElementById('tee').value.trim();
     if (!namn) { msg.textContent = 'Banan behöver ett namn.'; return; }
     if (Number.isNaN(lat) || Number.isNaN(lon) || (lat === null) !== (lon === null)) { msg.textContent = 'Fyll i både latitud och longitud som decimaltal, eller lämna båda tomma.'; return; }
-    if (!giltig) { msg.textContent = 'Välj datum för versionen.'; return; }
+    if (!giltig) { msg.textContent = 'Skriv datum för versionen som ÅÅÅÅ-MM-DD.'; return; }
     const knapp = e.target.querySelector('[type=submit]'); knapp.disabled = true; msg.textContent = 'Skapar …';
     try {
       const [b] = await write('POST', 'bana', { namn, lat, lon, restaurang: document.getElementById('rest').checked, rattigheter: document.getElementById('ratt').checked });
@@ -144,7 +144,7 @@ async function renderBana(bid, meddelande = '') {
       <summary><strong>+ Ny version</strong> <span class="muted">– om banan byggts om</span></summary>
       <form class="form" id="nyversion" novalidate>
         <div class="adm-falt tva">
-          <label>Giltig från<input type="date" id="vgiltig" value="${idag()}" required></label>
+          <label>Giltig från<input type="text" inputmode="numeric" class="datum" placeholder="ÅÅÅÅ-MM-DD" maxlength="10" autocomplete="off" id="vgiltig" value="${idag()}" required></label>
           <label>Kopiera hål och tee:er från
             <select id="vkopia"><option value="">Ingen – börja tomt</option>
               ${versioner.map((v) => `<option value="${v.id}">Versionen från ${esc(v.giltig_fran)}</option>`).join('')}
@@ -189,9 +189,9 @@ async function renderBana(bid, meddelande = '') {
   document.getElementById('nyversion').onsubmit = async (e) => {
     e.preventDefault();
     const msg = document.getElementById('vmsg');
-    const giltig = document.getElementById('vgiltig').value, kopia = Number(document.getElementById('vkopia').value) || null;
+    const giltig = tolkaDatum(document.getElementById('vgiltig').value), kopia = Number(document.getElementById('vkopia').value) || null;
     const kommentar = document.getElementById('vkomm').value.trim() || null;
-    if (!giltig) { msg.textContent = 'Välj datum.'; return; }
+    if (!giltig) { msg.textContent = 'Skriv datum som ÅÅÅÅ-MM-DD.'; return; }
     const knapp = e.target.querySelector('[type=submit]'); knapp.disabled = true; msg.textContent = 'Skapar …';
     try {
       const [v] = await write('POST', 'banversion', { bana_id: bid, giltig_fran: giltig, kommentar });
@@ -266,7 +266,7 @@ async function renderVersion(bid, vid, meddelande = '') {
     <h2>Versionen</h2>
     <div class="card form">
       <div class="adm-falt tva">
-        <label>Giltig från<input type="date" id="vgiltig" value="${esc(v.giltig_fran)}"></label>
+        <label>Giltig från<input type="text" inputmode="numeric" class="datum" placeholder="ÅÅÅÅ-MM-DD" maxlength="10" autocomplete="off" id="vgiltig" value="${esc(v.giltig_fran)}"></label>
         <label>Kommentar<input type="text" id="vkomm" value="${esc(v.kommentar ?? '')}" autocomplete="off"></label>
       </div>
     </div>
@@ -370,8 +370,8 @@ async function renderVersion(bid, vid, meddelande = '') {
     });
     const namn = tees.filter((t) => t.namn).map((t) => t.namn.toLowerCase());
     if (new Set(namn).size !== namn.length) fel.push('Två tee:er har samma namn.');
-    const giltig = document.getElementById('vgiltig').value;
-    if (!giltig) fel.push('Versionen behöver ett giltig-från-datum.');
+    const giltig = tolkaDatum(document.getElementById('vgiltig').value);
+    if (!giltig) fel.push('Giltig från ska vara ett datum, ÅÅÅÅ-MM-DD.');
     if (fel.length) { msg.textContent = [...new Set(fel)].slice(0, 4).join(' '); return; }
     const varnText = varn.join(' ');
     if (varn.length && varnatFor !== varnText) { varnatFor = varnText; msg.textContent = `${varnText} Tryck Spara igen om det stämmer.`; return; }

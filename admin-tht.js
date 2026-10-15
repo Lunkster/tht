@@ -1,5 +1,5 @@
 // Admin: THT (nr, år, ort, startdatum, krönika) och dess deltävlingar (bana/version/tee, datum, namn).
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.11.0';
+import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.12.0';
 
 const app = document.getElementById('app');
 const idag = () => new Date().toISOString().slice(0, 10);
@@ -34,7 +34,7 @@ async function renderLista() {
           <label>Nummer<input type="text" inputmode="numeric" id="tnr" value="${nastaNr}"></label>
           <label>År<input type="text" inputmode="numeric" id="tar" value="${ledigtAr}"></label>
           <label>Ort<input type="text" id="tort" placeholder="t.ex. Lindesberg" autocomplete="off"></label>
-          <label><span>Startdatum <span class="muted">(valfritt)</span></span><input type="date" id="tstart"></label>
+          <label><span>Startdatum <span class="muted">(valfritt)</span></span><input type="text" inputmode="numeric" class="datum" placeholder="ÅÅÅÅ-MM-DD" maxlength="10" autocomplete="off" id="tstart"></label>
         </div>
         <p class="hint">Startdatumet styr nedräkningen på startsidan tills deltävlingarna är upplagda.</p>
         <p class="hint" id="tmsg" role="status"></p>
@@ -55,11 +55,12 @@ async function renderLista() {
     e.preventDefault();
     const msg = document.getElementById('tmsg');
     const nr = Number(document.getElementById('tnr').value), artal = Number(document.getElementById('tar').value);
-    const ort = document.getElementById('tort').value.trim(), start = document.getElementById('tstart').value || null;
+    const ort = document.getElementById('tort').value.trim(), start = tolkaDatum(document.getElementById('tstart').value);
     if (!Number.isInteger(nr) || nr < 1) { msg.textContent = 'Numret ska vara ett heltal.'; return; }
     if (thts.some((t) => t.nr === nr)) { msg.textContent = `THT ${nr} finns redan.`; return; }
     if (!Number.isInteger(artal) || artal < 1990 || artal > 2100) { msg.textContent = 'Året ser fel ut.'; return; }
     if (!ort) { msg.textContent = 'Fyll i ort – den går att ändra senare.'; return; }
+    if (Number.isNaN(start)) { msg.textContent = 'Startdatum skrivs ÅÅÅÅ-MM-DD.'; return; }
     if (start && !start.startsWith(String(artal))) { msg.textContent = 'Startdatumet ligger inte på det året.'; return; }
     msg.textContent = 'Skapar …';
     try {
@@ -112,7 +113,7 @@ async function renderEnTht(nr, meddelande = '') {
       <div class="adm-falt tva">
         <label>År<input type="text" inputmode="numeric" id="tar" value="${t.artal}"></label>
         <label>Ort<input type="text" id="tort" value="${esc(t.ort)}" autocomplete="off"></label>
-        <label><span>Startdatum <span class="muted">(valfritt)</span></span><input type="date" id="tstart" value="${t.start ?? ''}"></label>
+        <label><span>Startdatum <span class="muted">(valfritt)</span></span><input type="text" inputmode="numeric" class="datum" placeholder="ÅÅÅÅ-MM-DD" maxlength="10" autocomplete="off" id="tstart" value="${t.start ?? ''}"></label>
       </div>
       <label><span>Krönika <span class="muted">(valfritt)</span></span><textarea id="tkron" class="prosa" rows="5" placeholder="Vad hände i år?">${esc(t.kronika ?? '')}</textarea></label>
       <p class="hint" id="tmsg" role="status"></p>
@@ -143,7 +144,7 @@ async function renderEnTht(nr, meddelande = '') {
       <form class="form" id="df-${key}" novalidate>
         <div class="adm-falt dfalt">
           <label>Nr<input type="text" inputmode="numeric" id="dord-${key}" value="${d.ordning}"></label>
-          <label>Datum<input type="date" id="ddat-${key}" value="${d.datum ?? ''}"></label>
+          <label>Datum<input type="text" inputmode="numeric" class="datum" placeholder="ÅÅÅÅ-MM-DD" maxlength="10" autocomplete="off" id="ddat-${key}" value="${d.datum ?? ''}"></label>
         </div>
         <label>Namn<input type="text" id="dnamn-${key}" value="${esc(d.namn)}" placeholder="t.ex. The burning bockjävel open" autocomplete="off"></label>
         <label>Bana
@@ -166,7 +167,7 @@ async function renderEnTht(nr, meddelande = '') {
     const fyllVersioner = (behall) => {
       const bid = Number($('dbana').value);
       const vs = versioner.filter((v) => v.bana_id === bid);
-      const datum = $('ddat').value;
+      const datum = tolkaDatum($('ddat').value);
       const forslag = (vs.find((v) => !datum || v.giltig_fran <= datum) ?? vs[0])?.id;
       const vald = behall && vs.some((v) => v.id === d.banversion_id) ? d.banversion_id : forslag;
       $('dver').innerHTML = vs.length
@@ -196,12 +197,12 @@ async function renderEnTht(nr, meddelande = '') {
     $('df').onsubmit = async (e) => {
       e.preventDefault();
       const msg = $('dmsg');
-      const ordning = Number($('dord').value), datum = $('ddat').value;
+      const ordning = Number($('dord').value), datum = tolkaDatum($('ddat').value);
       const banversion_id = Number($('dver').value) || null, tee_id = Number($('dtee').value) || null;
       const namn = $('dnamn').value.trim() || `Deltävling ${ordning}`;
       if (!Number.isInteger(ordning) || ordning < 1 || ordning > 20) { msg.textContent = 'Numret ska vara ett heltal, 1, 2, 3 …'; return; }
       if (delt.some((x) => x.ordning === ordning && x.id !== d.id)) { msg.textContent = `R${ordning} finns redan.`; return; }
-      if (!datum) { msg.textContent = 'Välj datum.'; return; }
+      if (!datum) { msg.textContent = 'Skriv datum som ÅÅÅÅ-MM-DD.'; return; }
       if (!datum.startsWith(String(t.artal))) { msg.textContent = `Datumet ligger inte ${t.artal}.`; return; }
       if (!banversion_id) { msg.textContent = 'Välj bana.'; return; }
       if (!tee_id) { msg.textContent = 'Versionen saknar tee – lägg till en under Banor.'; return; }
@@ -219,9 +220,10 @@ async function renderEnTht(nr, meddelande = '') {
     e.preventDefault();
     const msg = document.getElementById('tmsg');
     const artal = Number(document.getElementById('tar').value), ort = document.getElementById('tort').value.trim();
-    const start = document.getElementById('tstart').value || null, kronika = document.getElementById('tkron').value.trim() || null;
+    const start = tolkaDatum(document.getElementById('tstart').value), kronika = document.getElementById('tkron').value.trim() || null;
     if (!Number.isInteger(artal) || artal < 1990 || artal > 2100) { msg.textContent = 'Året ser fel ut.'; return; }
     if (!ort) { msg.textContent = 'Fyll i ort.'; return; }
+    if (Number.isNaN(start)) { msg.textContent = 'Startdatum skrivs ÅÅÅÅ-MM-DD.'; return; }
     if (start && !start.startsWith(String(artal))) { msg.textContent = 'Startdatumet ligger inte på det året.'; return; }
     msg.textContent = 'Sparar …';
     try {
