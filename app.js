@@ -1,9 +1,9 @@
-// THT golfapp (v0.13.0) – statistik och inmatning.
+// THT golfapp (v0.13.1) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.13.0';
-import { renderMata } from './mata.js?v=0.13.0';
-import { renderAdmin } from './admin.js?v=0.13.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.13.1';
+import { renderMata } from './mata.js?v=0.13.1';
+import { renderAdmin } from './admin.js?v=0.13.1';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -338,13 +338,7 @@ async function renderStart(navId) {
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>
     ${huvud}
-    ${senast && !pagar ? `<p class="senast">Senast: <a href="#/ar/${senast.artal}">${esc(senast.ort)} ${senast.artal}</a></p>` : ''}
-    <nav class="genvagar" aria-label="Genvägar">
-      <a href="#/leaderboard"><strong>Leaderboard</strong><span>Senaste THT, live</span></a>
-      <a href="#/ar"><strong>År för år</strong><span>Resultat och grafen per THT</span></a>
-      <a href="#/alltime"><strong>All-time</strong><span>Segrar och statistik sedan ${ar1}</span></a>
-      <a href="#/mata"><strong>Mata in</strong><span>Slag och puttar per hål</span></a>
-    </nav>`;
+    ${senast && !pagar ? `<p class="senast">Senast: <a href="#/ar/${senast.artal}">${esc(senast.ort)} ${senast.artal}</a></p>` : ''}`;
 
   if (nasta && !pagar) {
     const mal = new Date(nasta.fran + 'T00:00:00').getTime();

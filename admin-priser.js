@@ -1,6 +1,6 @@
 // Admin: närmast hål och longest drive – hål och vinnare per deltävling (även i efterhand).
 // En vinnare per deltävling och typ. "Ingen vinnare" tar bort raden – ibland blir priset inte av.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.13.0';
+import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.13.1';
 
 const app = document.getElementById('app');
 const TYPER = [

@@ -391,8 +391,8 @@ input.datum.fel { border-color: #c0533e; background: #3a1d17; }
 
 /* Startsidan ska rymmas på en telefonskärm utan skroll */
 @media (max-width: 600px) {
-  .hero { padding: 6px 0 0; }
-  .hero-logo { width: min(180px, 48vw); margin-bottom: 4px; }
+  .hero { padding: 16px 0 0; }
+  .hero-logo { width: min(280px, 74vw); margin-bottom: 6px; }
   .hero-sub { font-size: 12px; margin-top: 2px; }
   .nasta { margin-top: 14px; padding: 14px 12px 14px; }
   .nasta-ort { font-size: 26px; margin-top: 2px; }
