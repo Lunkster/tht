@@ -2,7 +2,7 @@
 //  - renderKarta(artal?)   – helsida #/karta[/år]: alla spelade banor och övernattningar, filter per år
 //  - miniKarta(el, artal)  – liten karta på årssidan
 //  - kartvaljare(latEl, lonEl) – "Välj på karta" i admin: klicka/sök för att fylla i koordinater
-import { api, esc, nuNav, aktuell } from './lib.js?v=0.15.0';
+import { api, esc, nuNav, aktuell } from './lib.js?v=0.15.1';
 
 const app = document.getElementById('app');
 const LEAFLET = 'https://unpkg.com/leaflet@1.9.4/dist/';
@@ -26,10 +26,8 @@ export function laddaLeaflet() {
   return laddar;
 }
 
-// Mörk bakgrundskarta som passar appen (CARTO, bygger på OpenStreetMap-data).
-const morkLager = (L) => L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  maxZoom: 19, subdomains: 'abcd', attribution: `${ATTR_OSM} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
-});
+// Bakgrundskarta: vanliga OpenStreetMap-rutor (ingen nyckel). Mörkas med CSS-filtret .osm-mork så att den passar appen.
+const morkLager = (L) => L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: ATTR_OSM, className: 'osm-mork' });
 // Vanlig OSM-karta (visar golfbanor tydligt) för att välja plats.
 const osmLager = (L) => L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: ATTR_OSM });
 
@@ -78,6 +76,13 @@ export async function renderKarta(artal = null) {
   const karta = L.map('karta', { scrollWheelZoom: true });
   morkLager(L).addTo(karta);
   const grupp = L.featureGroup().addTo(karta);
+  // Knapp som zoomar ut till alla synliga platser igen
+  const Hela = L.Control.extend({ options: { position: 'topleft' }, onAdd() {
+    const k = L.DomUtil.create('a', 'leaflet-bar kartknapp'); k.href = '#'; k.title = 'Visa alla platser'; k.setAttribute('role', 'button'); k.setAttribute('aria-label', 'Visa alla platser'); k.textContent = '⤢';
+    L.DomEvent.on(k, 'click', (e) => { L.DomEvent.preventDefault(e); L.DomEvent.stopPropagation(e); if (grupp.getLayers().length) karta.fitBounds(grupp.getBounds(), { padding: [30, 30], maxZoom: 11 }); });
+    return k;
+  } });
+  new Hela().addTo(karta);
   const rita = () => {
     const a = Number(document.getElementById('kartar').value) || null;
     grupp.clearLayers();
@@ -101,7 +106,8 @@ export async function miniKarta(el, artal) {
     if (!document.body.contains(el)) return;
     const synliga = [...data.banor, ...data.over].filter((p) => p.lat != null && p.ar.includes(artal));
     if (!synliga.length) { el.closest('.minikarta')?.remove(); return; }
-    const karta = L.map(el, { scrollWheelZoom: false, dragging: !L.Browser.mobile, zoomControl: false, attributionControl: true });
+    // Zoomknappar så att man kan zooma ut igen (skrollhjulet är av så att sidan går att skrolla förbi kartan)
+    const karta = L.map(el, { scrollWheelZoom: false, dragging: !L.Browser.mobile, zoomControl: true, attributionControl: true });
     morkLager(L).addTo(karta);
     const grupp = L.featureGroup(synliga.map((p) => markor(L, p))).addTo(karta);
     karta.fitBounds(grupp.getBounds(), { padding: [24, 24], maxZoom: 11 });

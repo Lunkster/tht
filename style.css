@@ -484,3 +484,18 @@ td.win a.namn, .pod a.namn { border-bottom-color: rgba(227, 194, 120, 0.5); }
 .backup .meta { color: var(--cream-3); font-size: 14px; }
 .backup .hint { grid-column: 1 / -1; margin: 0; }
 .backup .hint:empty { display: none; }
+
+/* Mörk OSM-bakgrund utan API-nyckel: vanliga OSM-rutor inverterade */
+.osm-mork { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.6); }
+.leaflet-container { background: #1a1917; }
+.kartknapp { display: block; width: 30px; height: 30px; line-height: 30px; text-align: center; font-size: 18px; background: #fff; color: #333 !important; text-decoration: none; }
+.leaflet-touch .kartknapp { width: 34px; height: 34px; line-height: 34px; }
+.saknas { color: #f0b4a6; }
+.sokrad { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.filterknapp { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--stout-2); color: var(--cream-2); font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.filterknapp[aria-pressed="true"] { background: var(--gold); color: var(--stout); border-color: var(--gold); font-weight: 700; }
+.filterknapp:disabled { opacity: 0.5; cursor: default; }
+.saknar-lista { margin: 12px 0; border-color: #6b5520; }
+.saknar-lista summary { cursor: pointer; color: var(--gold-2); }
+.saknar-rader { display: grid; gap: 2px; margin-top: 8px; }
+.saknar-rader .link { text-align: left; padding: 6px 0; min-height: 36px; }

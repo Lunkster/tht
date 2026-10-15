@@ -1,6 +1,6 @@
 // Admin: övernattningar per THT – plats, antal nätter, organisatör, koordinater.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.15.0';
-import { kopplaKoordinater } from './admin-banor.js?v=0.15.0';
+import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.15.1';
+import { kopplaKoordinater } from './admin-banor.js?v=0.15.1';
 
 const app = document.getElementById('app');
 const tal = (v) => { const t = String(v ?? '').trim().replace(',', '.'); if (t === '') return null; const n = Number(t); return Number.isFinite(n) ? n : NaN; };
@@ -10,12 +10,13 @@ function felText(e) {
   return e.message;
 }
 
-export async function renderOvernattning(meddelande = '') {
+export async function renderOvernattning(meddelande = '', oppna = null) {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar …</p>';
-  const [thts, personer] = await Promise.all([
+  const [thts, personer, utan] = await Promise.all([
     api('tht?select=nr,artal,ort&order=nr.desc', { fresh: true }),
     api('person?select=fornamn,efternamn,aktiv&order=fornamn', { fresh: true }),
+    api('overnattning?lat=is.null&select=id,tht_nr,platsnamn&order=tht_nr', { fresh: true }),
   ]);
   if (!aktuell(myNav)) return;
   let valt = Number(sessionStorage.getItem('over-tht')) || thts[0]?.nr;
@@ -39,6 +40,9 @@ export async function renderOvernattning(meddelande = '') {
       ${thts.map((t) => `<option value="${t.nr}" ${t.nr === valt ? 'selected' : ''}>THT ${t.nr} · ${esc(t.ort)} ${t.artal}</option>`).join('')}
     </select></div>
     ${meddelande ? `<p class="ok" role="status">${esc(meddelande)}</p>` : ''}
+    ${utan.length ? `<details class="card saknar-lista"><summary><strong>Saknar koordinater (${utan.length})</strong> <span class="muted">– alla år</span></summary>
+      <div class="saknar-rader">${utan.map((o) => { const t = thts.find((x) => x.nr === o.tht_nr); return `<button type="button" class="link" data-fixa="${o.id}" data-tht="${o.tht_nr}">${t?.artal ?? ''} · ${esc(o.platsnamn)} ›</button>`; }).join('')}</div>
+      <p class="hint">Tryck på en rad för att öppna den och välja plats på kartan.</p></details>` : ''}
     <div class="rounds">${rader.map(kort).join('') || `<p class="muted">Inga övernattningar för ${esc(tht?.ort ?? '')} ${tht?.artal ?? ''} ännu.</p>`}</div>
     <details class="card adm-ny" ${rader.length ? '' : 'open'}>
       <summary><strong>+ Ny övernattning</strong></summary>
@@ -46,6 +50,10 @@ export async function renderOvernattning(meddelande = '') {
     </details>
     <datalist id="org-lista">${personer.filter((p) => p.aktiv).map((p) => `<option value="${esc(p.fornamn)} ${esc(p.efternamn)}">`).join('')}</datalist>`;
 
+  app.querySelectorAll('[data-fixa]').forEach((b) => b.onclick = () => {
+    try { sessionStorage.setItem('over-tht', b.dataset.tht); } catch { /* */ }
+    renderOvernattning('', Number(b.dataset.fixa));
+  });
   document.getElementById('overtht').onchange = (e) => { try { sessionStorage.setItem('over-tht', e.target.value); } catch { /* */ } renderOvernattning(); };
   formular(document.getElementById('nyform'), { id: null, platsnamn: '', antal_natter: null, organisator: '', lat: null, lon: null });
   app.querySelectorAll('[data-andra]').forEach((b) => b.onclick = () => {
@@ -55,6 +63,12 @@ export async function renderOvernattning(meddelande = '') {
     el.innerHTML = '<div class="oform"></div>';
     formular(el.querySelector('.oform'), o);
   });
+
+  // Öppna en rad direkt (från listan "Saknar koordinater") och fäll ut kartan.
+  if (oppna) {
+    const knapp = app.querySelector(`[data-andra="${oppna}"]`);
+    if (knapp) { knapp.click(); const ruta = app.querySelector(`[data-oid="${oppna}"]`); ruta?.scrollIntoView({ block: 'center' }); ruta?.querySelector('.kartval-knapp')?.click(); }
+  }
 
   function formular(el, o) {
     const k = o.id ?? 'ny';

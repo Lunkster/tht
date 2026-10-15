@@ -1,8 +1,8 @@
 // Admin: banor. Lista → bana (namn, plats, versioner) → banversion (tee:er och 18 hål).
 // Inget tas bort (RLS tillåter inte delete här) – allt rättas genom att ändra.
-import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.15.0';
-import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.15.0';
-import { kartvaljare } from './karta.js?v=0.15.0';
+import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.15.1';
+import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.15.1';
+import { kartvaljare } from './karta.js?v=0.15.1';
 
 const app = document.getElementById('app');
 const idag = () => new Date().toISOString().slice(0, 10);
@@ -37,30 +37,34 @@ export function kopplaKoordinater(latId, lonId) {
 async function renderLista() {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar banor …</p>';
-  const banor = await api('bana?select=id,namn,banversion(id,deltavling(tht(artal)))&order=namn', { fresh: true });
+  const banor = await api('bana?select=id,namn,lat,lon,banversion(id,deltavling(tht(artal)))&order=namn', { fresh: true });
   if (!aktuell(myNav)) return;
+  const utan = banor.filter((b) => b.lat == null).length;
   const ar = (b) => [...new Set(b.banversion.flatMap((v) => v.deltavling.map((d) => d.tht?.artal)).filter(Boolean))].sort();
   const rad = (b) => {
     const a = ar(b);
-    return `<a class="round link-card" href="#/admin/banor/${b.id}" data-namn="${esc(b.namn.toLowerCase())}">
+    return `<a class="round link-card" href="#/admin/banor/${b.id}" data-namn="${esc(b.namn.toLowerCase())}" data-utan="${b.lat == null ? 1 : 0}">
       <div><div class="rn">${esc(b.namn)}</div>
-      <div class="meta">${a.length ? 'Spelad ' + a.join(', ') : 'Inte spelad'}${b.banversion.length > 1 ? ` · ${b.banversion.length} versioner` : ''}</div></div>
+      <div class="meta">${a.length ? 'Spelad ' + a.join(', ') : 'Inte spelad'}${b.banversion.length > 1 ? ` · ${b.banversion.length} versioner` : ''}${b.lat == null ? ' · <span class="saknas">saknar koordinater</span>' : ''}</div></div>
       <div class="win"><span class="arrow">›</span></div></a>`;
   };
   app.innerHTML = `
     <a class="back" href="#/admin">‹ Admin</a>
     <div class="row-between"><h1>Banor</h1><a class="btn primary" href="#/admin/banor/ny">+ Ny bana</a></div>
     <p class="sub">${banor.length} banor. En bana kan ha flera versioner om den byggts om – deltävlingen pekar på den version som spelades.</p>
-    <input type="text" id="sok" placeholder="Sök bana …" aria-label="Sök bana" autocomplete="off">
+    <div class="sokrad"><input type="text" id="sok" placeholder="Sök bana …" aria-label="Sök bana" autocomplete="off">
+      <button type="button" class="filterknapp" id="utankoord" aria-pressed="false" ${utan ? '' : 'disabled'}>Saknar koordinater (${utan})</button></div>
     <div class="rounds" id="banlista" style="margin-top:10px">${banor.map(rad).join('')}</div>
     <p class="muted center" id="ingen" hidden>Ingen bana matchar.</p>`;
-  const sok = document.getElementById('sok');
-  sok.oninput = () => {
-    const q = sok.value.trim().toLowerCase();
+  const sok = document.getElementById('sok'), filter = document.getElementById('utankoord');
+  const visa = () => {
+    const q = sok.value.trim().toLowerCase(), bara = filter.getAttribute('aria-pressed') === 'true';
     let n = 0;
-    document.querySelectorAll('#banlista a').forEach((a) => { const vis = a.dataset.namn.includes(q); a.hidden = !vis; n += vis; });
+    document.querySelectorAll('#banlista a').forEach((a) => { const vis = a.dataset.namn.includes(q) && (!bara || a.dataset.utan === '1'); a.hidden = !vis; n += vis; });
     document.getElementById('ingen').hidden = n > 0;
   };
+  sok.oninput = visa;
+  filter.onclick = () => { filter.setAttribute('aria-pressed', String(filter.getAttribute('aria-pressed') !== 'true')); visa(); };
 }
 
 // ---------- ny bana ----------
