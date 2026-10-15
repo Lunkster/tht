@@ -388,3 +388,31 @@ input.datum { font-variant-numeric: tabular-nums; }
 input.datum.fel { border-color: #c0533e; background: #3a1d17; }
 .sk-boll { display: grid; gap: 2px; margin-top: 4px; }
 .sk-boll select { min-height: 36px; padding: 4px 8px; font-size: 14px; width: auto; max-width: 100%; }
+
+/* Startsidan ska rymmas på en telefonskärm utan skroll */
+@media (max-width: 600px) {
+  .hero { padding: 6px 0 0; }
+  .hero-logo { width: min(180px, 48vw); margin-bottom: 4px; }
+  .hero-sub { font-size: 12px; margin-top: 2px; }
+  .nasta { margin-top: 14px; padding: 14px 12px 14px; }
+  .nasta-ort { font-size: 26px; margin-top: 2px; }
+  .nedrakning { margin-top: 10px; gap: 6px; }
+  .enhet { padding: 6px 2px 5px; }
+  .tal { font-size: 28px; }
+  .etikett { font-size: 11px; }
+  .cta { margin-top: 12px; }
+  .senast { margin-top: 8px; font-size: 14px; }
+  .genvagar { grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 14px; }
+  .genvagar a { min-height: 48px; padding: 8px 4px; align-items: center; justify-content: center; text-align: center; }
+  .genvagar strong { font-size: 13px; line-height: 1.2; }
+  .genvagar span { display: none; }
+}
+
+/* Pågående THT och avsluta-knappen */
+.pagar { background: #33290f; border: 1px solid #6b5520; padding: 10px 12px; border-radius: var(--radius); margin: 12px 0; }
+.pagar strong { color: var(--gold-2); }
+.avsluta { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; margin: 12px 0 0; border-color: #6b5520; }
+.avsluta.klar { border-color: #2c6a43; }
+.avsluta .hint { grid-column: 1 / -1; margin: 0; }
+.avsluta .hint:empty { display: none; }
+.avsluta .meta { color: var(--cream-3); font-size: 14px; }

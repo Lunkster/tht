@@ -1,6 +1,6 @@
 // Scorekort i efterhand: hela rundor per spelare – 18 slag (och valfritt puttar) på en gång.
 // Samma tabeller och regler som Mata in: runda + score, poäng räknas på samma sätt som vyn v_score.
-import { api, write, esc, datum, poang, nuNav, aktuell } from './lib.js?v=0.12.1';
+import { api, write, esc, datum, poang, nuNav, aktuell } from './lib.js?v=0.13.0';
 
 const app = document.getElementById('app');
 const HAL = Array.from({ length: 18 }, (_, i) => i + 1);
@@ -75,7 +75,8 @@ export async function renderScorekort(did, meddelande = '') {
       <option value="${ny}">Ny boll (${ny})</option>
     </select>`;
   };
-  const ledigaPersoner = () => personer.filter((p) => !kort.some((k) => k.person_id === p.id));
+  // Vilande (inaktiva) spelare visas inte – aktivera under Admin → Spelare vid behov.
+  const ledigaPersoner = () => personer.filter((p) => p.aktiv && !kort.some((k) => k.person_id === p.id));
   app.innerHTML = `
     <a class="back" href="#/mata/${did}">‹ R${d.ordning} · bollar</a>
     <h1>Scorekort · R${d.ordning} ${esc(d.namn)}</h1>
@@ -85,7 +86,7 @@ export async function renderScorekort(did, meddelande = '') {
     <div id="korten">${kort.map(kortHtml).join('')}</div>
     <div class="card form sk-ny">
       <div class="adm-falt tva">
-        <label>Lägg till spelare<select id="nyspelare"><option value="">Välj …</option>${ledigaPersoner().map((p) => `<option value="${p.id}">${esc(p.fornamn)} ${esc(p.efternamn)}${p.aktiv ? '' : ' (inaktiv)'}</option>`).join('')}</select></label>
+        <label>Lägg till spelare<select id="nyspelare"><option value="">Välj …</option>${ledigaPersoner().map((p) => `<option value="${p.id}">${esc(p.fornamn)} ${esc(p.efternamn)}</option>`).join('')}</select></label>
         <label>Spel-HCP<input type="text" inputmode="numeric" id="nyhcp" maxlength="3"></label>
       </div>
       <p class="hint" id="nymsg"></p>

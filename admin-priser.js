@@ -1,6 +1,6 @@
 // Admin: närmast hål och longest drive – hål och vinnare per deltävling (även i efterhand).
 // En vinnare per deltävling och typ. "Ingen vinnare" tar bort raden – ibland blir priset inte av.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.12.1';
+import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.13.0';
 
 const app = document.getElementById('app');
 const TYPER = [
@@ -45,7 +45,8 @@ export async function renderPriser(meddelande = '') {
   };
   const personSelect = (d, T) => {
     const spelade = [...new Set(d.runda.map((r) => r.person_id))].map((id) => pMap[id]).filter(Boolean).sort((a, b) => a.fornamn.localeCompare(b.fornamn, 'sv'));
-    const ovriga = personer.filter((p) => !spelade.includes(p));
+    // Vilande spelare visas bara om de spelade deltävlingen eller redan är vinnare.
+    const ovriga = personer.filter((p) => !spelade.includes(p) && (p.aktiv || p.id === vinnare(d.id, T.typ)));
     const vald = vinnare(d.id, T.typ);
     const o = (p) => `<option value="${p.id}" ${p.id === vald ? 'selected' : ''}>${esc(p.fornamn)} ${esc(p.efternamn)}</option>`;
     return `<select id="p-${T.typ}-${d.id}" aria-label="${T.t}, vinnare">

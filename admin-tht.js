@@ -1,5 +1,5 @@
 // Admin: THT (nr, år, ort, startdatum, krönika) och dess deltävlingar (bana/version/tee, datum, namn).
-import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.12.1';
+import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.13.0';
 
 const app = document.getElementById('app');
 const idag = () => new Date().toISOString().slice(0, 10);
@@ -75,7 +75,7 @@ async function renderEnTht(nr, meddelande = '') {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar …</p>';
   const [[t], delt, banor, versioner] = await Promise.all([
-    api(`tht?nr=eq.${nr}&select=nr,artal,ort,start,kronika`, { fresh: true }),
+    api(`tht?nr=eq.${nr}&select=nr,artal,ort,start,kronika,klar`, { fresh: true }),
     api(`deltavling?tht_nr=eq.${nr}&select=id,ordning,namn,datum,banversion_id,tee_id,runda(count)&order=ordning`, { fresh: true }),
     api('bana?select=id,namn&order=namn', { fresh: true }),
     api('banversion?select=id,bana_id,giltig_fran,kommentar,tee(id,namn),hal(count)&order=giltig_fran.desc', { fresh: true }),
@@ -101,6 +101,12 @@ async function renderEnTht(nr, meddelande = '') {
     <a class="back" href="#/admin/tht">‹ THT och deltävlingar</a>
     <h1>THT ${t.nr} · ${esc(t.ort)} ${t.artal}</h1>
     ${meddelande ? `<p class="ok" role="status">${esc(meddelande)}</p>` : ''}
+    <div class="card avsluta ${t.klar ? 'klar' : ''}">
+      <div><strong>${t.klar ? 'Avslutad' : 'Pågår'}</strong>
+      <div class="meta">${t.klar ? 'Vinnare och pall är utsedda och räknas i all-time.' : 'Ingen vinnare utses förrän THT:n är avslutad – markera när alla rundor är inmatade.'}</div></div>
+      <button class="btn ${t.klar ? '' : 'primary'}" type="button" id="avsluta">${t.klar ? 'Öppna igen' : 'Avsluta THT'}</button>
+      <p class="hint" id="avslutamsg" role="status"></p>
+    </div>
     <h2>Deltävlingar</h2>
     <div class="rounds" id="dlista">${delt.map(kort).join('') || '<p class="muted">Inga deltävlingar ännu.</p>'}</div>
     <details class="card adm-ny" id="nydelt" ${delt.length ? '' : 'open'}>
@@ -215,6 +221,31 @@ async function renderEnTht(nr, meddelande = '') {
       } catch (err) { knapp.disabled = false; msg.textContent = 'Kunde inte spara: ' + felText(err); }
     };
   }
+
+  // Avsluta/öppna: kontrollera först att alla rundor har 18 hål – andra trycket avslutar ändå.
+  let bekraftat = false;
+  document.getElementById('avsluta').onclick = async () => {
+    const msg = document.getElementById('avslutamsg');
+    const knapp = document.getElementById('avsluta');
+    try {
+      if (!t.klar && !bekraftat) {
+        if (!delt.length) { msg.textContent = 'THT:n har inga deltävlingar ännu.'; return; }
+        const rundor = await api(`v_runda?tht_nr=eq.${nr}&select=ordning,fornamn,antal_hal&order=ordning`, { fresh: true });
+        const ofullst = rundor.filter((r) => (r.antal_hal ?? 0) < 18);
+        const utan = delt.filter((d) => !rundor.some((r) => r.ordning === d.ordning));
+        const brister = [...utan.map((d) => `R${d.ordning} saknar rundor`), ...ofullst.map((r) => `R${r.ordning} ${r.fornamn}: ${r.antal_hal ?? 0} hål`)];
+        if (brister.length) {
+          bekraftat = true;
+          msg.innerHTML = `Inte komplett: ${brister.slice(0, 8).map(esc).join(' · ')}${brister.length > 8 ? ` · och ${brister.length - 8} till` : ''}. Tryck igen för att avsluta ändå.`;
+          knapp.textContent = 'Avsluta ändå';
+          return;
+        }
+      }
+      knapp.disabled = true; msg.textContent = 'Sparar …';
+      await write('PATCH', `tht?nr=eq.${nr}`, { klar: !t.klar }, 'return=minimal');
+      renderEnTht(nr, t.klar ? 'THT:n är öppnad igen – ingen vinnare utses förrän den avslutas.' : `THT ${nr} är avslutad – vinnaren är utsedd.`);
+    } catch (err) { knapp.disabled = false; msg.textContent = 'Kunde inte spara: ' + felText(err); }
+  };
 
   document.getElementById('thtform').onsubmit = async (e) => {
     e.preventDefault();

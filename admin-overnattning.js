@@ -1,6 +1,6 @@
 // Admin: övernattningar per THT – plats, antal nätter, organisatör, koordinater.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.12.1';
-import { kopplaKoordinater } from './admin-banor.js?v=0.12.1';
+import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.13.0';
+import { kopplaKoordinater } from './admin-banor.js?v=0.13.0';
 
 const app = document.getElementById('app');
 const tal = (v) => { const t = String(v ?? '').trim().replace(',', '.'); if (t === '') return null; const n = Number(t); return Number.isFinite(n) ? n : NaN; };
@@ -44,7 +44,7 @@ export async function renderOvernattning(meddelande = '') {
       <summary><strong>+ Ny övernattning</strong></summary>
       <div id="nyform"></div>
     </details>
-    <datalist id="org-lista">${personer.map((p) => `<option value="${esc(p.fornamn)} ${esc(p.efternamn)}">`).join('')}</datalist>`;
+    <datalist id="org-lista">${personer.filter((p) => p.aktiv).map((p) => `<option value="${esc(p.fornamn)} ${esc(p.efternamn)}">`).join('')}</datalist>`;
 
   document.getElementById('overtht').onchange = (e) => { try { sessionStorage.setItem('over-tht', e.target.value); } catch { /* */ } renderOvernattning(); };
   formular(document.getElementById('nyform'), { id: null, platsnamn: '', antal_natter: null, organisator: '', lat: null, lon: null });
