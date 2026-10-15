@@ -1,5 +1,5 @@
 // Personsida: en spelares nyckeltal, resultat per år, snittpoäng över tid och resultatfördelning.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.14.0';
+import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.15.0';
 
 const app = document.getElementById('app');
 const BLA = '#3987e5';                       // seriefärg 1 (validerad mot mörk yta)
@@ -7,16 +7,6 @@ const CREAM = '#f2e8d5', CREAM3 = '#8f8676', GRID = 'rgba(242,232,213,0.08)';
 const RESULTAT = ['hole in one', 'albatross', 'eagle', 'birdie', 'par', 'bogey', 'dubbelbogey', 'trippelbogey', 'kvadrupel+'];
 const RES_NAMN = { 'hole in one': 'Hole in one', albatross: 'Albatross', eagle: 'Eagle', birdie: 'Birdie', par: 'Par', bogey: 'Bogey', dubbelbogey: 'Dubbelbogey', trippelbogey: 'Trippelbogey', 'kvadrupel+': 'Kvadrupel+' };
 const mot = (v) => v === null ? '–' : v > 0 ? `+${v}` : v < 0 ? `−${-v}` : '±0';
-
-// PostgREST levererar högst 1000 rader per anrop – hämta i sidor.
-async function allaRader(path) {
-  const ut = [];
-  for (let off = 0; ; off += 1000) {
-    const del = await api(`${path}&limit=1000&offset=${off}`, { fresh: true });
-    ut.push(...del);
-    if (del.length < 1000) return ut;
-  }
-}
 
 export async function renderSpelare(pid) {
   const myNav = nuNav();

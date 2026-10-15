@@ -1,10 +1,10 @@
 // Admin: grunddata som läggs upp sällan – spelare, banor, THT, priser och övernattningar.
-import { api, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.14.0';
-import { visaLogin } from './mata.js?v=0.14.0';
-import { renderBanor } from './admin-banor.js?v=0.14.0';
-import { renderTht } from './admin-tht.js?v=0.14.0';
-import { renderPriser } from './admin-priser.js?v=0.14.0';
-import { renderOvernattning } from './admin-overnattning.js?v=0.14.0';
+import { api, allaRader, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.15.0';
+import { visaLogin } from './mata.js?v=0.15.0';
+import { renderBanor } from './admin-banor.js?v=0.15.0';
+import { renderTht } from './admin-tht.js?v=0.15.0';
+import { renderPriser } from './admin-priser.js?v=0.15.0';
+import { renderOvernattning } from './admin-overnattning.js?v=0.15.0';
 
 const app = document.getElementById('app');
 
@@ -34,8 +34,78 @@ function renderMeny() {
       ${SEKTIONER.map((s) => s.kommer
         ? `<div class="round adm-kommer"><div><div class="rn">${esc(s.t)}</div><div class="meta">${esc(s.d)} · kommer</div></div></div>`
         : `<a class="round link-card" href="#/admin/${s.id}"><div><div class="rn">${esc(s.t)}</div><div class="meta">${esc(s.d)}</div></div><div class="win"><span class="arrow">›</span></div></a>`).join('')}
+    </div>
+
+    <h2>Backup</h2>
+    <div class="card backup">
+      <div><strong>Ladda ned backup</strong>
+      <div class="meta">All data som en SQL-fil (insert-satser), t.ex. att spara i Dropbox efter varje THT.</div></div>
+      <button class="btn primary" type="button" id="backup">Ladda ned .sql</button>
+      <p class="hint" id="backupmsg" role="status"></p>
     </div>`;
   document.getElementById('logout').onclick = () => { logout(); renderAdmin([]); };
+  document.getElementById('backup').onclick = laddaNedBackup;
+}
+
+// ---------- backup ----------
+// Tabellerna i den ordning de måste läsas in (främmande nycklar). id = tabeller med identitetskolumn.
+const BACKUP = [
+  { t: 'tht', o: 'nr' }, { t: 'person', o: 'id', id: true }, { t: 'bana', o: 'id', id: true },
+  { t: 'banversion', o: 'id', id: true }, { t: 'tee', o: 'id', id: true }, { t: 'hal', o: 'id', id: true },
+  { t: 'hal_langd', o: 'hal_id,tee_id' }, { t: 'deltavling', o: 'id', id: true }, { t: 'runda', o: 'id', id: true },
+  { t: 'score', o: 'runda_id,hal_nr' }, { t: 'pris', o: 'deltavling_id,typ' }, { t: 'overnattning', o: 'id', id: true },
+  { t: 'ban_betyg', o: 'tht_nr,bana_id,person_id' },
+];
+const sqlVarde = (v) => v === null || v === undefined ? 'NULL'
+  : typeof v === 'boolean' ? (v ? 'true' : 'false')
+  : typeof v === 'number' ? String(v)
+  : `'${String(v).replace(/'/g, "''")}'`;
+
+export function byggBackup(data, nu = new Date()) {
+  const stampel = `${nu.toISOString().slice(0, 10)} ${nu.toTimeString().slice(0, 5)}`;
+  const rader = [
+    `-- THT backup ${stampel}`,
+    '-- Bara data (insert-satser). Schemat finns i repot: supabase/01_schema.sql, 02_vyer.sql … 08 –',
+    '-- kör dem först i en tom databas, sedan den här filen.',
+    '-- person_kontakt ingår inte (skyddad tabell utan läsrätt).',
+    '',
+    'begin;',
+  ];
+  for (const { t, id } of BACKUP) {
+    const rows = data[t] ?? [];
+    rader.push('', `-- ${t}: ${rows.length} rader`);
+    if (!rows.length) continue;
+    const kol = Object.keys(rows[0]);
+    for (let i = 0; i < rows.length; i += 200) {
+      rader.push(`insert into public.${t} (${kol.join(', ')}) values\n` +
+        rows.slice(i, i + 200).map((r) => `  (${kol.map((k) => sqlVarde(r[k])).join(', ')})`).join(',\n') + ';');
+    }
+    if (id) rader.push(`select setval(pg_get_serial_sequence('public.${t}', 'id'), (select coalesce(max(id), 1) from public.${t}));`);
+  }
+  rader.push('', 'commit;', '');
+  return rader.join('\n');
+}
+
+async function laddaNedBackup() {
+  const knapp = document.getElementById('backup'), msg = document.getElementById('backupmsg');
+  knapp.disabled = true;
+  try {
+    const data = {};
+    for (const { t, o } of BACKUP) {
+      msg.textContent = `Hämtar ${t} …`;
+      data[t] = await allaRader(`${t}?select=*&order=${o}`);
+    }
+    const sql = byggBackup(data);
+    const namn = `tht-backup-${new Date().toISOString().slice(0, 10)}.sql`;
+    const url = URL.createObjectURL(new Blob([sql], { type: 'application/sql' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: namn });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    const antal = Object.values(data).reduce((s, x) => s + x.length, 0);
+    msg.textContent = `Klart: ${namn} (${antal.toLocaleString('sv-SE')} rader, ${(sql.length / 1024).toFixed(0)} kB). Spara den i Dropbox.`;
+  } catch (e) {
+    msg.textContent = 'Backupen misslyckades: ' + e.message;
+  } finally { knapp.disabled = false; }
 }
 
 // ---------- spelare ----------

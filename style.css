@@ -455,3 +455,32 @@ td.win a.namn, .pod a.namn { border-bottom-color: rgba(227, 194, 120, 0.5); }
 .sp-antal { text-align: right; font-variant-numeric: tabular-nums; color: var(--cream); }
 .sp-antal small { color: var(--cream-3); margin-left: 6px; }
 .sp-partyp { margin-top: 10px; }
+
+/* ---------- kartor ---------- */
+.karta { width: 100%; border: 1px solid var(--line); border-radius: var(--radius); background: #1a1917; z-index: 0; }
+.karta.stor { height: min(70vh, 620px); margin-top: 8px; }
+.karta.mini { height: 260px; }
+.karta.liten { height: 300px; margin-top: 8px; }
+.kartlegend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--cream-2); margin-top: 6px; }
+.kartlegend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 2px solid #121110; box-shadow: 0 0 0 1px var(--line); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--stout-2); color: var(--cream); border: 1px solid var(--line); }
+.leaflet-popup-content { font-size: 14px; line-height: 1.45; }
+.leaflet-popup-content a { color: var(--gold-2); }
+.leaflet-container a.leaflet-popup-close-button { color: var(--cream-3); }
+.leaflet-control-attribution { background: rgba(18, 17, 16, 0.75) !important; color: var(--cream-3) !important; }
+.leaflet-control-attribution a { color: var(--cream-2) !important; }
+.minikarta { margin-top: 8px; }
+.minikarta .row-between h2 { margin-bottom: 8px; }
+.lank-pil { color: var(--gold-2); text-decoration: none; font-weight: 600; margin-top: 20px; }
+.kartlank { margin-top: 24px; }
+.kartval { grid-column: 1 / -1; }
+.kartval-knapp { padding: 0; min-height: 36px; }
+.kartval-sok { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+.kartval-sok .btn { min-height: 44px; }
+#kartar { width: auto; min-height: 40px; }
+
+/* ---------- backup ---------- */
+.backup { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; }
+.backup .meta { color: var(--cream-3); font-size: 14px; }
+.backup .hint { grid-column: 1 / -1; margin: 0; }
+.backup .hint:empty { display: none; }

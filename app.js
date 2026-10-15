@@ -1,10 +1,11 @@
-// THT golfapp (v0.14.0) – statistik och inmatning.
+// THT golfapp (v0.15.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.14.0';
-import { renderMata } from './mata.js?v=0.14.0';
-import { renderAdmin } from './admin.js?v=0.14.0';
-import { renderSpelare } from './spelare.js?v=0.14.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.15.0';
+import { renderMata } from './mata.js?v=0.15.0';
+import { renderAdmin } from './admin.js?v=0.15.0';
+import { renderSpelare } from './spelare.js?v=0.15.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.15.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -28,6 +29,7 @@ function route() {
   if (page === 'mata') return renderMata([arg, ...rest]).catch(fel);
   if (page === 'admin') return renderAdmin([arg, ...rest]).catch(fel);
   if (page === 'spelare' && arg) return renderSpelare(Number(arg)).catch(fel);
+  if (page === 'karta') return renderKarta(arg ? Number(arg) : null).catch(fel);
   if (page === 'ar') return renderYear(arg ? Number(arg) : null).catch(fel);
   return renderStart(id).catch(fel);
 }
@@ -115,8 +117,14 @@ async function renderYear(artal) {
           ${extra ? `<div class="extra">${extra}</div>` : ''}
         </div>`;
       }).join('')}
-    </div>`;
+    </div>
 
+    <section class="minikarta">
+      <div class="row-between"><h2>Karta</h2><a href="#/karta/${artal}" class="lank-pil">Större karta ›</a></div>
+      <div class="karta mini" id="minikarta"></div>
+    </section>`;
+
+  miniKarta(document.getElementById('minikarta'), artal);
   document.getElementById('ar').onchange = (e) => { location.hash = `#/ar/${e.target.value}`; };
   document.getElementById('prev').onclick = () => { location.hash = `#/ar/${lista[idx - 1].artal}`; };
   document.getElementById('next').onclick = () => { location.hash = `#/ar/${lista[idx + 1].artal}`; };
@@ -431,11 +439,17 @@ let sortKey = 'segrar', sortAsc = false;
 async function renderAlltime() {
   const myNav = nuNav();
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
-  const [res, rundor, thtKlar] = await Promise.all([
+  const [res, rundor, thtKlar, priser] = await Promise.all([
     api('v_tht_resultat?select=person_id,fornamn,artal,placering,poang'),
     api('v_runda?select=person_id,fornamn,artal,poang,slag,antal_hal,puttar,hal_med_puttar,placering'),
     api('tht?select=artal,klar'),
+    api('pris?select=typ,person_id,person(fornamn)'),
   ]);
+  // Topplista närmast hål / longest drive
+  const prisTopp = Object.values(priser.reduce((acc, x) => {
+    const r = (acc[x.person_id] ??= { id: x.person_id, fornamn: x.person?.fornamn ?? '?', narmast: 0, longest: 0 });
+    r[x.typ]++; return acc;
+  }, {})).map((r) => ({ ...r, tot: r.narmast + r.longest })).sort((a, b) => b.tot - a.tot || b.longest - a.longest || a.fornamn.localeCompare(b.fornamn, 'sv'));
   // Vinnare utses först när THT:n är avslutad (Admin → THT → Avsluta).
   const klarAr = new Set(thtKlar.filter((t) => t.klar).map((t) => t.artal));
   const p = {};
@@ -479,7 +493,16 @@ async function renderAlltime() {
       <div class="tablewrap"><table>
         <thead><tr><th class="l">År</th><th class="l">Vinnare</th><th>Poäng</th></tr></thead>
         <tbody>${vinnare.map((v) => `<tr><td class="l"><a href="#/ar/${v.artal}">${v.artal}</a></td><td class="l win"><a class="namn" href="#/spelare/${v.person_id}">${esc(v.fornamn)}</a></td><td>${fmt(v.poang)}</td></tr>`).join('')}</tbody>
-      </table></div>`;
+      </table></div>
+
+      <h2>Närmast hål och longest drive</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th class="l">Spelare</th><th>Närmast hål</th><th>Longest drive</th><th>Totalt</th></tr></thead>
+        <tbody>${prisTopp.map((r) => `<tr><td class="l"><a class="namn" href="#/spelare/${r.id}">${esc(r.fornamn)}</a></td><td>${r.narmast}</td><td>${r.longest}</td><td><strong>${r.tot}</strong></td></tr>`).join('')}</tbody>
+      </table></div>
+      <p class="hint">Vunna priser alla år. Vissa år saknas uppgifter om priserna.</p>
+
+      <a class="round link-card kartlank" href="#/karta"><div><div class="rn">Karta</div><div class="meta">Alla banor och övernattningar sedan 1998</div></div><div class="win"><span class="arrow">›</span></div></a>`;
     app.querySelectorAll('th.sortable').forEach((th) => th.onclick = () => {
       const c = KOLUMNER.find((x) => x.k === th.dataset.k);
       if (sortKey === c.k) sortAsc = !sortAsc; else { sortKey = c.k; sortAsc = !!(c.asc || c.l); }

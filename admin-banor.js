@@ -1,7 +1,8 @@
 // Admin: banor. Lista → bana (namn, plats, versioner) → banversion (tee:er och 18 hål).
 // Inget tas bort (RLS tillåter inte delete här) – allt rättas genom att ändra.
-import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.14.0';
-import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.14.0';
+import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.15.0';
+import { tolkaScorekort, kontrolleraHal } from './banparse.js?v=0.15.0';
+import { kartvaljare } from './karta.js?v=0.15.0';
 
 const app = document.getElementById('app');
 const idag = () => new Date().toISOString().slice(0, 10);
@@ -29,6 +30,7 @@ export function kopplaKoordinater(latId, lonId) {
     const m = lat.value.match(/^\s*(-?\d+[.,]\d+)\s*[,;\s]\s*(-?\d+[.,]\d+)\s*$/);
     if (m) { lat.value = m[1]; lon.value = m[2]; }
   });
+  kartvaljare(lat, lon);   // "Välj på karta" – klicka eller sök i OpenStreetMap
 }
 
 // ---------- lista ----------

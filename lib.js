@@ -29,6 +29,16 @@ export async function api(path, { fresh = false } = {}) {
   try { return await p; } catch (e) { cache.delete(path); throw e; }
 }
 
+// PostgREST levererar högst 1000 rader per anrop – hämta i sidor (path måste ha ?select=… och order=…).
+export async function allaRader(path) {
+  const ut = [];
+  for (let off = 0; ; off += 1000) {
+    const del = await api(`${path}&limit=1000&offset=${off}`, { fresh: true });
+    ut.push(...del);
+    if (del.length < 1000) return ut;
+  }
+}
+
 // ---------- skriva (kräver inloggning) ----------
 export async function write(method, path, body, prefer = 'return=representation') {
   const s = await session(true);
