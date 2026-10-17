@@ -1,14 +1,15 @@
-// THT golfapp (v0.22.0) – statistik och inmatning.
+// THT golfapp (v0.23.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.22.0';
-import { renderMata } from './mata.js?v=0.22.0';
-import { renderAdmin } from './admin.js?v=0.22.0';
-import { renderSpelare } from './spelare.js?v=0.22.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.22.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.22.0';
-import { renderBetygLank } from './betyg.js?v=0.22.0';
-import { renderNyheter } from './nyheter.js?v=0.22.0';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.23.0';
+import { renderMata } from './mata.js?v=0.23.0';
+import { renderAdmin } from './admin.js?v=0.23.0';
+import { renderSpelare } from './spelare.js?v=0.23.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.23.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.23.0';
+import { renderBetygLank } from './betyg.js?v=0.23.0';
+import { renderNyheter } from './nyheter.js?v=0.23.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik } from './statistik.js?v=0.23.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -128,6 +129,8 @@ async function renderYear(artal) {
       }).join('')}
     </div>
 
+    <section id="arsstat"></section>
+
     <section class="minikarta">
       <div class="row-between"><h2>Karta</h2><a href="#/karta/${artal}" class="lank-pil">Större karta ›</a></div>
       <div class="karta mini" id="minikarta"></div>
@@ -139,6 +142,7 @@ async function renderYear(artal) {
   document.getElementById('next').onclick = () => { location.hash = `#/ar/${lista[idx + 1].artal}`; };
 
   if (!utanKort) drawKurva(res, kurva, ordningar.length);
+  if (!utanKort) arsStatistik(document.getElementById('arsstat'), tht.nr).catch(() => {});
 }
 
 
@@ -434,12 +438,12 @@ const KOLUMNER = [
   { k: 'fornamn', t: 'Spelare', l: true },
   { k: 'tht', t: 'THT' },
   { k: 'segrar', t: 'Segrar', title: 'Vunna THT' },
-  { k: 'dSegrar', t: 'Deltävl.', title: 'Vunna deltävlingar' },
+  { k: 'dSegrar', t: 'Del&shy;tävl.', title: 'Vunna deltävlingar' },
   { k: 'pall', t: 'Pall', sm: true },
   { k: 'rundor', t: 'Rundor', sm: true },
-  { k: 'snittPoang', t: 'Poäng/runda', d: 1 },
-  { k: 'snittSlag', t: 'Slag/runda', d: 1, asc: true },
-  { k: 'puttarHal', t: 'Puttar/hål', d: 2, asc: true, sm: true },
+  { k: 'snittPoang', t: 'Poäng/​runda', d: 1 },
+  { k: 'snittSlag', t: 'Slag/​runda', d: 1, asc: true },
+  { k: 'puttarHal', t: 'Puttar/​hål', d: 2, asc: true, sm: true },
   { k: 'bastaRunda', t: 'Bästa runda', sm: true },
   { k: 'totalPoang', t: 'Poäng totalt', sm: true },
   { k: 'totalSlag', t: 'Slag totalt', sm: true, title: 'Alla slag i alla rundor (tak par + 5 per hål)' },
@@ -459,14 +463,24 @@ const ALLTIME_FLIKAR = [
   { id: 'vinnare', t: 'Vinnare' },
   { id: 'priser', t: 'Priser' },
   { id: 'banor', t: 'Banor' },
+  ...STAT_FLIKAR,
 ];
+const alltimeHuvud = (flik) => `
+      <h1>All-time</h1>
+      <nav class="underflikar" aria-label="Delar av All-time">${ALLTIME_FLIKAR.map((f) => `<a href="#/alltime/${f.id}" class="${f.id === flik ? 'on' : ''}"${f.id === flik ? ' aria-current="page"' : ''}>${f.t}</a>`).join('')}</nav>`;
 async function renderAlltime(flik) {
   if (!ALLTIME_FLIKAR.some((f) => f.id === flik)) flik = 'spelare';
   const myNav = nuNav();
+  if (STAT_FLIKAR.some((f) => f.id === flik)) {   // statistikflikarna hämtar sin egen data
+    app.innerHTML = `${alltimeHuvud(flik)}<div id="statflik"><p class="muted center">Laddar …</p></div>`;
+    const el = document.getElementById('statflik');
+    await renderStatFlik(flik, el);
+    return;
+  }
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
   const [res, rundor, thtKlar, priser, utanKort] = await Promise.all([
-    api('v_tht_resultat?select=person_id,fornamn,artal,placering,poang'),
-    api('v_runda?select=person_id,fornamn,artal,poang,slag,antal_hal,puttar,hal_med_puttar,placering'),
+    api('v_tht_resultat?select=person_id,fornamn,artal,placering,poang,slag,rundor,puttar_per_hal'),
+    allaRader('v_runda?select=person_id,fornamn,artal,poang,slag,antal_hal,puttar,hal_med_puttar,placering&order=runda_id'),
     api('tht?select=artal,klar'),
     api('pris?select=typ,person_id,person(fornamn)'),
     api('deltavling?vinnare_utan_kort=not.is.null&select=vinnare_utan_kort,tht(artal)'),
@@ -498,7 +512,23 @@ async function renderAlltime(flik) {
   const rows = Object.values(p).filter((x) => x.rundor > 0).map((x) => ({
     ...x, snittPoang: x.pSum / x.rundor, snittSlag: x.sN ? x.sSum / x.sN : null, puttarHal: x.puttN ? x.putt / x.puttN : null,
   }));
-  const vinnare = res.filter((r) => r.placering === 1 && klarAr.has(r.artal)).sort((a, b) => b.artal - a.artal);
+  const tvaan = {};
+  res.forEach((r) => { if (r.placering === 2) tvaan[r.artal] = Math.max(tvaan[r.artal] ?? 0, Number(r.poang)); });
+  const vinnare = res.filter((r) => r.placering === 1 && klarAr.has(r.artal)).sort((a, b) => b.artal - a.artal).map((v) => ({
+    ...v,
+    prRunda: v.slag != null && v.rundor ? v.poang / v.rundor : null,
+    slRunda: v.slag != null && v.rundor ? v.slag / v.rundor : null,
+    marginal: tvaan[v.artal] != null ? v.poang - tvaan[v.artal] : null,
+  }));
+  // Segerstatistik per spelare (F-37)
+  const segerSpelare = Object.values(vinnare.reduce((acc, v) => {
+    const x = (acc[v.person_id] ??= { id: v.person_id, fornamn: v.fornamn, n: 0, bastaP: null, bastaS: null, bastaPutt: null });
+    x.n++;
+    if (v.prRunda != null) x.bastaP = Math.max(x.bastaP ?? -1, v.prRunda);
+    if (v.slRunda != null) x.bastaS = Math.min(x.bastaS ?? 999, v.slRunda);
+    if (v.puttar_per_hal != null) x.bastaPutt = Math.min(x.bastaPutt ?? 99, Number(v.puttar_per_hal));
+    return acc;
+  }, {})).sort((a, b) => b.n - a.n || (b.bastaP ?? 0) - (a.bastaP ?? 0));
   const pagar = [...new Set(res.map((r) => r.artal))].filter((a) => !klarAr.has(a)).sort();
 
   const draw = () => {
@@ -510,11 +540,10 @@ async function renderAlltime(flik) {
       return sortAsc ? c : -c;
     });
     if (!aktuell(myNav)) return; app.innerHTML = `
-      <h1>All-time</h1>
-      <nav class="underflikar" aria-label="Delar av All-time">${ALLTIME_FLIKAR.map((f) => `<a href="#/alltime/${f.id}" class="${f.id === flik ? 'on' : ''}"${f.id === flik ? ' aria-current="page"' : ''}>${f.t}</a>`).join('')}</nav>
+${alltimeHuvud(flik)}
       <p class="sub">${new Set(res.map((r) => r.artal)).size} THT med resultat · ${rundor.filter((r) => r.antal_hal > 0).length} rundor</p>
 `
-      + (flik === 'spelare' ? `      <div class="tablewrap"><table>
+      + (flik === 'spelare' ? `      <div class="tablewrap"><table class="radbryt">
         <thead><tr>${KOLUMNER.map((c) => `<th class="sortable ${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''} ${sortKey === c.k ? 'sorted' : ''}" data-k="${c.k}" ${c.title ? `title="${c.title}"` : ''} aria-sort="${sortKey === c.k ? (sortAsc ? 'ascending' : 'descending') : 'none'}">${c.t}${sortKey === c.k ? (sortAsc ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
         <tbody>${rows.map((r) => `<tr>${KOLUMNER.map((c) => `<td class="${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''}">${c.k === 'fornamn' ? `<a class="namn" href="#/spelare/${r.id}">${esc(r.fornamn)}</a>` : c.l ? esc(r[c.k]) : fmt(r[c.k], c.d || 0)}</td>`).join('')}</tr>`).join('')}</tbody>
       </table></div>
@@ -522,10 +551,18 @@ async function renderAlltime(flik) {
 
 ` : '')
       + (flik === 'vinnare' ? `      <h2>Vinnare</h2>
-      <div class="tablewrap"><table>
-        <thead><tr><th class="l">År</th><th class="l">Vinnare</th><th>Poäng</th></tr></thead>
-        <tbody>${vinnare.map((v) => `<tr><td class="l"><a href="#/ar/${v.artal}">${v.artal}</a></td><td class="l win"><a class="namn" href="#/spelare/${v.person_id}">${esc(v.fornamn)}</a></td><td>${fmt(v.poang)}</td></tr>`).join('')}</tbody>
+      <div class="tablewrap"><table class="radbryt">
+        <thead><tr><th class="l">År</th><th class="l">Vinnare</th><th>Poäng</th><th>Poäng/​runda</th><th>Slag/​runda</th><th class="hide-sm">Puttar/​hål</th><th title="Poäng före tvåan">Mar&shy;ginal</th></tr></thead>
+        <tbody>${vinnare.map((v) => `<tr><td class="l"><a href="#/ar/${v.artal}">${v.artal}</a></td><td class="l win"><a class="namn" href="#/spelare/${v.person_id}">${esc(v.fornamn)}</a></td><td>${fmt(v.poang)}</td><td>${fmt(v.prRunda, 1)}</td><td>${fmt(v.slRunda, 1)}</td><td class="hide-sm">${fmt(v.puttar_per_hal, 2)}</td><td>${v.marginal == null ? '–' : '+' + fmt(v.marginal)}</td></tr>`).join('')}</tbody>
       </table></div>
+      <p class="hint">Poäng och slag per runda under det vinnande året (slag med tak par + 5). Marginal = poäng före tvåan.</p>
+
+      <h2>Segrar per spelare</h2>
+      <div class="tablewrap"><table class="radbryt">
+        <thead><tr><th class="l">Spelare</th><th>Segrar</th><th>Bästa poäng/​runda</th><th>Bästa slag/​runda</th><th class="hide-sm">Bästa puttar/​hål</th></tr></thead>
+        <tbody>${segerSpelare.map((x) => `<tr><td class="l"><a class="namn" href="#/spelare/${x.id}">${esc(x.fornamn)}</a></td><td><strong>${x.n}</strong></td><td>${fmt(x.bastaP, 1)}</td><td>${fmt(x.bastaS, 1)}</td><td class="hide-sm">${fmt(x.bastaPutt, 2)}</td></tr>`).join('')}</tbody>
+      </table></div>
+      <p class="hint">Bästa värdet under något av de vunna åren. År utan scorekort (1999) räknas bara i antalet segrar.</p>
 
 ` : '')
       + (flik === 'priser' ? `      <h2>Närmast hål och longest drive</h2>
@@ -537,9 +574,9 @@ async function renderAlltime(flik) {
 
 ` : '')
       + (flik === 'banor' ? `      ${banTopp.length || allaBanor.length ? `<h2>${visaAllaBanor ? 'Alla banor' : 'Bästa banorna'}</h2>
-      <div class="tablewrap"><table>
+      <div class="tablewrap"><table class="bantabell radbryt">
         <thead><tr><th>#</th><th class="l">Bana</th><th>Betyg</th><th class="hide-sm">Antal betyg</th>${visaAllaBanor ? '<th class="hide-sm">Spelade gånger</th>' : ''}</tr></thead>
-        <tbody>${(visaAllaBanor ? allaBanor : banTopp.slice(0, 10)).map((b, i) => `<tr><td>${b.n >= 3 ? i + 1 : ''}</td><td class="l"><a class="namn" href="#/bana/${b.id}">${esc(b.namn)}</a></td><td class="${b.n >= 3 ? '' : 'dim'}">${b.snitt == null ? '–' : `${fmt(b.snitt, 1)} ${stjarnor(b.snitt)}`}</td><td class="hide-sm">${b.n}</td>${visaAllaBanor ? `<td class="hide-sm">${b.spelad}</td>` : ''}</tr>`).join('')}</tbody>
+        <tbody>${(visaAllaBanor ? allaBanor : banTopp.slice(0, 10)).map((b, i) => `<tr><td>${b.n >= 3 ? i + 1 : ''}</td><td class="l"><a class="namn" href="#/bana/${b.id}">${esc(b.namn)}</a></td><td class="${b.n >= 3 ? '' : 'dim'}">${b.snitt == null ? '–' : `<span class="bt-siffra">${fmt(b.snitt, 1)} </span>${stjarnor(b.snitt)}`}</td><td class="hide-sm">${b.n}</td>${visaAllaBanor ? `<td class="hide-sm">${b.spelad}</td>` : ''}</tr>`).join('')}</tbody>
       </table></div>
       <button class="link visa-alla" type="button" id="allabanor" aria-expanded="${visaAllaBanor}">${visaAllaBanor ? 'Visa bara de tio bästa ▴' : `Visa alla banor (${allaBanor.length}) ▾`}</button>
       <p class="hint">Deltagarnas betyg 1–5, snitt över alla år. Placering bara för banor med minst 3 betyg${visaAllaBanor ? ' – övriga visas dämpade, utan placering' : ''}. Tryck på en bana för mer.</p>` : ''}` : '');

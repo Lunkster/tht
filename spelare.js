@@ -1,5 +1,5 @@
 // Personsida: en spelares nyckeltal, resultat per år, snittpoäng över tid och resultatfördelning.
-import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.22.0';
+import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.23.0';
 
 const app = document.getElementById('app');
 const BLA = '#3987e5';                       // seriefärg 1 (validerad mot mörk yta)
@@ -67,6 +67,14 @@ export async function renderSpelare(pid) {
       punkter: fulla.filter((r) => r.placering != null).map((r, i, a) => ({ etikett: i === 0 || a[i - 1].artal !== r.artal ? r.artal : '', v: r.placering, ring: klar(r.tht_nr) && r.placering === 1,
         tip: `<div class="tt-title">${r.artal} R${r.ordning}${r.deltavling ? ' · ' + esc(r.deltavling) : ''}</div><div class="tt-row on">Placering<b>${r.placering}</b></div><div class="tt-row">Poäng<b>${fmt(r.poang)}</b></div>` })) },
   };
+  // Spel-HCP: årsmedel av spel-HCP över årets rundor
+  lagen.hcp = { rubrik: 'Spel-HCP per år', hint: 'Snitt av spel-HCP över årets rundor. Lägre = bättre, överst. Ring = vann THT:n.', opt: { inv: true },
+    punkter: arLista.filter((r) => r.rs.some((x) => x.spel_hcp != null)).map((r) => {
+      const hs = r.rs.filter((x) => x.spel_hcp != null).map((x) => Number(x.spel_hcp));
+      const v = hs.reduce((a, h) => a + h, 0) / hs.length;
+      return { etikett: r.artal, v: Math.round(v * 10) / 10, ring: r.klar && r.placering === 1,
+        tip: `<div class="tt-title">${r.artal} · ${esc(r.ort)}</div><div class="tt-row on">Spel-HCP, snitt<b>${fmt(v, 1)}</b></div><div class="tt-row">Placering<b>${plac(r)}</b></div>` };
+    }) };
   let lage = 'poang';
 
   // Resultatfördelning och snitt per par-typ
@@ -86,7 +94,7 @@ export async function renderSpelare(pid) {
 
     <h2 id="sp-rubrik">Poäng per runda</h2>
     <div class="chartcard">
-      <div class="seg sp-seg" role="group" aria-label="Visa"><button data-lage="poang" class="on">Poäng</button><button data-lage="ar">Placering/år</button><button data-lage="delt">Per deltävling</button></div>
+      <div class="seg sp-seg" role="group" aria-label="Visa"><button data-lage="poang" class="on">Poäng</button><button data-lage="ar">Placering/år</button><button data-lage="delt">Per deltävling</button><button data-lage="hcp">Spel-HCP</button></div>
       <div class="chartbox sp-chart" id="sp-linje"><div class="tip" id="sp-tip" hidden></div></div>
       <p class="hint" id="sp-hint">Snitt per runda och år. Ring = vann THT:n. 36 p per runda = spelat på handicap.</p></div>
 

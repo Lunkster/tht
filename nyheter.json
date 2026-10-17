@@ -2,59 +2,65 @@
  {
   "datum": "2026-10-17",
   "punkter": [
+   "**Mer statistik** i All-time med nya flikar: **Hålvinster** (vem som vunnit flest hål på slag, alla och ensamma), **Fördelning** (birdies, par, bogeys … per runda eller totalt), **Par 3/4/5** (snitt per hålpar), **Rekord** (bästa och sämsta runda, flest birdies, längsta svit, bästa puttrunda m.m.) och **Hål** (svåraste och lättaste hålen) (v0.23.0)",
+   "Fliken **Vinnare** visar poäng och slag per runda, puttar och segermarginal för varje vinnare, och bästa segerstatistiken per spelare (v0.23.0)",
+   "Årssidan har fått **Statistik för året**: hålvinster, resultatfördelning och par 3/4/5 (v0.23.0)",
+   "Bansidans hållista visar hur svårt varje hål har varit för oss – snitt över par och poäng (v0.23.0)",
+   "Spelarsidans graf har fått läget **Spel-HCP** – snittet för varje år (v0.23.0)",
+   "Rubrikerna i All-time radbryts så att kolumnerna ryms i mobilen, och i Banor visas bara stjärnorna i mobilen (v0.23.0)",
+   "All-time har fått underflikar: **Spelare**, **Vinnare**, **Priser** och **Banor** (v0.22.0)",
+   "Spelartabellen i All-time visar även **Slag totalt** på bredare skärmar (v0.22.0)",
+   "Tabellen för att ange banbetyg (för markörer och admin) ryms på telefonen (v0.22.0)",
+   "Under topplistan **Bästa banorna** i All-time finns **Visa alla banor** – alla banor vi spelat, med antal betyg och hur många gånger vi spelat dem (v0.21.0, v0.22.0)",
+   "Den personliga länken för banbetyg gäller nu alla år: banorna visas per THT med det senaste först, och man ser och kan ändra sina tidigare betyg. Samma länk fungerar nästa år (v0.21.0)",
+   "Kristinehamns GK, Nora Golfbana och Lagans GK fanns dubbelt – nu är de en bana var, så att alla gånger vi spelat dem och deras betyg samlas på samma bansida. Linde GK och Lindesberga GK är samma bana och heter nu **Lindesbergs GK** (v0.21.0)",
+   "**Nytt i appen:** den här listan finns i appen – tryck på i-ikonen i toppmenyn (v0.20.0)",
+   "**Banbetyg via personlig länk:** varje spelare kan få en egen länk, t.ex. via mejl, och betygsätta banorna med 1–5 stjärnor utan att logga in (v0.19.0)",
+   "THT 1999 finns med i statistiken med totalresultat och deltävlingsvinnare. Scorekorten saknas, så snittpoäng, slag och puttar räknas inte för det året (v0.18.0)",
+   "Banbetyg kan bara ges för banor man själv spelade det året, och markörer kan ge banbetyg även för avslutade THT (v0.18.0)",
+   "**Markörer** har fått en egen kod. Med den kan man mata in slag och puttar, sätta spelare i bollar och ange närmast hål och longest drive så länge THT:n inte är avslutad – allt samlat under Mata in (v0.17.0, v0.18.0)",
    "Varje bana har en egen sida med banbetyg, när den spelats, de bästa rundorna, hålen och en karta – tryck på banans namn på årssidan eller i kartan (v0.16.0)",
    "Topplistan **Bästa banorna** enligt deltagarnas betyg finns under All-time (v0.16.0)",
    "Kartan har fått en egen ikon i toppmenyn (v0.16.0)",
    "Tabellen över närmast hål och longest drive under All-time kan sorteras – tryck på en rubrik (v0.16.0)",
-   "Grafen på spelarsidan kan också visa placering per år och placering per deltävling (v0.16.0)",
-   "**Markörer** har fått en egen kod. Med den kan man mata in slag och puttar, sätta spelare i bollar och ange närmast hål och longest drive så länge THT:n inte är avslutad – allt samlat under Mata in (v0.17.0, v0.18.0)",
-   "THT 1999 finns med i statistiken med totalresultat och deltävlingsvinnare. Scorekorten saknas, så snittpoäng, slag och puttar räknas inte för det året (v0.18.0)",
-   "Banbetyg kan bara ges för banor man själv spelade det året, och markörer kan ge banbetyg även för avslutade THT (v0.18.0)",
-   "**Banbetyg via personlig länk:** varje spelare kan få en egen länk, t.ex. via mejl, och betygsätta banorna med 1–5 stjärnor utan att logga in (v0.19.0)",
-   "**Nytt i appen:** den här listan finns i appen – tryck på i-ikonen i toppmenyn (v0.20.0)",
-   "Den personliga länken för banbetyg gäller nu alla år: banorna visas per THT med det senaste först, och man ser och kan ändra sina tidigare betyg. Samma länk fungerar nästa år (v0.21.0)",
-   "Kristinehamns GK, Nora Golfbana och Lagans GK fanns dubbelt – nu är de en bana var, så att alla gånger vi spelat dem och deras betyg samlas på samma bansida. Linde GK och Lindesberga GK är samma bana och heter nu **Lindesbergs GK** (v0.21.0)",
-   "Under topplistan **Bästa banorna** i All-time finns **Visa alla banor** – alla banor vi spelat, med antal betyg och hur många gånger vi spelat dem (v0.21.0, v0.22.0)",
-   "All-time har fått underflikar: **Spelare**, **Vinnare**, **Priser** och **Banor** (v0.22.0)",
-   "Spelartabellen i All-time visar även **Slag totalt** på bredare skärmar (v0.22.0)",
-   "Tabellen för att ange banbetyg (för markörer och admin) ryms på telefonen (v0.22.0)"
+   "Grafen på spelarsidan kan också visa placering per år och placering per deltävling (v0.16.0)"
   ]
  },
  {
   "datum": "2026-10-16",
   "punkter": [
-   "Karta över alla spelade banor och övernattningar, med filter per år. Årssidan har fått en liten karta över årets banor (v0.15.0)",
-   "Mörkare bakgrundskarta som passar appen, knappar för att zooma och **Visa alla platser** (v0.15.1)"
+   "Mörkare bakgrundskarta som passar appen, knappar för att zooma och **Visa alla platser** (v0.15.1)",
+   "Karta över alla spelade banor och övernattningar, med filter per år. Årssidan har fått en liten karta över årets banor (v0.15.0)"
   ]
  },
  {
   "datum": "2026-10-15",
   "punkter": [
-   "**Scorekort i efterhand:** hela rundor från pappersscorekorten matas in med 18 hål per spelare på en gång (v0.11.0)",
+   "**Spelarsida** för varje spelare med nyckeltal, utvecklingen över åren, resultat år för år och resultat per hål – tryck på ett namn var som helst i appen (v0.14.0)",
+   "All-time sorteras efter THT-segrar och vid lika efter deltävlingssegrar (v0.14.0)",
+   "Leaderboard först i menyn, tydligare THT-graf och en startsida som ryms i mobilen utan att skrolla (v0.13.0, v0.13.1)",
+   "En THT avslutas av admin när alla rundor är inmatade – först då utses vinnare. Innan dess visas vem som leder (v0.13.0)",
+   "Spelare kan flyttas mellan bollar i Scorekort i efterhand (v0.12.1)",
    "Datum skrivs och visas som ÅÅÅÅ-MM-DD (v0.12.0)",
    "Resultattabellen har fått kolumnen **Mot HCP**, och spel-HCP visas som heltal (v0.12.0)",
-   "Spelare kan flyttas mellan bollar i Scorekort i efterhand (v0.12.1)",
-   "En THT avslutas av admin när alla rundor är inmatade – först då utses vinnare. Innan dess visas vem som leder (v0.13.0)",
-   "Leaderboard först i menyn, tydligare THT-graf och en startsida som ryms i mobilen utan att skrolla (v0.13.0, v0.13.1)",
-   "**Spelarsida** för varje spelare med nyckeltal, utvecklingen över åren, resultat år för år och resultat per hål – tryck på ett namn var som helst i appen (v0.14.0)",
-   "All-time sorteras efter THT-segrar och vid lika efter deltävlingssegrar (v0.14.0)"
+   "**Scorekort i efterhand:** hela rundor från pappersscorekorten matas in med 18 hål per spelare på en gång (v0.11.0)"
   ]
  },
  {
   "datum": "2026-10-14",
   "punkter": [
+   "Ny startsida med nedräkning till nästa THT (v0.5.0)",
    "Ny flik **Leaderboard** som visar senaste THT och uppdaterar sig själv under tävlingen (v0.4.0)",
-   "All-time visar THT-segrar och deltävlingssegrar (v0.4.0)",
-   "Ny startsida med nedräkning till nästa THT (v0.5.0)"
+   "All-time visar THT-segrar och deltävlingssegrar (v0.4.0)"
   ]
  },
  {
   "datum": "2026-10-08",
   "punkter": [
-   "Appen finns på lunkster.github.io/tht med resultat för alla år sedan 1998 (även 2025), THT-grafen och All-time (v0.1.0)",
+   "Mata in fungerar i mobilen, och tidigare år kan väljas för att rätta gamla rundor (v0.3.0)",
    "**Mata in:** hål för hål i bollen, poängen räknas direkt och allt sparas automatiskt (v0.2.0)",
    "Puttar visas som snitt per hål (v0.2.0)",
-   "Mata in fungerar i mobilen, och tidigare år kan väljas för att rätta gamla rundor (v0.3.0)"
+   "Appen finns på lunkster.github.io/tht med resultat för alla år sedan 1998 (även 2025), THT-grafen och All-time (v0.1.0)"
   ]
  }
 ]

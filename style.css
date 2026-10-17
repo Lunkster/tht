@@ -568,3 +568,34 @@ td.win a.namn, .pod a.namn { border-bottom-color: rgba(227, 194, 120, 0.5); }
   .betygtabell th.l { max-width: 74px; overflow: hidden; text-overflow: ellipsis; }
   .betygtabell select.betyg { width: 40px; min-height: 36px; padding: 2px 0; font-size: 15px; -webkit-appearance: none; appearance: none; text-align: center; text-align-last: center; background-image: none; }
 }
+
+/* Statistik (v0.23.0) */
+.underflikar a { padding: 6px 12px; font-size: 13px; min-height: 34px; }
+table.radbryt th { white-space: normal; vertical-align: bottom; line-height: 1.2; }
+@media (max-width: 480px) {
+  table.radbryt th { font-size: 12px; padding-left: 6px; padding-right: 6px; }
+  table.radbryt td { padding-left: 6px; padding-right: 6px; }
+  .bantabell td.l { white-space: normal; font-size: 14px; line-height: 1.25; }
+  .bantabell .bt-siffra { display: none; }
+}
+.stat-tabell td, .stat-tabell th { padding-left: 8px; padding-right: 8px; }
+.stat-tabell.fordelning th { font-size: 12px; }
+.stat-seg { margin-bottom: 10px; }
+.stat-ar { margin-top: 10px; }
+.stat-ar > summary { cursor: pointer; }
+.stat-ar .tablewrap { margin-top: 10px; }
+.rekordgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.rekord h3 { margin: 0 0 2px; font-size: 17px; color: var(--gold-2); }
+.rekord .hint { margin: 0 0 8px; }
+.rekord ol { margin: 0; padding-left: 22px; }
+.rekord li { margin: 0 0 6px; line-height: 1.35; }
+.rekord .rek-v { font-weight: 700; color: var(--cream); margin-right: 4px; }
+.rekord .muted { font-size: 13px; }
+th .kort { display: none; }
+@media (max-width: 480px) {
+  .stat-tabell.fordelning th .lang { display: none; }
+  .stat-tabell.fordelning th .kort { display: inline; }
+  .stat-tabell.fordelning th, .stat-tabell.fordelning td { padding-left: 4px; padding-right: 4px; font-size: 13px; }
+  .stat-tabell.fordelning td.l { max-width: 66px; overflow: hidden; text-overflow: ellipsis; }
+  .stat-tabell.fordelning th.l { font-size: 12px; }
+}
