@@ -41,6 +41,16 @@ export async function allaRader(path) {
   }
 }
 
+// ---------- funktioner i databasen (rpc) som anon, t.ex. banbetyg via personlig länk ----------
+export async function rpc(name, args) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST', headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args),
+  });
+  if (!r.ok) { const t = await r.text(); let m = t; try { m = JSON.parse(t).message || t; } catch { /* text */ } throw new Error(m); }
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
 // ---------- skriva (kräver inloggning) ----------
 export async function write(method, path, body, prefer = 'return=representation') {
   const s = await session(true);

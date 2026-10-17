@@ -2,7 +2,7 @@
 //  - renderKarta(artal?)   – helsida #/karta[/år]: alla spelade banor och övernattningar, filter per år
 //  - miniKarta(el, artal)  – liten karta på årssidan
 //  - kartvaljare(latEl, lonEl) – "Välj på karta" i admin: klicka/sök för att fylla i koordinater
-import { api, esc, nuNav, aktuell } from './lib.js?v=0.18.0';
+import { api, esc, nuNav, aktuell } from './lib.js?v=0.19.0';
 
 const app = document.getElementById('app');
 const LEAFLET = 'https://unpkg.com/leaflet@1.9.4/dist/';

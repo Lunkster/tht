@@ -522,3 +522,13 @@ td.win a.namn, .pod a.namn { border-bottom-color: rgba(227, 194, 120, 0.5); }
 .golfid-lista summary { cursor: pointer; }
 .golfid-lista .tablewrap { margin-top: 10px; }
 .golfid-lista code { font-size: 14px; color: var(--cream); }
+
+/* Banbetyg via personlig länk */
+.betyg-rad { align-items: center; }
+.stjarnval { display: flex; gap: 2px; flex-shrink: 0; }
+.stjarnval button { width: 38px; height: 44px; padding: 0; border: 0; background: none; font-size: 28px; line-height: 1; color: rgba(242, 232, 213, 0.18); cursor: pointer; }
+.stjarnval button.on { color: var(--gold-2); }
+.stjarnval button:focus-visible { outline: 2px solid var(--gold); border-radius: 6px; }
+.lankrad .lankknappar { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.lankrad .btn { min-height: 36px; padding: 6px 10px; font-size: 14px; }
+.card + .rounds { margin-top: 14px; }
