@@ -616,3 +616,10 @@ th .kort { display: none; }
 .sp-rundor > summary { cursor: pointer; }
 .sp-rundor .tablewrap { margin-top: 10px; }
 .bana-kort { white-space: normal; font-size: 14px; }
+
+/* Ihopfällbara rubriker */
+h2.fallbar { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px; }
+h2.fallbar::after { content: "▾"; font-size: 14px; color: var(--cream-3); transition: transform .15s; }
+h2.fallbar.stangd::after { transform: rotate(-90deg); }
+h2.fallbar:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+.kollapsad { display: none !important; }
