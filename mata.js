@@ -1,7 +1,7 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.16.0';
+import { api, write, login, logout, isLoggedIn, arMarkor, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.17.0';
 
-import { renderScorekort } from './scorekort.js?v=0.16.0';
+import { renderScorekort } from './scorekort.js?v=0.17.0';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
@@ -24,7 +24,7 @@ function renderLogin(args) {
 export function visaLogin(titel, klar) {
   app.innerHTML = `
     <h1>${esc(titel)}</h1>
-    <p class="sub">Skriv THT-koden. Telefonen kommer ihåg den.</p>
+    <p class="sub">Skriv THT-koden (admin) eller markörkoden. Telefonen kommer ihåg den.</p>
     <form id="login" class="card form">
       <label for="kod">Kod</label>
       <input id="kod" type="password" autocomplete="current-password" required>
@@ -44,10 +44,26 @@ export function visaLogin(titel, klar) {
 async function renderValjDeltavling() {
   const myNav = nuNav();
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
-  const delt = await api('deltavling?select=id,ordning,namn,datum,tht_nr,tht(artal,ort),banversion(bana(namn))&order=datum.desc', { fresh: true });
+  const [allaDelt, [senaste]] = await Promise.all([
+    api('deltavling?select=id,ordning,namn,datum,tht_nr,tht(artal,ort,klar),banversion(bana(namn))&order=datum.desc', { fresh: true }),
+    api('tht?select=nr,artal,ort,klar&order=nr.desc&limit=1', { fresh: true }),
+  ]);
+  const markor = arMarkor();
+  // Markör: bara den senaste THT:n och bara innan den är avslutad (samma regel som i databasen).
+  const delt = markor ? allaDelt.filter((d) => d.tht_nr === senaste?.nr && !senaste.klar) : allaDelt;
   const idag = new Date().toISOString().slice(0, 10);
   const thts = [...new Map(delt.map((d) => [d.tht_nr, d.tht])).entries()]; // nyast först
-  const valt = Number(sessionStorage.getItem('mata-tht')) || thts[0]?.[0];
+  let valt = Number(sessionStorage.getItem('mata-tht')) || thts[0]?.[0];
+  if (!thts.some(([nr]) => nr === valt)) valt = thts[0]?.[0];
+  if (markor && !thts.length) {
+    if (!aktuell(myNav)) return; app.innerHTML = `
+      <div class="row-between"><h1>Mata in</h1><button class="link" id="logout">Logga ut</button></div>
+      <p class="sub">Inloggad som markör.</p>
+      <div class="card"><p>${senaste?.klar ? `THT ${senaste.nr} är avslutad – det finns inget att mata in.` : `Inga deltävlingar är upplagda för ${esc(senaste?.ort ?? 'årets THT')} ${senaste?.artal ?? ''} ännu.`}</p>
+      ${senaste?.klar ? '' : '<p class="hint">Deltävlingarna läggs upp av admin.</p>'}</div>`;
+    document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
+    return;
+  }
   const lista = delt.filter((d) => d.tht_nr === valt).sort((a, b) => a.ordning - b.ordning);
   if (!aktuell(myNav)) return; app.innerHTML = `
     <div class="row-between"><h1>Mata in</h1><button class="link" id="logout">Logga ut</button></div>
@@ -62,7 +78,7 @@ async function renderValjDeltavling() {
           <div class="win"><span class="arrow">›</span></div>
         </a>`).join('')}
     </div>
-    <p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp under <a href="#/admin">Admin</a>.</p>`;
+    ${markor ? '<p class="hint">Inloggad som markör: du kan mata in årets THT och sätta spelare i bollar.</p>' : '<p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp under <a href="#/admin">Admin</a>.</p>'}`;
   document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
   document.getElementById('matatht').onchange = (e) => { try { sessionStorage.setItem('mata-tht', e.target.value); } catch { /* */ } renderValjDeltavling(); };
 }

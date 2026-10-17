@@ -1,5 +1,5 @@
 // Admin: banbetyg – varje spelares betyg 1–5 på årets banor (tabellen ban_betyg).
-import { api, write, esc, fmt, nuNav, aktuell } from './lib.js?v=0.16.0';
+import { api, write, esc, fmt, nuNav, aktuell } from './lib.js?v=0.17.0';
 
 const app = document.getElementById('app');
 

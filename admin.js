@@ -1,11 +1,11 @@
 // Admin: grunddata som läggs upp sällan – spelare, banor, THT, priser och övernattningar.
-import { api, allaRader, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.16.0';
-import { visaLogin } from './mata.js?v=0.16.0';
-import { renderBanor } from './admin-banor.js?v=0.16.0';
-import { renderTht } from './admin-tht.js?v=0.16.0';
-import { renderPriser } from './admin-priser.js?v=0.16.0';
-import { renderOvernattning } from './admin-overnattning.js?v=0.16.0';
-import { renderBanbetyg } from './admin-banbetyg.js?v=0.16.0';
+import { api, allaRader, write, isLoggedIn, arAdmin, arMarkor, logout, esc, nuNav, aktuell } from './lib.js?v=0.17.0';
+import { visaLogin } from './mata.js?v=0.17.0';
+import { renderBanor } from './admin-banor.js?v=0.17.0';
+import { renderTht } from './admin-tht.js?v=0.17.0';
+import { renderPriser } from './admin-priser.js?v=0.17.0';
+import { renderOvernattning } from './admin-overnattning.js?v=0.17.0';
+import { renderBanbetyg } from './admin-banbetyg.js?v=0.17.0';
 
 const app = document.getElementById('app');
 
@@ -20,6 +20,7 @@ const SEKTIONER = [
 
 export async function renderAdmin([sida, ...rest]) {
   if (!isLoggedIn()) return visaLogin('Admin', () => renderAdmin([sida, ...rest]));
+  if (!arAdmin()) return visaEjAdmin([sida, ...rest]);
   if (sida === 'spelare') return renderSpelare();
   if (sida === 'banor') return renderBanor(rest);
   if (sida === 'tht') return renderTht(rest);
@@ -27,6 +28,18 @@ export async function renderAdmin([sida, ...rest]) {
   if (sida === 'overnattning') return renderOvernattning();
   if (sida === 'banbetyg') return renderBanbetyg();
   return renderMeny();
+}
+
+// Inloggad med markörkoden (eller ett konto utan roll): admin kräver admin-koden.
+function visaEjAdmin(args) {
+  app.innerHTML = `
+    <h1>Admin</h1>
+    <div class="card">
+      <p>${arMarkor() ? 'Du är inloggad som <strong>markör</strong>. Markörer kan mata in årets THT och sätta spelare i bollar under <a href="#/mata">Mata in</a>.' : 'Kontot saknar behörighet för admin.'}</p>
+      <p class="sub">Admin kräver admin-koden.</p>
+      <button class="btn primary" type="button" id="bytkonto">Logga in som admin</button>
+    </div>`;
+  document.getElementById('bytkonto').onclick = () => { logout(); renderAdmin(args); };
 }
 
 function renderMeny() {

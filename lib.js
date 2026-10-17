@@ -2,7 +2,9 @@
 
 export const SUPABASE_URL = 'https://nlvgisjssbjethumvgdz.supabase.co';
 export const SUPABASE_KEY = 'sb_publishable_3wzcVvDgcoupfWSqAis4eg_bz2e6jiG'; // publik nyckel, skyddet är RLS
-const AUTH_EMAIL = 'h.lundqvist+tht@gmail.com'; // delat konto – koden är lösenordet
+// Två delade konton – koden är lösenordet. Rollen (admin/markor) står i kontots app_metadata
+// och följer med i inloggningens JWT; databasens regler (RLS) avgör vad rollen får skriva.
+const KONTON = ['h.lundqvist+tht@gmail.com', 'h.lundqvist+thtmarkor@gmail.com']; // admin, markör
 const SESSION_KEY = 'tht-session';
 
 const cache = new Map();
@@ -65,6 +67,7 @@ export async function write(method, path, body, prefer = 'return=representation'
 function load() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { return null; } }
 function save(s) { try { s ? localStorage.setItem(SESSION_KEY, JSON.stringify(s)) : localStorage.removeItem(SESSION_KEY); } catch { /* privat läge */ } }
 let current = load();
+if (current && !current.roll) current.roll = rollUr(current.access_token); // äldre sparad session
 
 async function auth(grant, body) {
   const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {
@@ -72,16 +75,33 @@ async function auth(grant, body) {
   });
   if (!r.ok) return null;
   const j = await r.json();
-  return { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: j.expires_at };
+  return { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: j.expires_at, roll: rollUr(j.access_token) };
+}
+function rollUr(token) {
+  try {
+    const b = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = new TextDecoder().decode(Uint8Array.from(atob(b), (c) => c.charCodeAt(0)));
+    return JSON.parse(json).app_metadata?.roll ?? null;
+  } catch { return null; }
 }
 
 export async function login(code) {
-  const s = await auth('password', { email: AUTH_EMAIL, password: code });
+  let s = null;
+  for (const email of KONTON) { s = await auth('password', { email, password: code }); if (s) break; }
   current = s; save(s);
   return !!s;
 }
 export function logout() { current = null; save(null); }
 export const isLoggedIn = () => !!current;
+export const roll = () => current?.roll ?? null;          // 'admin', 'markor' eller null
+export const arAdmin = () => roll() === 'admin';
+export const arMarkor = () => roll() === 'markor';
+// Sessioner sparade före rollerna saknar roll – hämta en ny token (den får rollen) vid start.
+export async function uppdateraRoll() {
+  if (!current || current.roll) return;
+  const s = await auth('refresh_token', { refresh_token: current.refresh_token });
+  if (s) { current = s; save(s); }
+}
 
 async function session(required) {
   if (!current) { if (required) throw Object.assign(new Error('Inte inloggad'), { status: 401 }); return null; }
