@@ -1,6 +1,6 @@
 // Statistik från 2016-rapporten: hålvinster, resultatfördelning, par 3/4/5, rekord och svåraste hålen.
 // Beräknas i databasvyerna v_stat_* (migrering 17) – här bara sammanställning och tabeller.
-import { api, allaRader, esc, fmt } from './lib.js?v=0.23.0';
+import { api, allaRader, esc, fmt } from './lib.js?v=0.23.1';
 
 const namnLank = (id, namn) => `<a class="namn" href="#/spelare/${id}">${esc(namn)}</a>`;
 const summa = (xs, f) => xs.reduce((a, x) => a + (Number(f(x)) || 0), 0);
@@ -49,6 +49,21 @@ export function fordelningTabell(rader, satt = lage.fordelning) {
 }
 
 // ---------- Par 3/4/5 ----------
+// Sortering i par-tabellerna: klick på en rubrik (delad mellan All-time och årssidan)
+const parSort = { k: null, asc: false };   // k: null = snitt av par 3/4/5 (standard)
+const parTabeller = new Map();             // tabell-id → { rader, satt }
+let parNr = 0;
+document.addEventListener('click', (e) => {
+  const th = e.target.closest('th[data-ps]');
+  if (!th) return;
+  const wrap = th.closest('.tablewrap'), data = parTabeller.get(wrap?.dataset.par);
+  if (!data) return;
+  const k = th.dataset.ps;
+  if (parSort.k === k) parSort.asc = !parSort.asc;
+  else { parSort.k = k; parSort.asc = k === 'fornamn' || (k !== 'hal' && data.satt === 'slag'); }   // bäst först
+  wrap.outerHTML = parTabell(data.rader, data.satt);
+});
+
 export function parTabell(rader, satt = lage.par) {
   const per = {};
   rader.forEach((r) => {
@@ -61,9 +76,21 @@ export function parTabell(rader, satt = lage.par) {
   const v = (x, par) => (x[par]?.hal ? x[par][satt] / x[par].hal : null);
   const basta = (par) => (satt === 'poang' ? Math.max : Math.min)(...lista.map((x) => v(x, par)).filter((y) => y != null));
   const snitt = (x) => { const h = [3, 4, 5].filter((p) => x[p]?.hal); return h.reduce((a, p) => a + v(x, p), 0) / (h.length || 1); };
-  lista.sort((a, b) => (satt === 'poang' ? snitt(b) - snitt(a) : snitt(a) - snitt(b)));
-  return `<div class="tablewrap"><table class="stat-tabell">
-    <thead><tr><th class="l">Spelare</th><th>Par 3</th><th>Par 4</th><th>Par 5</th><th class="hide-sm">Hål</th></tr></thead>
+  const varde = (x, k) => (k === 'fornamn' ? x.fornamn : k === 'hal' ? x.hal : v(x, Number(k)));
+  if (parSort.k) {
+    lista.sort((a, b) => {
+      const va = varde(a, parSort.k), vb = varde(b, parSort.k);
+      if (va == null) return 1; if (vb == null) return -1;   // saknade värden sist
+      const c = typeof va === 'string' ? va.localeCompare(vb, 'sv') : va - vb;
+      return parSort.asc ? c : -c;
+    });
+  } else lista.sort((a, b) => (satt === 'poang' ? snitt(b) - snitt(a) : snitt(a) - snitt(b)));
+  const id = `par-${++parNr}`;
+  parTabeller.set(id, { rader, satt });
+  const KOL = [['fornamn', 'Spelare', 'l'], ['3', 'Par 3', ''], ['4', 'Par 4', ''], ['5', 'Par 5', ''], ['hal', 'Hål', 'hide-sm']];
+  const th = ([k, t, c]) => `<th class="sortable ${c} ${parSort.k === k ? 'sorted' : ''}" data-ps="${k}" aria-sort="${parSort.k === k ? (parSort.asc ? 'ascending' : 'descending') : 'none'}">${t}${parSort.k === k ? (parSort.asc ? ' ▲' : ' ▼') : ''}</th>`;
+  return `<div class="tablewrap" data-par="${id}"><table class="stat-tabell">
+    <thead><tr>${KOL.map(th).join('')}</tr></thead>
     <tbody>${lista.map((x) => `<tr><td class="l">${namnLank(x.id, x.fornamn)}</td>${[3, 4, 5].map((p) => { const y = v(x, p); return `<td class="${y != null && y === basta(p) ? 'win' : ''}">${y == null ? '–' : fmt(y, 2)}</td>`; }).join('')}<td class="hide-sm">${x.hal}</td></tr>`).join('')}</tbody>
   </table></div>`;
 }
@@ -149,7 +176,7 @@ export async function renderStatFlik(flik, el) {
     const rader = await api('v_stat_par?select=tht_nr,person_id,fornamn,par,hal,poang,slag');
     const rita = () => {
       el.innerHTML = `${knappar('par', [['poang', 'Poäng'], ['slag', 'Slag']])}${parTabell(rader)}
-        <p class="hint">Snitt ${lage.par === 'poang' ? 'poäng' : 'slag (tak par + 5)'} per hål på par 3-, par 4- och par 5-hål, alla år. Bäst i varje kolumn är markerad.</p>`;
+        <p class="hint">Snitt ${lage.par === 'poang' ? 'poäng' : 'slag (tak par + 5)'} per hål på par 3-, par 4- och par 5-hål, alla år. Bäst i varje kolumn är markerad. Tryck på en rubrik för att sortera.</p>`;
       kopplaLage(el, rita);
     };
     rita();

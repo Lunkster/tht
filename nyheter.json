@@ -2,6 +2,7 @@
  {
   "datum": "2026-10-17",
   "punkter": [
+   "Tabellen **Par 3/4/5** går att sortera – tryck på Spelare, Par 3, Par 4, Par 5 eller Hål (v0.23.1)",
    "**Mer statistik** i All-time med nya flikar: **Hålvinster** (vem som vunnit flest hål på slag, alla och ensamma), **Fördelning** (birdies, par, bogeys … per runda eller totalt), **Par 3/4/5** (snitt per hålpar), **Rekord** (bästa och sämsta runda, flest birdies, längsta svit, bästa puttrunda m.m.) och **Hål** (svåraste och lättaste hålen) (v0.23.0)",
    "Fliken **Vinnare** visar poäng och slag per runda, puttar och segermarginal för varje vinnare, och bästa segerstatistiken per spelare (v0.23.0)",
    "Årssidan har fått **Statistik för året**: hålvinster, resultatfördelning och par 3/4/5 (v0.23.0)",

@@ -1,15 +1,15 @@
-// THT golfapp (v0.23.0) – statistik och inmatning.
+// THT golfapp (v0.23.1) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.23.0';
-import { renderMata } from './mata.js?v=0.23.0';
-import { renderAdmin } from './admin.js?v=0.23.0';
-import { renderSpelare } from './spelare.js?v=0.23.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.23.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.23.0';
-import { renderBetygLank } from './betyg.js?v=0.23.0';
-import { renderNyheter } from './nyheter.js?v=0.23.0';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik } from './statistik.js?v=0.23.0';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.23.1';
+import { renderMata } from './mata.js?v=0.23.1';
+import { renderAdmin } from './admin.js?v=0.23.1';
+import { renderSpelare } from './spelare.js?v=0.23.1';
+import { renderKarta, miniKarta } from './karta.js?v=0.23.1';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.23.1';
+import { renderBetygLank } from './betyg.js?v=0.23.1';
+import { renderNyheter } from './nyheter.js?v=0.23.1';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik } from './statistik.js?v=0.23.1';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
