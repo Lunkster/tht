@@ -1,12 +1,12 @@
-// THT golfapp (v0.17.0) – statistik och inmatning.
+// THT golfapp (v0.18.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.17.0';
-import { renderMata } from './mata.js?v=0.17.0';
-import { renderAdmin } from './admin.js?v=0.17.0';
-import { renderSpelare } from './spelare.js?v=0.17.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.17.0';
-import { renderBana, banTopplista, stjarnor } from './bana.js?v=0.17.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.18.0';
+import { renderMata } from './mata.js?v=0.18.0';
+import { renderAdmin } from './admin.js?v=0.18.0';
+import { renderSpelare } from './spelare.js?v=0.18.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.18.0';
+import { renderBana, banTopplista, stjarnor } from './bana.js?v=0.18.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -69,13 +69,14 @@ async function renderYear(artal) {
     api(`v_tht_resultat?tht_nr=eq.${tht.nr}&order=placering`),
     api(`v_runda?tht_nr=eq.${tht.nr}&select=person_id,ordning,poang,slag,antal_hal,spel_hcp`),
     api(`v_tht_kurva?tht_nr=eq.${tht.nr}&order=hal_i_tht&select=person_id,hal_i_tht,poang_ack,poang_ack_mot_hcp`),
-    api(`deltavling?tht_nr=eq.${tht.nr}&order=ordning&select=id,ordning,namn,datum,narmast_hal,longest_hal,banversion(bana(id,namn))`),
+    api(`deltavling?tht_nr=eq.${tht.nr}&order=ordning&select=id,ordning,namn,datum,narmast_hal,longest_hal,vinnare_utan_kort,banversion(bana(id,namn))`),
     api(`pris?select=deltavling_id,typ,person(fornamn)`),
   ]);
 
   const ordningar = [...new Set(delt.map((d) => d.ordning))];
   const perRunda = {};
   rundor.forEach((r) => { (perRunda[r.person_id] ??= {})[r.ordning] = r; });
+  const utanKort = !rundor.length && res.length > 0;   // t.ex. 1999: bara totalresultat och deltävlingsvinnare
   const topp = res.slice(0, 3);
   const tieNote = res.length > 1 && res[0].poang === res[1].poang ? `<p class="hint">Lika poäng – lägst spel-HCP vinner.</p>` : '';
 
@@ -101,13 +102,15 @@ async function renderYear(artal) {
     </div>
     ${tieNote}
 
-    ${resultatOchGraf(res, ordningar, perRunda, tht.klar)}
+    ${utanKort ? `<p class="hint">Scorekorten från ${artal} saknas – här finns bara totalresultatet och vem som vann varje deltävling.</p>` : ''}
+    ${resultatOchGraf(res, ordningar, perRunda, tht.klar, utanKort)}
 
     <h2>Deltävlingar</h2>
     <div class="rounds">
       ${delt.map((d) => {
         const vinnare = rundor.filter((r) => r.ordning === d.ordning).sort((a, b) => (b.poang ?? -1) - (a.poang ?? -1))[0];
         const vNamn = vinnare ? res.find((r) => r.person_id === vinnare.person_id)?.fornamn : null;
+        const kand = !vinnare && d.vinnare_utan_kort ? res.find((r) => r.person_id === d.vinnare_utan_kort) : null;   // vinnare utan scorekort
         const nh = pris.find((p) => p.deltavling_id === d.id && p.typ === 'narmast');
         const ld = pris.find((p) => p.deltavling_id === d.id && p.typ === 'longest');
         const extra = [nh && `Närmast hål${d.narmast_hal ? ' (' + d.narmast_hal + ')' : ''}: ${esc(nh.person.fornamn)}`,
@@ -115,7 +118,7 @@ async function renderYear(artal) {
         return `<div class="round">
           <div><div class="rn">R${d.ordning} · ${esc(d.namn)}</div>
           <div class="meta">${d.banversion?.bana ? `<a class="namn" href="#/bana/${d.banversion.bana.id}">${esc(d.banversion.bana.namn)}</a>` : ''} · ${datum(d.datum)}</div></div>
-          <div class="win">${vNamn ? `<div class="rn"><a class="namn" href="#/spelare/${vinnare.person_id}">${esc(vNamn)}</a></div><div class="meta">${fmt(vinnare.poang)} p${tht.klar ? '' : ' · leder'}</div>` : '<div class="meta">Inga resultat</div>'}</div>
+          <div class="win">${vNamn ? `<div class="rn"><a class="namn" href="#/spelare/${vinnare.person_id}">${esc(vNamn)}</a></div><div class="meta">${fmt(vinnare.poang)} p${tht.klar ? '' : ' · leder'}</div>` : kand ? `<div class="rn"><a class="namn" href="#/spelare/${kand.person_id}">${esc(kand.fornamn)}</a></div><div class="meta">vann · poäng saknas</div>` : '<div class="meta">Inga resultat</div>'}</div>
           ${extra ? `<div class="extra">${extra}</div>` : ''}
         </div>`;
       }).join('')}
@@ -131,7 +134,7 @@ async function renderYear(artal) {
   document.getElementById('prev').onclick = () => { location.hash = `#/ar/${lista[idx - 1].artal}`; };
   document.getElementById('next').onclick = () => { location.hash = `#/ar/${lista[idx + 1].artal}`; };
 
-  drawKurva(res, kurva, ordningar.length);
+  if (!utanKort) drawKurva(res, kurva, ordningar.length);
 }
 
 
@@ -142,13 +145,13 @@ function pagarRuta(res) {
   return `<div class="pagar"><strong>Pågår</strong> – ingen vinnare utses förrän THT:n är avslutad.${ledare.length ? ` Leder just nu: ${ledare.map((r) => `<a class="namn" href="#/spelare/${r.person_id}">${esc(r.fornamn)}</a>`).join(', ')} (${fmt(ledare[0].poang)} p).` : ''}</div>`;
 }
 
-function resultatOchGraf(res, ordningar, perRunda, klar = true) {
+function resultatOchGraf(res, ordningar, perRunda, klar = true, utanGraf = false) {
   const rundorFor = (r) => Object.values(perRunda[r.person_id] ?? {});
   // Poäng mot handicap = poäng − 2 per spelat hål (samma mått som "Mot handicap" i grafen).
   const motHcp = (r) => { const hal = rundorFor(r).reduce((a, x) => a + (x.antal_hal ?? 0), 0); return hal ? r.poang - 2 * hal : null; };
   const motHcpText = (r) => { const v = motHcp(r); return v === null ? '–' : v > 0 ? `+${v}` : v < 0 ? `−${-v}` : '±0'; };
   // Spel-HCP är alltid ett heltal – visa senaste rundans i stället för årets snitt.
-  const senasteHcp = (r) => { const rs = rundorFor(r).filter((x) => x.spel_hcp != null).sort((a, b) => b.ordning - a.ordning); return rs[0]?.spel_hcp ?? Math.round(r.snitt_spel_hcp); };
+  const senasteHcp = (r) => { const rs = rundorFor(r).filter((x) => x.spel_hcp != null).sort((a, b) => b.ordning - a.ordning); return rs[0]?.spel_hcp ?? (r.snitt_spel_hcp == null ? null : Math.round(r.snitt_spel_hcp)); };
   return `
     <h2>Resultat</h2>
     <div class="tablewrap"><table>
@@ -171,7 +174,7 @@ function resultatOchGraf(res, ordningar, perRunda, klar = true) {
       </tbody>
     </table></div>
 
-    <h2>THT-grafen</h2>
+    ${utanGraf ? '' : `    <h2>THT-grafen</h2>
     <div class="chartcard">
       <div class="seg" role="group" aria-label="Visa">
         <button data-mode="hcp" class="on">Mot handicap</button>
@@ -180,7 +183,7 @@ function resultatOchGraf(res, ordningar, perRunda, klar = true) {
       <div class="chartbox" id="kurvabox"><div class="tip" id="kurvatip" hidden></div></div>
       <div class="chips" id="chips"></div>
       <p class="hint" id="charthint"></p>
-    </div>`;
+    </div>`}`;
 }
 
 // ---------- THT-grafen (egen SVG, inga beroenden) ----------
@@ -447,11 +450,12 @@ const sorteraPris = (rows) => rows.slice().sort((a, b) => {
 async function renderAlltime() {
   const myNav = nuNav();
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
-  const [res, rundor, thtKlar, priser] = await Promise.all([
+  const [res, rundor, thtKlar, priser, utanKort] = await Promise.all([
     api('v_tht_resultat?select=person_id,fornamn,artal,placering,poang'),
     api('v_runda?select=person_id,fornamn,artal,poang,slag,antal_hal,puttar,hal_med_puttar,placering'),
     api('tht?select=artal,klar'),
     api('pris?select=typ,person_id,person(fornamn)'),
+    api('deltavling?vinnare_utan_kort=not.is.null&select=vinnare_utan_kort,tht(artal)'),
   ]);
   const banTopp = await banTopplista().catch(() => []);
   // Topplista närmast hål / longest drive
@@ -475,6 +479,8 @@ async function renderAlltime() {
     x.putt += r.puttar ?? 0; x.puttN += r.hal_med_puttar ?? 0;
     if (x.bastaRunda === null || r.poang > x.bastaRunda) x.bastaRunda = r.poang;
   });
+  // Deltävlingar där scorekorten saknas men vinnaren är känd (t.ex. 1999)
+  utanKort.forEach((d) => { if (klarAr.has(d.tht?.artal) && p[d.vinnare_utan_kort]) p[d.vinnare_utan_kort].dSegrar++; });
   const rows = Object.values(p).filter((x) => x.rundor > 0).map((x) => ({
     ...x, snittPoang: x.pSum / x.rundor, snittSlag: x.sN ? x.sSum / x.sN : null, puttarHal: x.puttN ? x.putt / x.puttN : null,
   }));

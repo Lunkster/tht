@@ -1,7 +1,7 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, arMarkor, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.17.0';
+import { api, write, login, logout, isLoggedIn, arMarkor, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.18.0';
 
-import { renderScorekort } from './scorekort.js?v=0.17.0';
+import { renderScorekort } from './scorekort.js?v=0.18.0';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
@@ -78,7 +78,12 @@ async function renderValjDeltavling() {
           <div class="win"><span class="arrow">›</span></div>
         </a>`).join('')}
     </div>
-    ${markor ? '<p class="hint">Inloggad som markör: du kan mata in THT som inte är avslutade, sätta spelare i bollar och under <a href="#/admin">Admin</a> ange priser och banbetyg.</p>' : '<p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp under <a href="#/admin">Admin</a>.</p>'}`;
+    ${markor ? `<h2>Priser och banbetyg</h2>
+    <div class="rounds">
+      <a class="round link-card" href="#/admin/priser"><div><div class="rn">Närmast hål och longest drive</div><div class="meta">Hål och vinnare per deltävling</div></div><div class="win"><span class="arrow">›</span></div></a>
+      <a class="round link-card" href="#/admin/banbetyg"><div><div class="rn">Banbetyg</div><div class="meta">Varje spelares betyg 1–5 på årets banor</div></div><div class="win"><span class="arrow">›</span></div></a>
+    </div>
+    <p class="hint">Inloggad som markör: du kan mata in THT som inte är avslutade, sätta spelare i bollar, och ange priser och banbetyg.</p>` : '<p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp under <a href="#/admin">Admin</a>.</p>'}`;
   document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
   document.getElementById('matatht').onchange = (e) => { try { sessionStorage.setItem('mata-tht', e.target.value); } catch { /* */ } renderValjDeltavling(); };
 }

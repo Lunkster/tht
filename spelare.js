@@ -1,5 +1,5 @@
 // Personsida: en spelares nyckeltal, resultat per år, snittpoäng över tid och resultatfördelning.
-import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.17.0';
+import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.18.0';
 
 const app = document.getElementById('app');
 const BLA = '#3987e5';                       // seriefärg 1 (validerad mot mörk yta)
@@ -11,7 +11,7 @@ const mot = (v) => v === null ? '–' : v > 0 ? `+${v}` : v < 0 ? `−${-v}` : '
 export async function renderSpelare(pid) {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar …</p>';
-  const [[p], thts, res, rundor, priser, score, alla] = await Promise.all([
+  const [[p], thts, res, rundor, priser, score, alla, utanKort] = await Promise.all([
     api(`person?id=eq.${pid}&select=id,fornamn,efternamn,aktiv`),
     api('tht?select=nr,artal,ort,klar&order=artal'),
     api(`v_tht_resultat?person_id=eq.${pid}&select=tht_nr,artal,placering,poang,slag,puttar_per_hal,rundor`),
@@ -19,6 +19,7 @@ export async function renderSpelare(pid) {
     api(`pris?person_id=eq.${pid}&select=typ,deltavling(tht_nr,ordning)`),
     allaRader(`v_score?person_id=eq.${pid}&select=resultat,par,slag_tak,poang&order=runda_id,hal_nr`),
     api('person?select=id,fornamn&order=fornamn'),
+    api(`deltavling?vinnare_utan_kort=eq.${pid}&select=tht_nr,ordning`),
   ]);
   if (!aktuell(myNav)) return;
   if (!p) { app.innerHTML = '<p class="err">Spelaren finns inte.</p>'; return; }
@@ -36,7 +37,7 @@ export async function renderSpelare(pid) {
   const nyckel = [
     { t: 'THT-segrar', v: segrar.length, d: segrar.map((r) => r.artal).join(', ') || '–' },
     { t: 'Pallplatser', v: res.filter((r) => klar(r.tht_nr) && r.placering <= 3).length, d: `av ${res.filter((r) => klar(r.tht_nr)).length} avslutade THT` },
-    { t: 'Deltävlingssegrar', v: fulla.filter((r) => klar(r.tht_nr) && r.placering === 1).length, d: `av ${fulla.length} rundor` },
+    { t: 'Deltävlingssegrar', v: fulla.filter((r) => klar(r.tht_nr) && r.placering === 1).length + utanKort.filter((d) => klar(d.tht_nr)).length, d: `av ${fulla.length} rundor${utanKort.length ? ' + år utan scorekort' : ''}` },
     { t: 'Poäng/runda', v: fmt(fulla.length ? sum(fulla, (r) => r.poang) / fulla.length : null, 1), d: `mot hcp ${mot(hal ? sum(fulla, (r) => r.poang) - 2 * hal : null)} totalt` },
     { t: 'Slag/runda', v: fmt(hela.length ? sum(hela, (r) => r.slag) / hela.length : null, 1), d: 'hela 18-hålsrundor, tak par + 5' },
     { t: 'Puttar/hål', v: fmt(puttN ? sum(fulla, (r) => r.puttar) / puttN : null, 2), d: `${puttN} hål med puttar` },
@@ -60,7 +61,7 @@ export async function renderSpelare(pid) {
       punkter: arLista.map((r) => { const v = sum(r.rs, (x) => x.poang) / r.rs.length; return { etikett: r.artal, v: Math.round(v * 10) / 10, ring: r.klar && r.placering === 1,
         tip: `<div class="tt-title">${r.artal} · ${esc(r.ort)}</div><div class="tt-row on">Poäng/runda<b>${fmt(v, 1)}</b></div><div class="tt-row">Placering<b>${plac(r)}</b></div>` }; }) },
     ar: { rubrik: 'Placering per år', hint: 'Placering i THT:n varje år – 1 överst. Ring = seger. Pågående år räknas inte som seger.', opt: { inv: true, lo: 1 },
-      punkter: arLista.map((r) => ({ etikett: r.artal, v: r.placering, ring: r.klar && r.placering === 1,
+      punkter: perAr.slice().reverse().map((r) => ({ etikett: r.artal, v: r.placering, ring: r.klar && r.placering === 1,
         tip: `<div class="tt-title">${r.artal} · ${esc(r.ort)}</div><div class="tt-row on">Placering<b>${plac(r)}</b></div><div class="tt-row">Poäng<b>${fmt(r.poang)}</b></div>` })) },
     delt: { rubrik: 'Placering per deltävling', hint: 'Placering i varje deltävling – 1 överst. Ring = vann deltävlingen.', opt: { inv: true, lo: 1 },
       punkter: fulla.filter((r) => r.placering != null).map((r, i, a) => ({ etikett: i === 0 || a[i - 1].artal !== r.artal ? r.artal : '', v: r.placering, ring: klar(r.tht_nr) && r.placering === 1,

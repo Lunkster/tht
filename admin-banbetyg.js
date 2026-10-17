@@ -1,7 +1,8 @@
 // Admin: banbetyg – varje spelares betyg 1–5 på årets banor (tabellen ban_betyg).
-import { api, write, esc, fmt, nuNav, aktuell, arMarkor } from './lib.js?v=0.17.0';
+import { api, write, esc, fmt, nuNav, aktuell, arMarkor } from './lib.js?v=0.18.0';
 
 const app = document.getElementById('app');
+const tillbaka = () => arMarkor() ? '<a class="back" href="#/mata">‹ Mata in</a>' : '<a class="back" href="#/admin">‹ Admin</a>';
 
 export async function renderBanbetyg(meddelande = '') {
   const myNav = nuNav();
@@ -11,7 +12,7 @@ export async function renderBanbetyg(meddelande = '') {
   const med = thts.filter((t) => t.deltavling.length && !(arMarkor() && t.klar)); // markör: bara öppna THT
   let valt = Number(sessionStorage.getItem('betyg-tht')) || med[0]?.nr;
   if (!med.some((t) => t.nr === valt)) valt = med[0]?.nr;
-  if (!valt) { app.innerHTML = `<a class="back" href="#/admin">‹ Admin</a><h1>Banbetyg</h1><p class="muted">${arMarkor() ? 'Ingen öppen THT med deltävlingar – avslutade THT hanteras av admin.' : 'Inga deltävlingar ännu.'}</p>`; return; }
+  if (!valt) { app.innerHTML = `${tillbaka()}<h1>Banbetyg</h1><p class="muted">${arMarkor() ? 'Ingen öppen THT med deltävlingar – avslutade THT hanteras av admin.' : 'Inga deltävlingar ännu.'}</p>`; return; }
 
   const [delt, rundor, betyg, personer] = await Promise.all([
     api(`deltavling?tht_nr=eq.${valt}&select=ordning,banversion(bana(id,namn))&order=ordning`, { fresh: true }),
@@ -37,7 +38,7 @@ export async function renderBanbetyg(meddelande = '') {
   const snitt = (b) => { const xs = spelare.map((p) => orig[`${p.id}-${b.id}`]).filter(Boolean); return xs.length ? fmt(xs.reduce((a, x) => a + x, 0) / xs.length, 1) : '–'; };
 
   app.innerHTML = `
-    <a class="back" href="#/admin">‹ Admin</a>
+    ${tillbaka()}
     <h1>Banbetyg</h1>
     <div class="yearbar"><select id="betygtht" aria-label="Välj THT">
       ${med.map((t) => `<option value="${t.nr}" ${t.nr === valt ? 'selected' : ''}>THT ${t.nr} · ${esc(t.ort)} ${t.artal}</option>`).join('')}

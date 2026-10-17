@@ -1,11 +1,11 @@
 // Admin: grunddata som läggs upp sällan – spelare, banor, THT, priser och övernattningar.
-import { api, allaRader, write, isLoggedIn, arAdmin, arMarkor, logout, esc, nuNav, aktuell } from './lib.js?v=0.17.0';
-import { visaLogin } from './mata.js?v=0.17.0';
-import { renderBanor } from './admin-banor.js?v=0.17.0';
-import { renderTht } from './admin-tht.js?v=0.17.0';
-import { renderPriser } from './admin-priser.js?v=0.17.0';
-import { renderOvernattning } from './admin-overnattning.js?v=0.17.0';
-import { renderBanbetyg } from './admin-banbetyg.js?v=0.17.0';
+import { api, allaRader, write, isLoggedIn, arAdmin, arMarkor, logout, esc, nuNav, aktuell } from './lib.js?v=0.18.0';
+import { visaLogin } from './mata.js?v=0.18.0';
+import { renderBanor } from './admin-banor.js?v=0.18.0';
+import { renderTht } from './admin-tht.js?v=0.18.0';
+import { renderPriser } from './admin-priser.js?v=0.18.0';
+import { renderOvernattning } from './admin-overnattning.js?v=0.18.0';
+import { renderBanbetyg } from './admin-banbetyg.js?v=0.18.0';
 
 const app = document.getElementById('app');
 
@@ -23,7 +23,7 @@ export async function renderAdmin([sida, ...rest]) {
   if (arMarkor()) {   // markör: priser och banbetyg för öppna THT
     if (sida === 'priser') return renderPriser();
     if (sida === 'banbetyg') return renderBanbetyg();
-    if (!sida) return renderMarkorMeny();
+    if (!sida) { location.hash = '#/mata'; return; }   // markörens sida är Mata in
   }
   if (!arAdmin()) return visaEjAdmin([sida, ...rest]);
   if (sida === 'spelare') return renderSpelare();
@@ -35,25 +35,12 @@ export async function renderAdmin([sida, ...rest]) {
   return renderMeny();
 }
 
-function renderMarkorMeny() {
-  const delar = SEKTIONER.filter((s) => s.id === 'priser' || s.id === 'banbetyg');
-  app.innerHTML = `
-    <div class="row-between"><h1>Admin</h1><button class="link" id="logout">Logga ut</button></div>
-    <p class="sub">Inloggad som markör. Gäller THT som inte är avslutade – slag, puttar och bollar matas in under <a href="#/mata">Mata in</a>.</p>
-    <div class="rounds">
-      ${delar.map((s) => `<a class="round link-card" href="#/admin/${s.id}"><div><div class="rn">${esc(s.t)}</div><div class="meta">${esc(s.d)}</div></div><div class="win"><span class="arrow">›</span></div></a>`).join('')}
-    </div>
-    <p class="hint">Banor, THT, deltävlingar, spelare och avslutade THT hanteras av admin. <button class="link" id="bytkonto">Logga in som admin</button></p>`;
-  document.getElementById('logout').onclick = () => { logout(); renderAdmin([]); };
-  document.getElementById('bytkonto').onclick = () => { logout(); renderAdmin([]); };
-}
-
 // Inloggad med markörkoden (eller ett konto utan roll): admin kräver admin-koden.
 function visaEjAdmin(args) {
   app.innerHTML = `
     <h1>Admin</h1>
     <div class="card">
-      <p>${arMarkor() ? 'Du är inloggad som <strong>markör</strong>. Den här delen kräver admin – markörer når <a href="#/admin">priser och banbetyg</a> och <a href="#/mata">Mata in</a>.' : 'Kontot saknar behörighet för admin.'}</p>
+      <p>${arMarkor() ? 'Du är inloggad som <strong>markör</strong>. Den här delen kräver admin – allt markörer kan göra finns under <a href="#/mata">Mata in</a>.' : 'Kontot saknar behörighet för admin.'}</p>
       <p class="sub">Admin kräver admin-koden.</p>
       <button class="btn primary" type="button" id="bytkonto">Logga in som admin</button>
     </div>`;
@@ -105,7 +92,7 @@ async function visaGolfId() {
 // ---------- backup ----------
 // Tabellerna i den ordning de måste läsas in (främmande nycklar). id = tabeller med identitetskolumn.
 const BACKUP = [
-  { t: 'tht', o: 'nr' }, { t: 'person', o: 'id', id: true }, { t: 'bana', o: 'id', id: true },
+  { t: 'tht', o: 'nr' }, { t: 'person', o: 'id', id: true }, { t: 'tht_resultat_utan_kort', o: 'tht_nr,person_id' }, { t: 'bana', o: 'id', id: true },
   { t: 'banversion', o: 'id', id: true }, { t: 'tee', o: 'id', id: true }, { t: 'hal', o: 'id', id: true },
   { t: 'hal_langd', o: 'hal_id,tee_id' }, { t: 'deltavling', o: 'id', id: true }, { t: 'runda', o: 'id', id: true },
   { t: 'score', o: 'runda_id,hal_nr' }, { t: 'pris', o: 'deltavling_id,typ' }, { t: 'overnattning', o: 'id', id: true },
