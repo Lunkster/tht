@@ -1,6 +1,6 @@
 // Bansida: en banas betyg, när den spelats, bästa rundor och hålen.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.20.0';
-import { punktKarta } from './karta.js?v=0.20.0';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.21.0';
+import { punktKarta } from './karta.js?v=0.21.0';
 
 const app = document.getElementById('app');
 const stjarnor = (v) => v == null ? '' : `<span class="stjarnor" aria-hidden="true" style="--v:${(v / 5) * 100}%">★★★★★</span>`;
@@ -70,5 +70,17 @@ export async function banTopplista() {
   const per = Object.values(betyg.reduce((acc, x) => { const r = (acc[x.bana_id] ??= { id: x.bana_id, namn: x.bana?.namn ?? '?', n: 0, s: 0 }); r.n++; r.s += x.betyg; return acc; }, {}))
     .filter((r) => r.n >= 3).map((r) => ({ ...r, snitt: r.s / r.n })).sort((a, c) => c.snitt - a.snitt || c.n - a.n);
   return per;
+}
+// Alla spelade banor med betyg (även färre än 3) och antal gånger spelad – för "Visa alla banor"
+export async function banLista() {
+  const [banor, betyg] = await Promise.all([
+    api('bana?select=id,namn,banversion(deltavling(id))'),
+    api('ban_betyg?select=bana_id,betyg'),
+  ]);
+  const per = {};
+  betyg.forEach((x) => { const r = (per[x.bana_id] ??= { n: 0, s: 0 }); r.n++; r.s += Number(x.betyg); });
+  return banor.map((b) => ({ id: b.id, namn: b.namn, spelad: b.banversion.reduce((a, v) => a + v.deltavling.length, 0), n: per[b.id]?.n ?? 0, snitt: per[b.id] ? per[b.id].s / per[b.id].n : null }))
+    .filter((b) => b.spelad > 0)
+    .sort((a, c) => (c.n >= 3) - (a.n >= 3) || (c.snitt ?? -1) - (a.snitt ?? -1) || c.n - a.n || a.namn.localeCompare(c.namn, 'sv'));
 }
 export { stjarnor };

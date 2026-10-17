@@ -1,7 +1,7 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, arMarkor, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.20.0';
+import { api, write, login, logout, isLoggedIn, arMarkor, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.21.0';
 
-import { renderScorekort } from './scorekort.js?v=0.20.0';
+import { renderScorekort } from './scorekort.js?v=0.21.0';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än

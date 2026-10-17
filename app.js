@@ -1,14 +1,14 @@
-// THT golfapp (v0.20.0) – statistik och inmatning.
+// THT golfapp (v0.21.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.20.0';
-import { renderMata } from './mata.js?v=0.20.0';
-import { renderAdmin } from './admin.js?v=0.20.0';
-import { renderSpelare } from './spelare.js?v=0.20.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.20.0';
-import { renderBana, banTopplista, stjarnor } from './bana.js?v=0.20.0';
-import { renderBetygLank } from './betyg.js?v=0.20.0';
-import { renderNyheter } from './nyheter.js?v=0.20.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.21.0';
+import { renderMata } from './mata.js?v=0.21.0';
+import { renderAdmin } from './admin.js?v=0.21.0';
+import { renderSpelare } from './spelare.js?v=0.21.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.21.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.21.0';
+import { renderBetygLank } from './betyg.js?v=0.21.0';
+import { renderNyheter } from './nyheter.js?v=0.21.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -446,6 +446,7 @@ const KOLUMNER = [
 let sortKey = 'segrar', sortAsc = false;
 const PRISKOL = [{ k: 'fornamn', t: 'Spelare', l: true }, { k: 'narmast', t: 'Närmast hål' }, { k: 'longest', t: 'Longest drive' }, { k: 'tot', t: 'Totalt' }];
 const prisSort = { k: 'tot', asc: false };
+let visaAllaBanor = false;   // All-time: topp 10 eller alla banor
 const sorteraPris = (rows) => rows.slice().sort((a, b) => {
   const c = prisSort.k === 'fornamn' ? a.fornamn.localeCompare(b.fornamn, 'sv') : (a[prisSort.k] - b[prisSort.k]) || (a.tot - b.tot);
   return prisSort.asc ? c : -c;
@@ -461,7 +462,7 @@ async function renderAlltime() {
     api('pris?select=typ,person_id,person(fornamn)'),
     api('deltavling?vinnare_utan_kort=not.is.null&select=vinnare_utan_kort,tht(artal)'),
   ]);
-  const banTopp = await banTopplista().catch(() => []);
+  const [banTopp, allaBanor] = await Promise.all([banTopplista().catch(() => []), banLista().catch(() => [])]);
   // Topplista närmast hål / longest drive
   const prisTopp = Object.values(priser.reduce((acc, x) => {
     const r = (acc[x.person_id] ??= { id: x.person_id, fornamn: x.person?.fornamn ?? '?', narmast: 0, longest: 0 });
@@ -521,12 +522,15 @@ async function renderAlltime() {
       </table></div>
       <p class="hint">Vunna priser alla år – tryck på en rubrik för att sortera. Vissa år saknas uppgifter om priserna.</p>
 
-      ${banTopp.length ? `<h2>Bästa banorna</h2>
+      ${banTopp.length || allaBanor.length ? `<h2>${visaAllaBanor ? 'Alla banor' : 'Bästa banorna'}</h2>
       <div class="tablewrap"><table>
-        <thead><tr><th>#</th><th class="l">Bana</th><th>Betyg</th><th class="hide-sm">Antal</th></tr></thead>
-        <tbody>${banTopp.slice(0, 10).map((b, i) => `<tr><td>${i + 1}</td><td class="l"><a class="namn" href="#/bana/${b.id}">${esc(b.namn)}</a></td><td>${fmt(b.snitt, 1)} ${stjarnor(b.snitt)}</td><td class="hide-sm">${b.n}</td></tr>`).join('')}</tbody>
+        <thead><tr><th>#</th><th class="l">Bana</th><th>Betyg</th><th class="hide-sm">Antal</th>${visaAllaBanor ? '<th class="hide-sm">Spelad</th>' : ''}</tr></thead>
+        <tbody>${(visaAllaBanor ? allaBanor : banTopp.slice(0, 10)).map((b, i) => `<tr><td>${b.n >= 3 ? i + 1 : ''}</td><td class="l"><a class="namn" href="#/bana/${b.id}">${esc(b.namn)}</a></td><td class="${b.n >= 3 ? '' : 'dim'}">${b.snitt == null ? '–' : `${fmt(b.snitt, 1)} ${stjarnor(b.snitt)}`}</td><td class="hide-sm">${b.n}</td>${visaAllaBanor ? `<td class="hide-sm">${b.spelad}</td>` : ''}</tr>`).join('')}</tbody>
       </table></div>
-      <p class="hint">Deltagarnas betyg 1–5, snitt över alla år. Banor med minst 3 betyg. Tryck på en bana för mer.</p>` : ''}`;
+      <button class="link visa-alla" type="button" id="allabanor" aria-expanded="${visaAllaBanor}">${visaAllaBanor ? 'Visa bara de tio bästa ▴' : `Visa alla banor (${allaBanor.length}) ▾`}</button>
+      <p class="hint">Deltagarnas betyg 1–5, snitt över alla år. Placering bara för banor med minst 3 betyg${visaAllaBanor ? ' – övriga visas dämpade, utan placering' : ''}. Tryck på en bana för mer.</p>` : ''}`;
+    const knappAlla = document.getElementById('allabanor');
+    if (knappAlla) knappAlla.onclick = () => { visaAllaBanor = !visaAllaBanor; draw(); };
     app.querySelectorAll('th[data-pk]').forEach((th) => th.onclick = () => {
       const k = th.dataset.pk;
       if (prisSort.k === k) prisSort.asc = !prisSort.asc; else { prisSort.k = k; prisSort.asc = k === 'fornamn'; }

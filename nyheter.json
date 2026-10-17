@@ -7,30 +7,26 @@
    "Kartan har fått en egen ikon i toppmenyn (v0.16.0)",
    "Tabellen över närmast hål och longest drive under All-time kan sorteras – tryck på en rubrik (v0.16.0)",
    "Grafen på spelarsidan kan också visa placering per år och placering per deltävling (v0.16.0)",
-   "Banbetyg kan föras in under Admin (v0.16.0)",
-   "Golf-ID finns som lista under Admin. HCP, adress och telefon är borttagna – det som räknas är spel-HCP för varje runda (v0.16.0, v0.17.0)",
    "**Markörer** har fått en egen kod. Med den kan man mata in slag och puttar, sätta spelare i bollar och ange närmast hål och longest drive så länge THT:n inte är avslutad – allt samlat under Mata in (v0.17.0, v0.18.0)",
    "THT 1999 finns med i statistiken med totalresultat och deltävlingsvinnare. Scorekorten saknas, så snittpoäng, slag och puttar räknas inte för det året (v0.18.0)",
    "Banbetyg kan bara ges för banor man själv spelade det året, och markörer kan ge banbetyg även för avslutade THT (v0.18.0)",
-   "**Banbetyg via personlig länk:** varje spelare kan få en egen länk, t.ex. via mejl, och betygsätta årets banor med 1–5 stjärnor utan att logga in (v0.19.0)",
-   "**Nytt i appen:** den här listan finns i appen – tryck på i-ikonen i toppmenyn (v0.20.0)"
+   "**Banbetyg via personlig länk:** varje spelare kan få en egen länk, t.ex. via mejl, och betygsätta banorna med 1–5 stjärnor utan att logga in (v0.19.0)",
+   "**Nytt i appen:** den här listan finns i appen – tryck på i-ikonen i toppmenyn (v0.20.0)",
+   "Den personliga länken för banbetyg gäller nu alla år: banorna visas per THT med det senaste först, och man ser och kan ändra sina tidigare betyg. Samma länk fungerar nästa år (v0.21.0)",
+   "Kristinehamns GK, Linde GK, Nora Golfbana och Lagans GK fanns dubbelt – nu är de en bana var, så att alla gånger vi spelat dem och deras betyg samlas på samma bansida (v0.21.0)",
+   "Under topplistan **Bästa banorna** i All-time finns **Visa alla banor** – alla banor vi spelat, med betyg och hur många gånger (v0.21.0)"
   ]
  },
  {
   "datum": "2026-10-16",
   "punkter": [
    "Karta över alla spelade banor och övernattningar, med filter per år. Årssidan har fått en liten karta över årets banor (v0.15.0)",
-   "Admin: koordinater kan väljas genom att klicka i en karta, och all data kan laddas ned som säkerhetskopia (v0.15.0)",
-   "Mörkare bakgrundskarta som passar appen, knappar för att zooma och **Visa alla platser** (v0.15.1)",
-   "Admin: listor över banor och övernattningar som saknar koordinater (v0.15.1)"
+   "Mörkare bakgrundskarta som passar appen, knappar för att zooma och **Visa alla platser** (v0.15.1)"
   ]
  },
  {
   "datum": "2026-10-15",
   "punkter": [
-   "Admin: lägga upp THT och deltävlingar med bana, version och tee (v0.8.0)",
-   "Admin: närmast hål och longest drive – hål och vinnare per deltävling. Ett pris som inte blev av kan tas bort (v0.9.0, v0.9.1)",
-   "Admin: övernattningar för varje THT (v0.10.0)",
    "**Scorekort i efterhand:** hela rundor från pappersscorekorten matas in med 18 hål per spelare på en gång (v0.11.0)",
    "Datum skrivs och visas som ÅÅÅÅ-MM-DD (v0.12.0)",
    "Resultattabellen har fått kolumnen **Mot HCP**, och spel-HCP visas som heltal (v0.12.0)",
@@ -46,9 +42,7 @@
   "punkter": [
    "Ny flik **Leaderboard** som visar senaste THT och uppdaterar sig själv under tävlingen (v0.4.0)",
    "All-time visar THT-segrar och deltävlingssegrar (v0.4.0)",
-   "Ny startsida med nedräkning till nästa THT (v0.5.0)",
-   "Admin: lägga till och ändra spelare (v0.6.0)",
-   "Admin: lägga in banor med hål, par, index och tee:er – ett scorekort kan klistras in (v0.7.0)"
+   "Ny startsida med nedräkning till nästa THT (v0.5.0)"
   ]
  },
  {

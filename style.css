@@ -551,3 +551,7 @@ td.win a.namn, .pod a.namn { border-bottom-color: rgba(227, 194, 120, 0.5); }
   .tabs a.tab-ikon { padding-left: 3px; padding-right: 3px; }
   .topbar .logo { height: 30px; }
 }
+.betyg-ar { margin-top: 14px; }
+.betyg-ar > summary { cursor: pointer; padding: 10px 0; font-size: 17px; }
+.betyg-ar .rounds { margin-top: 4px; }
+.visa-alla { display: block; margin: 8px 0 2px; font-weight: 600; }
