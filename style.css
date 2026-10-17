@@ -499,3 +499,26 @@ td.win a.namn, .pod a.namn { border-bottom-color: rgba(227, 194, 120, 0.5); }
 .saknar-lista summary { cursor: pointer; color: var(--gold-2); }
 .saknar-rader { display: grid; gap: 2px; margin-top: 8px; }
 .saknar-rader .link { text-align: left; padding: 6px 0; min-height: 36px; }
+
+/* ---------- kartikon i menyn ---------- */
+.tabs a.tab-ikon { padding-left: 10px; padding-right: 10px; }
+.tabs a.tab-ikon svg { display: block; }
+@media (max-width: 480px) { .tabs a.tab-ikon { padding-left: 6px; padding-right: 6px; } }
+
+/* ---------- betyg ---------- */
+.stjarnor { position: relative; display: inline-block; font-size: 13px; letter-spacing: 1px; color: rgba(242, 232, 213, 0.18); vertical-align: 1px; }
+.stjarnor::before { content: "★★★★★"; position: absolute; inset: 0; width: var(--v); overflow: hidden; color: var(--gold-2); white-space: nowrap; }
+.betygtabell th, .betygtabell td { text-align: center; }
+.betygtabell th.l { text-align: left; }
+.betygtabell thead th { white-space: normal; min-width: 64px; font-size: 12px; line-height: 1.2; }
+.betygtabell select.betyg { width: 56px; min-height: 38px; padding: 2px 4px; font-size: 16px; text-align: center; }
+.betygtabell select.betyg.andrad { border-color: var(--gold); }
+.betygtabell tfoot td, .betygtabell tfoot th { color: var(--gold-2); }
+.bana-hal { margin-top: 16px; }
+.bana-hal summary { cursor: pointer; color: var(--gold-2); }
+.bana-hal .tablewrap { margin-top: 10px; }
+.sp-seg { margin-bottom: 8px; }
+.golfid-lista { margin-top: 16px; }
+.golfid-lista summary { cursor: pointer; }
+.golfid-lista .tablewrap { margin-top: 10px; }
+.golfid-lista code { font-size: 14px; color: var(--cream); }

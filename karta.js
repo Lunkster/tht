@@ -2,7 +2,7 @@
 //  - renderKarta(artal?)   – helsida #/karta[/år]: alla spelade banor och övernattningar, filter per år
 //  - miniKarta(el, artal)  – liten karta på årssidan
 //  - kartvaljare(latEl, lonEl) – "Välj på karta" i admin: klicka/sök för att fylla i koordinater
-import { api, esc, nuNav, aktuell } from './lib.js?v=0.15.1';
+import { api, esc, nuNav, aktuell } from './lib.js?v=0.16.0';
 
 const app = document.getElementById('app');
 const LEAFLET = 'https://unpkg.com/leaflet@1.9.4/dist/';
@@ -51,7 +51,7 @@ function markor(L, p) {
   if (p.typ === 'bana') {
     const r = Math.min(14, 6 + 2 * (p.spel.length - 1));
     return L.circleMarker([p.lat, p.lon], { radius: r, color: MORK, weight: 2, fillColor: GULD, fillOpacity: 0.95 })
-      .bindPopup(`<strong>${esc(p.namn)}</strong><br>${p.spel.map((s) => `<a href="#/ar/${s.artal}">${s.artal}</a> R${s.ordning}`).join(' · ')}`);
+      .bindPopup(`<strong><a href="#/bana/${p.id}">${esc(p.namn)}</a></strong><br>${p.spel.map((s) => `<a href="#/ar/${s.artal}">${s.artal}</a> R${s.ordning}`).join(' · ')}`);
   }
   return L.circleMarker([p.lat, p.lon], { radius: 6, color: MORK, weight: 2, fillColor: BLA, fillOpacity: 0.95 })
     .bindPopup(`<strong>${esc(p.namn)}</strong><br>Övernattning <a href="#/ar/${p.ar[0]}">${p.ar[0]}</a>${p.ort ? ' · ' + esc(p.ort) : ''}${p.antal_natter ? ` · ${p.antal_natter} nätter` : ''}${p.organisator ? `<br>Ordnat av ${esc(p.organisator)}` : ''}`);
@@ -163,4 +163,15 @@ export function kartvaljare(latEl, lonEl) {
     wrap.querySelector('.kartval-sok button').onclick = sok;
     sokInp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); sok(); } };
   };
+}
+
+// ---------- en enda plats (bansidan) ----------
+export async function punktKarta(el, lat, lon) {
+  try {
+    const L = await laddaLeaflet();
+    if (!document.body.contains(el)) return;
+    const karta = L.map(el, { scrollWheelZoom: false, dragging: !L.Browser.mobile }).setView([lat, lon], 13);
+    morkLager(L).addTo(karta);
+    L.circleMarker([lat, lon], { radius: 9, color: MORK, weight: 2, fillColor: GULD, fillOpacity: 0.95 }).addTo(karta);
+  } catch { el.closest('.minikarta')?.remove(); }
 }

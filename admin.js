@@ -1,18 +1,20 @@
 // Admin: grunddata som läggs upp sällan – spelare, banor, THT, priser och övernattningar.
-import { api, allaRader, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.15.1';
-import { visaLogin } from './mata.js?v=0.15.1';
-import { renderBanor } from './admin-banor.js?v=0.15.1';
-import { renderTht } from './admin-tht.js?v=0.15.1';
-import { renderPriser } from './admin-priser.js?v=0.15.1';
-import { renderOvernattning } from './admin-overnattning.js?v=0.15.1';
+import { api, allaRader, write, isLoggedIn, logout, esc, nuNav, aktuell } from './lib.js?v=0.16.0';
+import { visaLogin } from './mata.js?v=0.16.0';
+import { renderBanor } from './admin-banor.js?v=0.16.0';
+import { renderTht } from './admin-tht.js?v=0.16.0';
+import { renderPriser } from './admin-priser.js?v=0.16.0';
+import { renderOvernattning } from './admin-overnattning.js?v=0.16.0';
+import { renderBanbetyg } from './admin-banbetyg.js?v=0.16.0';
 
 const app = document.getElementById('app');
 
 const SEKTIONER = [
-  { id: 'spelare', t: 'Spelare', d: 'Lägg till spelare, ändra namn och HCP, aktiv/inaktiv' },
+  { id: 'spelare', t: 'Spelare', d: 'Lägg till spelare, ändra namn och Golf-ID, aktiv/vilande' },
   { id: 'banor', t: 'Banor', d: 'Ny bana, ombyggnad (ny version), tee:er och hål – klistra in scorekort' },
   { id: 'tht', t: 'THT och deltävlingar', d: 'Ny THT med ort och startdatum, deltävlingar med bana, version och tee' },
   { id: 'priser', t: 'Närmast hål och longest drive', d: 'Hål och vinnare per deltävling' },
+  { id: 'banbetyg', t: 'Banbetyg', d: 'Varje spelares betyg 1–5 på årets banor' },
   { id: 'overnattning', t: 'Övernattningar', d: 'Plats, nätter, organisatör och koordinater per THT' },
 ];
 
@@ -23,6 +25,7 @@ export async function renderAdmin([sida, ...rest]) {
   if (sida === 'tht') return renderTht(rest);
   if (sida === 'priser') return renderPriser();
   if (sida === 'overnattning') return renderOvernattning();
+  if (sida === 'banbetyg') return renderBanbetyg();
   return renderMeny();
 }
 
@@ -36,6 +39,11 @@ function renderMeny() {
         : `<a class="round link-card" href="#/admin/${s.id}"><div><div class="rn">${esc(s.t)}</div><div class="meta">${esc(s.d)}</div></div><div class="win"><span class="arrow">›</span></div></a>`).join('')}
     </div>
 
+    <details class="card golfid-lista" id="golfid">
+      <summary><strong>Golf-ID</strong> <span class="muted">– lista för anmälan och tävlingar</span></summary>
+      <div id="golfid-innehall"><p class="muted">Laddar …</p></div>
+    </details>
+
     <h2>Backup</h2>
     <div class="card backup">
       <div><strong>Ladda ned backup</strong>
@@ -45,6 +53,22 @@ function renderMeny() {
     </div>`;
   document.getElementById('logout').onclick = () => { logout(); renderAdmin([]); };
   document.getElementById('backup').onclick = laddaNedBackup;
+  document.getElementById('golfid').addEventListener('toggle', visaGolfId, { once: true });
+}
+
+async function visaGolfId() {
+  const el = document.getElementById('golfid-innehall');
+  try {
+    const [personer, kontakt] = await Promise.all([
+      api('person?select=id,fornamn,efternamn,aktiv&order=fornamn,efternamn', { fresh: true }),
+      api('person_kontakt?select=person_id,golf_id', { fresh: true }),
+    ]);
+    const g = Object.fromEntries(kontakt.map((k) => [k.person_id, k.golf_id]));
+    const rad = (p) => `<tr class="${p.aktiv ? '' : 'dim'}"><td class="l">${esc(p.fornamn)} ${esc(p.efternamn)}</td><td class="l"><code>${esc(g[p.id] ?? '–')}</code></td></tr>`;
+    el.innerHTML = `<div class="tablewrap"><table><thead><tr><th class="l">Spelare</th><th class="l">Golf-ID</th></tr></thead>
+      <tbody>${personer.filter((p) => p.aktiv).map(rad).join('')}${personer.filter((p) => !p.aktiv).map(rad).join('')}</tbody></table></div>
+      <p class="hint">Vilande spelare står sist i grått. Golf-ID ändras under <a href="#/admin/spelare">Spelare</a>.</p>`;
+  } catch (e) { el.innerHTML = `<p class="err">Kunde inte hämta Golf-ID: ${esc(e.message)}</p>`; }
 }
 
 // ---------- backup ----------
@@ -128,17 +152,22 @@ export function visaHcp(v) {
 async function renderSpelare(meddelande = '') {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar spelare …</p>';
-  const bas = 'person?select=id,fornamn,efternamn,hcp,aktiv';
+  const bas = 'person?select=id,fornamn,efternamn,aktiv';
   // Antal rundor är bara information – om räkningen inte stöds visas listan ändå.
-  const personer = await api(`${bas},runda(count)&order=fornamn,efternamn`, { fresh: true })
-    .catch(() => api(`${bas}&order=fornamn,efternamn`, { fresh: true }));
+  const [personer, kontakt] = await Promise.all([
+    api(`${bas},runda(count)&order=fornamn,efternamn`, { fresh: true }).catch(() => api(`${bas}&order=fornamn,efternamn`, { fresh: true })),
+    api('person_kontakt?select=person_id,golf_id', { fresh: true }).catch(() => []),
+  ]);
+  // Golf-ID ligger i den skyddade tabellen person_kontakt (syns bara inloggad). HCP lagras inte längre – spel-HCP anges per runda.
+  const golfId = Object.fromEntries(kontakt.map((k) => [k.person_id, k.golf_id]));
+  personer.forEach((p) => { p.golf_id = golfId[p.id] ?? null; p.harKontakt = p.id in golfId; });
   if (!aktuell(myNav)) return;
   const rundor = (p) => p.runda?.[0]?.count;
   const rad = (p) => `
     <div class="adm-rad" data-id="${p.id}">
       <div class="adm-namn">
         <div class="rn">${esc(p.fornamn)} ${esc(p.efternamn)}</div>
-        <div class="meta">HCP ${p.hcp === null ? '–' : visaHcp(p.hcp)}${rundor(p) === undefined ? '' : ` · ${rundor(p)} ${rundor(p) === 1 ? 'runda' : 'rundor'}`}</div>
+        <div class="meta">${p.golf_id ? 'Golf-ID ' + esc(p.golf_id) : '<span class="saknas">Golf-ID saknas</span>'}${rundor(p) === undefined ? '' : ` · ${rundor(p)} ${rundor(p) === 1 ? 'runda' : 'rundor'}`}</div>
       </div>
       <button class="link" data-andra="${p.id}">Ändra</button>
       <button class="vaxel" role="switch" aria-checked="${p.aktiv}" data-aktiv="${p.id}" aria-label="${esc(p.fornamn)} aktiv">
@@ -155,7 +184,7 @@ async function renderSpelare(meddelande = '') {
 
     <details class="card adm-ny" ${personer.length ? '' : 'open'}>
       <summary><strong>+ Lägg till spelare</strong></summary>
-      ${formular('ny', { fornamn: '', efternamn: '', hcp: null })}
+      ${formular('ny', { fornamn: '', efternamn: '', golf_id: null })}
     </details>
 
     <h2>Aktiva <span class="muted">(${aktiva.length})</span></h2>
@@ -193,7 +222,7 @@ function formular(key, p) {
       <div class="adm-falt">
         <label>Förnamn<input type="text" id="fn-${key}" value="${esc(p.fornamn)}" autocomplete="off" required></label>
         <label>Efternamn<input type="text" id="en-${key}" value="${esc(p.efternamn)}" autocomplete="off" required></label>
-        <label><span>HCP <span class="muted">(valfritt)</span></span><input type="text" inputmode="decimal" id="hcp-${key}" value="${esc(visaHcp(p.hcp))}" placeholder="t.ex. 14,2 eller +1,5" autocomplete="off"></label>
+        <label><span>Golf-ID <span class="muted">(valfritt)</span></span><input type="text" inputmode="numeric" id="gid-${key}" value="${esc(p.golf_id ?? '')}" placeholder="ÅÅMMDD-NNN" autocomplete="off"></label>
       </div>
       <p class="hint" id="msg-${key}" role="status"></p>
       <div class="adm-knappar">
@@ -219,17 +248,20 @@ function koppla(key, p, personer) {
     e.preventDefault();
     const fornamn = fnEl.value.trim();
     const efternamn = document.getElementById(`en-${key}`).value.trim();
-    const hcp = tolkaHcp(document.getElementById(`hcp-${key}`).value);
+    const golf_id = document.getElementById(`gid-${key}`).value.trim() || null;
     if (!fornamn || !efternamn) { msg.textContent = 'Fyll i både förnamn och efternamn.'; return; }
-    if (Number.isNaN(hcp)) { msg.textContent = 'HCP ska vara ett tal, t.ex. 14,2 – plus-hcp skrivs +1,5.'; return; }
     if (!p && personer.some((x) => x.fornamn.toLowerCase() === fornamn.toLowerCase() && x.efternamn.toLowerCase() === efternamn.toLowerCase())) {
       msg.textContent = `${fornamn} ${efternamn} finns redan – sök i listan och aktivera hen i stället.`; return;
     }
     const knapp = f.querySelector('[type=submit]');
     knapp.disabled = true; msg.textContent = 'Sparar …';
     try {
-      if (p) await write('PATCH', `person?id=eq.${p.id}`, { fornamn, efternamn, hcp }, 'return=minimal');
-      else await write('POST', 'person', { fornamn, efternamn, hcp, aktiv: true }, 'return=minimal');
+      let pid = p?.id;
+      if (p) await write('PATCH', `person?id=eq.${p.id}`, { fornamn, efternamn }, 'return=minimal');
+      else [{ id: pid }] = await write('POST', 'person', { fornamn, efternamn, aktiv: true });
+      if (golf_id !== (p?.golf_id ?? null) && (golf_id || p?.harKontakt)) {
+        await write('POST', 'person_kontakt?on_conflict=person_id', { person_id: pid, golf_id }, 'resolution=merge-duplicates,return=minimal');
+      }
       renderSpelare(p ? `${fornamn} ${efternamn} är uppdaterad.` : `${fornamn} ${efternamn} är tillagd som aktiv spelare.`);
     } catch (e2) {
       knapp.disabled = false;
