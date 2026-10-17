@@ -1,5 +1,5 @@
 // Admin: banbetyg – varje spelares betyg 1–5 på årets banor (tabellen ban_betyg).
-import { api, write, esc, fmt, nuNav, aktuell, arMarkor, arAdmin } from './lib.js?v=0.21.0';
+import { api, write, esc, fmt, nuNav, aktuell, arMarkor, arAdmin } from './lib.js?v=0.22.0';
 
 const app = document.getElementById('app');
 const tillbaka = () => arMarkor() ? '<a class="back" href="#/mata">‹ Mata in</a>' : '<a class="back" href="#/admin">‹ Admin</a>';
@@ -70,7 +70,7 @@ export async function renderBanbetyg(meddelande = '') {
     ${meddelande ? `<p class="ok" role="status">${esc(meddelande)}</p>` : ''}
     <p class="sub">Betyg 1–5 per spelare och bana för ${esc(tht.ort)} ${tht.artal}. 5 = bäst. Lämna "–" om spelaren inte betygsatt banan. Bara den som spelade banan kan få betyg (· = spelade inte).</p>
     <div class="tablewrap betygtabell"><table>
-      <thead><tr><th class="l">Spelare</th>${banor.map((b) => `<th title="${esc(b.namn)}">${esc(b.namn.replace(/ (GK|Golfklubb|Golf & Countryclub|Golfbana)$/i, ''))}</th>`).join('')}</tr></thead>
+      <thead><tr><th class="l">Spelare</th>${banor.map((b) => `<th title="${esc(b.namn)}">${esc(b.namn.replace(/ (GK|Golfklubb|Golf & Country ?Club|Golfbana|Golf Resort|Golf)$/i, ''))}</th>`).join('')}</tr></thead>
       <tbody>${spelare.map((p) => `<tr><th scope="row" class="l">${esc(p.fornamn)}</th>${banor.map((b) => cell(p, b)).join('')}</tr>`).join('')}</tbody>
       <tfoot><tr><th class="l">Snitt</th>${banor.map((b) => `<td><strong>${snitt(b)}</strong></td>`).join('')}</tr></tfoot>
     </table></div>

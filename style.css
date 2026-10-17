@@ -555,3 +555,16 @@ td.win a.namn, .pod a.namn { border-bottom-color: rgba(227, 194, 120, 0.5); }
 .betyg-ar > summary { cursor: pointer; padding: 10px 0; font-size: 17px; }
 .betyg-ar .rounds { margin-top: 4px; }
 .visa-alla { display: block; margin: 8px 0 2px; font-weight: 600; }
+
+/* Underflikar (All-time) */
+.underflikar { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 12px; }
+.underflikar a { padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; color: var(--cream-2); text-decoration: none; font-weight: 600; font-size: 14px; min-height: 36px; display: inline-flex; align-items: center; }
+.underflikar a.on { background: var(--gold); border-color: var(--gold); color: var(--stout); }
+
+/* Banbetyg: rutnätet ska rymmas på en telefon */
+@media (max-width: 480px) {
+  .betygtabell th, .betygtabell td { padding: 6px 2px; }
+  .betygtabell thead th { min-width: 0; font-size: 11px; max-width: 70px; white-space: normal; overflow-wrap: break-word; hyphens: auto; }
+  .betygtabell th.l { max-width: 74px; overflow: hidden; text-overflow: ellipsis; }
+  .betygtabell select.betyg { width: 40px; min-height: 36px; padding: 2px 0; font-size: 15px; -webkit-appearance: none; appearance: none; text-align: center; text-align-last: center; background-image: none; }
+}

@@ -1,14 +1,14 @@
-// THT golfapp (v0.21.0) – statistik och inmatning.
+// THT golfapp (v0.22.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.21.0';
-import { renderMata } from './mata.js?v=0.21.0';
-import { renderAdmin } from './admin.js?v=0.21.0';
-import { renderSpelare } from './spelare.js?v=0.21.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.21.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.21.0';
-import { renderBetygLank } from './betyg.js?v=0.21.0';
-import { renderNyheter } from './nyheter.js?v=0.21.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.22.0';
+import { renderMata } from './mata.js?v=0.22.0';
+import { renderAdmin } from './admin.js?v=0.22.0';
+import { renderSpelare } from './spelare.js?v=0.22.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.22.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.22.0';
+import { renderBetygLank } from './betyg.js?v=0.22.0';
+import { renderNyheter } from './nyheter.js?v=0.22.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -27,7 +27,7 @@ function route() {
   window.scrollTo(0, 0);
   const id = nyNav();
   const fel = (e) => { if (aktuell(id)) showError(e); };
-  if (page === 'alltime') return renderAlltime().catch(fel);
+  if (page === 'alltime') return renderAlltime(arg).catch(fel);
   if (page === 'leaderboard') return renderLeaderboard(id).catch(fel);
   if (page === 'mata') return renderMata([arg, ...rest]).catch(fel);
   if (page === 'admin') return renderAdmin([arg, ...rest]).catch(fel);
@@ -442,6 +442,7 @@ const KOLUMNER = [
   { k: 'puttarHal', t: 'Puttar/hål', d: 2, asc: true, sm: true },
   { k: 'bastaRunda', t: 'Bästa runda', sm: true },
   { k: 'totalPoang', t: 'Poäng totalt', sm: true },
+  { k: 'totalSlag', t: 'Slag totalt', sm: true, title: 'Alla slag i alla rundor (tak par + 5 per hål)' },
 ];
 let sortKey = 'segrar', sortAsc = false;
 const PRISKOL = [{ k: 'fornamn', t: 'Spelare', l: true }, { k: 'narmast', t: 'Närmast hål' }, { k: 'longest', t: 'Longest drive' }, { k: 'tot', t: 'Totalt' }];
@@ -452,7 +453,15 @@ const sorteraPris = (rows) => rows.slice().sort((a, b) => {
   return prisSort.asc ? c : -c;
 });
 
-async function renderAlltime() {
+// Underflikar i All-time – nya statistiktabeller läggs till här
+const ALLTIME_FLIKAR = [
+  { id: 'spelare', t: 'Spelare' },
+  { id: 'vinnare', t: 'Vinnare' },
+  { id: 'priser', t: 'Priser' },
+  { id: 'banor', t: 'Banor' },
+];
+async function renderAlltime(flik) {
+  if (!ALLTIME_FLIKAR.some((f) => f.id === flik)) flik = 'spelare';
   const myNav = nuNav();
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
   const [res, rundor, thtKlar, priser, utanKort] = await Promise.all([
@@ -471,14 +480,14 @@ async function renderAlltime() {
   // Vinnare utses först när THT:n är avslutad (Admin → THT → Avsluta).
   const klarAr = new Set(thtKlar.filter((t) => t.klar).map((t) => t.artal));
   const p = {};
-  const get = (r) => (p[r.person_id] ??= { id: r.person_id, fornamn: r.fornamn, tht: 0, segrar: 0, dSegrar: 0, pall: 0, rundor: 0, pSum: 0, sSum: 0, sN: 0, putt: 0, puttN: 0, bastaRunda: null, totalPoang: 0, vinstAr: [] });
+  const get = (r) => (p[r.person_id] ??= { id: r.person_id, fornamn: r.fornamn, tht: 0, segrar: 0, dSegrar: 0, pall: 0, rundor: 0, pSum: 0, sSum: 0, sN: 0, putt: 0, puttN: 0, bastaRunda: null, totalPoang: 0, totalSlag: 0, vinstAr: [] });
   res.forEach((r) => {
     const x = get(r); x.tht++;
     if (klarAr.has(r.artal) && r.placering === 1) { x.segrar++; x.vinstAr.push(r.artal); }
     if (klarAr.has(r.artal) && r.placering <= 3) x.pall++;
   });
   rundor.filter((r) => r.antal_hal > 0).forEach((r) => {
-    const x = get(r); x.rundor++; x.pSum += r.poang; x.totalPoang += r.poang;
+    const x = get(r); x.rundor++; x.pSum += r.poang; x.totalPoang += r.poang; x.totalSlag += r.slag ?? 0;
     if (klarAr.has(r.artal) && r.placering === 1) x.dSegrar++;
     if (r.antal_hal === 18) { x.sSum += r.slag; x.sN++; }
     x.putt += r.puttar ?? 0; x.puttN += r.hal_med_puttar ?? 0;
@@ -502,33 +511,38 @@ async function renderAlltime() {
     });
     if (!aktuell(myNav)) return; app.innerHTML = `
       <h1>All-time</h1>
+      <nav class="underflikar" aria-label="Delar av All-time">${ALLTIME_FLIKAR.map((f) => `<a href="#/alltime/${f.id}" class="${f.id === flik ? 'on' : ''}"${f.id === flik ? ' aria-current="page"' : ''}>${f.t}</a>`).join('')}</nav>
       <p class="sub">${new Set(res.map((r) => r.artal)).size} THT med resultat · ${rundor.filter((r) => r.antal_hal > 0).length} rundor</p>
-      <div class="tablewrap"><table>
+`
+      + (flik === 'spelare' ? `      <div class="tablewrap"><table>
         <thead><tr>${KOLUMNER.map((c) => `<th class="sortable ${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''} ${sortKey === c.k ? 'sorted' : ''}" data-k="${c.k}" ${c.title ? `title="${c.title}"` : ''} aria-sort="${sortKey === c.k ? (sortAsc ? 'ascending' : 'descending') : 'none'}">${c.t}${sortKey === c.k ? (sortAsc ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
         <tbody>${rows.map((r) => `<tr>${KOLUMNER.map((c) => `<td class="${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''}">${c.k === 'fornamn' ? `<a class="namn" href="#/spelare/${r.id}">${esc(r.fornamn)}</a>` : c.l ? esc(r[c.k]) : fmt(r[c.k], c.d || 0)}</td>`).join('')}</tr>`).join('')}</tbody>
       </table></div>
       <p class="hint">Tryck på en rubrik för att sortera. Segrar = vunna THT, Deltävl. = vunna deltävlingar (lika poäng → lägst spel-HCP). Slag/runda räknas bara på rundor med alla 18 hål, med tak par + 5. Puttar/hål är snittet av alla ifyllda puttar – tomma hål räknas inte.${pagar.length ? ` Segrar och pall räknas inte för ${pagar.join(', ')} förrän THT:n är avslutad.` : ''}</p>
 
-      <h2>Vinnare</h2>
+` : '')
+      + (flik === 'vinnare' ? `      <h2>Vinnare</h2>
       <div class="tablewrap"><table>
         <thead><tr><th class="l">År</th><th class="l">Vinnare</th><th>Poäng</th></tr></thead>
         <tbody>${vinnare.map((v) => `<tr><td class="l"><a href="#/ar/${v.artal}">${v.artal}</a></td><td class="l win"><a class="namn" href="#/spelare/${v.person_id}">${esc(v.fornamn)}</a></td><td>${fmt(v.poang)}</td></tr>`).join('')}</tbody>
       </table></div>
 
-      <h2>Närmast hål och longest drive</h2>
+` : '')
+      + (flik === 'priser' ? `      <h2>Närmast hål och longest drive</h2>
       <div class="tablewrap"><table>
         <thead><tr>${PRISKOL.map((c) => `<th class="sortable ${c.l ? 'l' : ''} ${prisSort.k === c.k ? 'sorted' : ''}" data-pk="${c.k}" aria-sort="${prisSort.k === c.k ? (prisSort.asc ? 'ascending' : 'descending') : 'none'}">${c.t}${prisSort.k === c.k ? (prisSort.asc ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead>
         <tbody>${sorteraPris(prisTopp).map((r) => `<tr><td class="l"><a class="namn" href="#/spelare/${r.id}">${esc(r.fornamn)}</a></td><td>${r.narmast}</td><td>${r.longest}</td><td><strong>${r.tot}</strong></td></tr>`).join('')}</tbody>
       </table></div>
       <p class="hint">Vunna priser alla år – tryck på en rubrik för att sortera. Vissa år saknas uppgifter om priserna.</p>
 
-      ${banTopp.length || allaBanor.length ? `<h2>${visaAllaBanor ? 'Alla banor' : 'Bästa banorna'}</h2>
+` : '')
+      + (flik === 'banor' ? `      ${banTopp.length || allaBanor.length ? `<h2>${visaAllaBanor ? 'Alla banor' : 'Bästa banorna'}</h2>
       <div class="tablewrap"><table>
-        <thead><tr><th>#</th><th class="l">Bana</th><th>Betyg</th><th class="hide-sm">Antal</th>${visaAllaBanor ? '<th class="hide-sm">Spelad</th>' : ''}</tr></thead>
+        <thead><tr><th>#</th><th class="l">Bana</th><th>Betyg</th><th class="hide-sm">Antal betyg</th>${visaAllaBanor ? '<th class="hide-sm">Spelade gånger</th>' : ''}</tr></thead>
         <tbody>${(visaAllaBanor ? allaBanor : banTopp.slice(0, 10)).map((b, i) => `<tr><td>${b.n >= 3 ? i + 1 : ''}</td><td class="l"><a class="namn" href="#/bana/${b.id}">${esc(b.namn)}</a></td><td class="${b.n >= 3 ? '' : 'dim'}">${b.snitt == null ? '–' : `${fmt(b.snitt, 1)} ${stjarnor(b.snitt)}`}</td><td class="hide-sm">${b.n}</td>${visaAllaBanor ? `<td class="hide-sm">${b.spelad}</td>` : ''}</tr>`).join('')}</tbody>
       </table></div>
       <button class="link visa-alla" type="button" id="allabanor" aria-expanded="${visaAllaBanor}">${visaAllaBanor ? 'Visa bara de tio bästa ▴' : `Visa alla banor (${allaBanor.length}) ▾`}</button>
-      <p class="hint">Deltagarnas betyg 1–5, snitt över alla år. Placering bara för banor med minst 3 betyg${visaAllaBanor ? ' – övriga visas dämpade, utan placering' : ''}. Tryck på en bana för mer.</p>` : ''}`;
+      <p class="hint">Deltagarnas betyg 1–5, snitt över alla år. Placering bara för banor med minst 3 betyg${visaAllaBanor ? ' – övriga visas dämpade, utan placering' : ''}. Tryck på en bana för mer.</p>` : ''}` : '');
     const knappAlla = document.getElementById('allabanor');
     if (knappAlla) knappAlla.onclick = () => { visaAllaBanor = !visaAllaBanor; draw(); };
     app.querySelectorAll('th[data-pk]').forEach((th) => th.onclick = () => {

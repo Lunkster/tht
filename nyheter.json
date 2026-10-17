@@ -14,7 +14,10 @@
    "**Nytt i appen:** den här listan finns i appen – tryck på i-ikonen i toppmenyn (v0.20.0)",
    "Den personliga länken för banbetyg gäller nu alla år: banorna visas per THT med det senaste först, och man ser och kan ändra sina tidigare betyg. Samma länk fungerar nästa år (v0.21.0)",
    "Kristinehamns GK, Nora Golfbana och Lagans GK fanns dubbelt – nu är de en bana var, så att alla gånger vi spelat dem och deras betyg samlas på samma bansida. Linde GK och Lindesberga GK är samma bana och heter nu **Lindesbergs GK** (v0.21.0)",
-   "Under topplistan **Bästa banorna** i All-time finns **Visa alla banor** – alla banor vi spelat, med betyg och hur många gånger (v0.21.0)"
+   "Under topplistan **Bästa banorna** i All-time finns **Visa alla banor** – alla banor vi spelat, med antal betyg och hur många gånger vi spelat dem (v0.21.0, v0.22.0)",
+   "All-time har fått underflikar: **Spelare**, **Vinnare**, **Priser** och **Banor** (v0.22.0)",
+   "Spelartabellen i All-time visar även **Slag totalt** på bredare skärmar (v0.22.0)",
+   "Tabellen för att ange banbetyg (för markörer och admin) ryms på telefonen (v0.22.0)"
   ]
  },
  {
