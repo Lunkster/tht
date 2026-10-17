@@ -1,6 +1,6 @@
 // Banbetyg via personlig länk (#/betyg/<kod>) – ingen inloggning. Databasen kontrollerar koden
 // och tar bara emot betyg på banor som spelaren spelade den THT:n.
-import { rpc, esc } from './lib.js?v=0.19.0';
+import { rpc, esc } from './lib.js?v=0.20.0';
 
 const app = document.getElementById('app');
 

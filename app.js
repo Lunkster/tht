@@ -1,13 +1,14 @@
-// THT golfapp (v0.19.0) – statistik och inmatning.
+// THT golfapp (v0.20.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.19.0';
-import { renderMata } from './mata.js?v=0.19.0';
-import { renderAdmin } from './admin.js?v=0.19.0';
-import { renderSpelare } from './spelare.js?v=0.19.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.19.0';
-import { renderBana, banTopplista, stjarnor } from './bana.js?v=0.19.0';
-import { renderBetygLank } from './betyg.js?v=0.19.0';
+import { api, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.20.0';
+import { renderMata } from './mata.js?v=0.20.0';
+import { renderAdmin } from './admin.js?v=0.20.0';
+import { renderSpelare } from './spelare.js?v=0.20.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.20.0';
+import { renderBana, banTopplista, stjarnor } from './bana.js?v=0.20.0';
+import { renderBetygLank } from './betyg.js?v=0.20.0';
+import { renderNyheter } from './nyheter.js?v=0.20.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -34,6 +35,7 @@ function route() {
   if (page === 'karta') return renderKarta(arg ? Number(arg) : null).catch(fel);
   if (page === 'bana' && arg) return renderBana(Number(arg)).catch(fel);
   if (page === 'betyg' && arg) return renderBetygLank(arg).catch(fel);
+  if (page === 'nyheter') return renderNyheter().catch(fel);
   if (page === 'ar') return renderYear(arg ? Number(arg) : null).catch(fel);
   return renderStart(id).catch(fel);
 }
