@@ -1,7 +1,7 @@
 // Bansida: en banas betyg, när den spelats, bästa rundor och hålen.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.23.1';
-import { punktKarta } from './karta.js?v=0.23.1';
-import { halStatistik } from './statistik.js?v=0.23.1';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.24.0';
+import { punktKarta } from './karta.js?v=0.24.0';
+import { halStatistik } from './statistik.js?v=0.24.0';
 
 const app = document.getElementById('app');
 const stjarnor = (v) => v == null ? '' : `<span class="stjarnor" aria-hidden="true" style="--v:${(v / 5) * 100}%">★★★★★</span>`;
@@ -62,7 +62,7 @@ export async function renderBana(bid) {
 
     ${hal.length ? `<details class="card bana-hal"><summary><strong>Hålen</strong> <span class="muted">– version från ${esc(senaste.giltig_fran)}</span></summary>
       <div class="tablewrap"><table><thead><tr><th>Hål</th><th>Par</th><th>Index</th>${tees.map((t) => `<th>${esc(t.namn)}</th>`).join('')}<th title="Snitt slag över par, alla som spelat hålet">Över par</th><th class="hide-sm">Poäng</th></tr></thead>
-        <tbody>${hal.map((h) => `<tr><td>${h.nr}</td><td>${h.par}</td><td>${h.hcp_index}</td>${tees.map((t) => `<td>${h.hal_langd.find((l) => l.tee_id === t.id)?.langd ?? '–'}</td>`).join('')}<td class="${svarast && hs(h) === svarast ? 'win' : ''}">${hs(h) ? `${hs(h).over_par > 0 ? '+' : ''}${fmt(hs(h).over_par, 1)}` : '–'}</td><td class="hide-sm">${hs(h) ? fmt(hs(h).poang, 1) : '–'}</td></tr>`).join('')}</tbody></table></div>
+        <tbody>${hal.map((h) => `<tr><td><a class="namn" href="#/hal/${bid}/${h.nr}">${h.nr}</a></td><td>${h.par}</td><td>${h.hcp_index}</td>${tees.map((t) => `<td>${h.hal_langd.find((l) => l.tee_id === t.id)?.langd ?? '–'}</td>`).join('')}<td class="${svarast && hs(h) === svarast ? 'win' : ''}">${hs(h) ? `${hs(h).over_par > 0 ? '+' : ''}${fmt(hs(h).over_par, 1)}` : '–'}</td><td class="hide-sm">${hs(h) ? fmt(hs(h).poang, 1) : '–'}</td></tr>`).join('')}</tbody></table></div>
         ${Object.keys(halStat).length ? `<p class="hint">Över par = snitt slag över par (tak par + 5) för alla som spelat hålet i THT.${svarast ? ` Svåraste: hål ${svarast.hal_nr}.` : ''}</p>` : ''}</details>` : ''}
 
     ${b.lat != null ? `<section class="minikarta"><div class="row-between"><h2>Karta</h2><a class="lank-pil" href="https://www.openstreetmap.org/?mlat=${b.lat}&mlon=${b.lon}#map=15/${b.lat}/${b.lon}" target="_blank" rel="noopener">OpenStreetMap ›</a></div><div class="karta mini" id="bankarta"></div></section>` : ''}`;

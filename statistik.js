@@ -1,6 +1,6 @@
 // Statistik från 2016-rapporten: hålvinster, resultatfördelning, par 3/4/5, rekord och svåraste hålen.
 // Beräknas i databasvyerna v_stat_* (migrering 17) – här bara sammanställning och tabeller.
-import { api, allaRader, esc, fmt } from './lib.js?v=0.23.1';
+import { api, allaRader, esc, fmt } from './lib.js?v=0.24.0';
 
 const namnLank = (id, namn) => `<a class="namn" href="#/spelare/${id}">${esc(namn)}</a>`;
 const summa = (xs, f) => xs.reduce((a, x) => a + (Number(f(x)) || 0), 0);
@@ -137,17 +137,18 @@ async function halHtml() {
   const rader = (await allaRader('v_stat_hal?select=bana_id,bana,hal_nr,par,spelade,over_par,poang&order=bana_id,hal_nr')).filter((h) => h.spelade >= 8);
   const tab = (lista) => `<div class="tablewrap"><table class="stat-tabell">
     <thead><tr><th class="l">Bana</th><th>Hål</th><th>Par</th><th title="Snitt slag över par">Över par</th><th class="hide-sm">Poäng</th><th class="hide-sm">Spelat</th></tr></thead>
-    <tbody>${lista.map((h) => `<tr><td class="l"><a class="namn" href="#/bana/${h.bana_id}">${esc(h.bana)}</a></td><td>${h.hal_nr}</td><td>${h.par}</td><td><strong>${h.over_par > 0 ? '+' : ''}${fmt(h.over_par, 2)}</strong></td><td class="hide-sm">${fmt(h.poang, 2)}</td><td class="hide-sm">${h.spelade}</td></tr>`).join('')}</tbody>
+    <tbody>${lista.map((h) => `<tr><td class="l"><a class="namn" href="#/bana/${h.bana_id}">${esc(h.bana)}</a></td><td><a class="namn" href="#/hal/${h.bana_id}/${h.hal_nr}">${h.hal_nr}</a></td><td>${h.par}</td><td><strong>${h.over_par > 0 ? '+' : ''}${fmt(h.over_par, 2)}</strong></td><td class="hide-sm">${fmt(h.poang, 2)}</td><td class="hide-sm">${h.spelade}</td></tr>`).join('')}</tbody>
   </table></div>`;
   const svar = rader.slice().sort((a, b) => b.over_par - a.over_par).slice(0, 10);
   const latt = rader.slice().sort((a, b) => a.over_par - b.over_par).slice(0, 10);
   return `<h2>Svåraste hålen</h2>${tab(svar)}
     <h2>Lättaste hålen</h2>${tab(latt)}
-    <p class="hint">Snitt antal slag över par (tak par + 5) för alla som spelat hålet. Bara hål som spelats minst 8 gånger. Varje banas alla hål finns på bansidan.</p>`;
+    <p class="hint">Snitt antal slag över par (tak par + 5) för alla som spelat hålet. Bara hål som spelats minst 8 gånger. Tryck på hålnumret för allas resultat på hålet. Varje banas alla hål finns på bansidan.</p>`;
 }
 
 // ---------- Flikarna i All-time ----------
 export const STAT_FLIKAR = [
+  { id: 'totalt', t: 'Totalt' },
   { id: 'halvinster', t: 'Hålvinster' },
   { id: 'fordelning', t: 'Fördelning' },
   { id: 'par', t: 'Par 3/4/5' },
@@ -183,7 +184,43 @@ export async function renderStatFlik(flik, el) {
     return;
   }
   if (flik === 'rekord') { el.innerHTML = await rekordHtml(); return; }
-  if (flik === 'hal') { el.innerHTML = await halHtml(); }
+  if (flik === 'hal') { el.innerHTML = await halHtml(); return; }
+  if (flik === 'totalt') {
+    const [rader, hv, hal] = await Promise.all([
+      api('v_stat_totalt?select=person_id,fornamn,tht,rundor,banor,hal,poang,slag,puttar,meter'),
+      api('v_stat_halvinst?select=tht_nr'),
+      allaRader('v_stat_hal?select=bana_id,hal_nr,par&order=bana_id,hal_nr,par'),
+    ]);
+    const alla = { fornamn: 'Alla', tht: new Set(hv.map((x) => x.tht_nr)).size, banor: new Set(hal.map((x) => x.bana_id)).size,
+      ...Object.fromEntries(['rundor', 'hal', 'poang', 'slag', 'puttar', 'meter'].map((k) => [k, summa(rader, (x) => x[k])])) };
+    const rita = () => { el.innerHTML = totaltHtml(rader, alla); };
+    el.addEventListener('click', (e) => {
+      const th = e.target.closest('th[data-ts]'); if (!th) return;
+      const k = th.dataset.ts;
+      if (totSort.k === k) totSort.asc = !totSort.asc; else { totSort.k = k; totSort.asc = k === 'fornamn'; }
+      rita();
+    });
+    rita();
+  }
+}
+
+// ---------- Totalt ----------
+const totSort = { k: 'rundor', asc: false };
+const TOTKOL = [['fornamn', 'Spelare', 'l'], ['tht', 'THT', 'hide-sm'], ['rundor', 'Rundor', ''], ['banor', 'Banor', ''], ['hal', 'Hål', ''], ['poang', 'Poäng', ''], ['slag', 'Slag', ''], ['puttar', 'Puttar', 'hide-sm'], ['meter', 'Km', '']];
+function totaltHtml(rader, alla) {
+  const lista = rader.slice().sort((a, b) => {
+    const va = a[totSort.k], vb = b[totSort.k];
+    const c = typeof va === 'string' ? va.localeCompare(vb, 'sv') : Number(va) - Number(vb);
+    return totSort.asc ? c : -c;
+  });
+  const cell = (x, k) => (k === 'meter' ? fmt(Number(x.meter) / 1000, 0) : fmt(Number(x[k])));
+  const th = ([k, t, c]) => `<th class="sortable ${c} ${totSort.k === k ? 'sorted' : ''}" data-ts="${k}">${t}${totSort.k === k ? (totSort.asc ? ' ▲' : ' ▼') : ''}</th>`;
+  return `<div class="tablewrap"><table class="stat-tabell radbryt totalt-tabell">
+    <thead><tr>${TOTKOL.map(th).join('')}</tr></thead>
+    <tbody>${lista.map((x) => `<tr><td class="l">${namnLank(x.person_id, x.fornamn)}</td>${TOTKOL.slice(1).map(([k, , c]) => `<td class="${c}">${cell(x, k)}</td>`).join('')}</tr>`).join('')}</tbody>
+    <tfoot><tr><th class="l">Alla</th>${TOTKOL.slice(1).map(([k, , c]) => `<td class="${c}"><strong>${cell(alla, k)}</strong></td>`).join('')}</tr></tfoot>
+  </table></div>
+  <p class="hint">Allt som finns på scorekorten, alla år. Slag = verkliga slag (utan tak), Km = hålens längd från den tee vi spelade. Alla: rundor, hål, poäng och slag summerade för alla spelare; THT och banor räknas en gång var. Tryck på en rubrik för att sortera.</p>`;
 }
 
 function kopplaLage(el, rita) {
@@ -209,4 +246,44 @@ export async function arsStatistik(el, thtNr) {
 export async function halStatistik(banaId) {
   const rader = await api(`v_stat_hal?bana_id=eq.${banaId}&select=hal_nr,par,spelade,over_par,poang`);
   return Object.fromEntries(rader.map((h) => [`${h.hal_nr}-${h.par}`, h]));
+}
+
+// ---------- Hålsida: allas resultat på ett hål (#/hal/<bana>/<nr>) ----------
+export async function renderHal(bid, nr) {
+  const app = document.getElementById('app');
+  app.innerHTML = '<p class="muted center">Laddar hål …</p>';
+  const [[bana], versioner, personer] = await Promise.all([
+    api(`bana?id=eq.${bid}&select=id,namn`),
+    api(`banversion?bana_id=eq.${bid}&select=id,giltig_fran,deltavling(id),hal(nr,par,hcp_index,hal_langd(langd,tee(namn)))&order=giltig_fran.desc`),
+    api('person?select=id,fornamn'),
+  ]);
+  if (!bana) { app.innerHTML = '<p class="err">Banan finns inte.</p>'; return; }
+  const did = versioner.flatMap((v) => v.deltavling.map((d) => d.id));
+  const rader = did.length ? await api(`v_score?deltavling_id=in.(${did.join(',')})&hal_nr=eq.${nr}&slag=not.is.null&select=person_id,artal,ordning,par,spel_hcp,slag,slag_tak,poang,puttar&order=artal.desc,ordning.desc,slag.asc`) : [];
+  const namn = Object.fromEntries(personer.map((p) => [p.id, p.fornamn]));
+  const hal = versioner.map((v) => v.hal.find((h) => h.nr === nr)).find(Boolean);
+  const langder = (hal?.hal_langd ?? []).map((l) => `${esc(l.tee?.namn ?? '')} ${l.langd} m`).join(' · ');
+  const RES = (r) => { const d = r.slag_tak - r.par; return r.slag === 1 ? 'Hole in one' : d <= -2 ? 'Eagle' : d === -1 ? 'Birdie' : d === 0 ? 'Par' : d === 1 ? 'Bogey' : d === 2 ? 'Dubbel' : d === 3 ? 'Trippel' : d === 4 ? 'Quad' : 'Quint+'; };
+  const n = rader.length;
+  const snitt = (f) => (n ? summa(rader, f) / n : null);
+  const basta = rader.slice().sort((a, b) => a.slag - b.slag || b.artal - a.artal)[0];
+  const ford = {}; rader.forEach((r) => { ford[RES(r)] = (ford[RES(r)] ?? 0) + 1; });
+  const ORD = ['Hole in one', 'Eagle', 'Birdie', 'Par', 'Bogey', 'Dubbel', 'Trippel', 'Quad', 'Quint+'];
+  app.innerHTML = `
+    <a class="back" href="#/bana/${bid}">‹ ${esc(bana.namn)}</a>
+    <h1>Hål ${nr}</h1>
+    <p class="sub">${esc(bana.namn)}${hal ? ` · par ${hal.par} · index ${hal.hcp_index}` : ''}${langder ? ` · ${langder}` : ''}</p>
+    <div class="sp-nyckel">
+      <div class="sp-tile"><div class="sp-v">${n}</div><div class="sp-t">Gånger spelat</div><div class="sp-d">av alla i THT</div></div>
+      <div class="sp-tile"><div class="sp-v">${n ? fmt(snitt((r) => r.slag_tak), 2) : '–'}</div><div class="sp-t">Slag i snitt</div><div class="sp-d">${n ? `${snitt((r) => r.slag_tak - r.par) > 0 ? '+' : ''}${fmt(snitt((r) => r.slag_tak - r.par), 2)} mot par` : ''}</div></div>
+      <div class="sp-tile"><div class="sp-v">${n ? fmt(snitt((r) => r.poang), 2) : '–'}</div><div class="sp-t">Poäng i snitt</div><div class="sp-d">2 = par på handicap</div></div>
+      <div class="sp-tile"><div class="sp-v">${basta ? basta.slag : '–'}</div><div class="sp-t">Bästa resultat</div><div class="sp-d">${basta ? `${esc(namn[basta.person_id] ?? '')} ${basta.artal}` : ''}</div></div>
+    </div>
+    ${n ? `<div class="chips hal-ford">${ORD.filter((k) => ford[k]).map((k) => `<span class="chip">${k} <b>${ford[k]}</b></span>`).join('')}</div>` : ''}
+    <h2>Allas resultat</h2>
+    ${n ? `<div class="tablewrap"><table class="stat-tabell">
+      <thead><tr><th class="l">År</th><th class="l">Spelare</th><th>Slag</th><th class="l">Resultat</th><th>Poäng</th><th class="hide-sm">Puttar</th><th class="hide-sm">Spel-HCP</th></tr></thead>
+      <tbody>${rader.map((r) => `<tr><td class="l"><a href="#/ar/${r.artal}">${r.artal}</a> <span class="muted">R${r.ordning}</span></td><td class="l">${namnLank(r.person_id, namn[r.person_id] ?? '?')}</td><td><strong>${r.slag}</strong></td><td class="l">${RES(r)}</td><td>${r.poang}</td><td class="hide-sm">${r.puttar ?? '–'}</td><td class="hide-sm">${r.spel_hcp ?? '–'}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="hint">Nyaste först. Resultat räknat mot par med tak par + 5.</p>` : '<p class="muted">Ingen har spelat hålet i THT ännu.</p>'}`;
 }

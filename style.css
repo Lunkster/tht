@@ -599,3 +599,6 @@ th .kort { display: none; }
   .stat-tabell.fordelning td.l { max-width: 66px; overflow: hidden; text-overflow: ellipsis; }
   .stat-tabell.fordelning th.l { font-size: 12px; }
 }
+.hal-ford { margin: 4px 0 6px; }
+.hal-ford .chip b { color: var(--gold-2); margin-left: 4px; }
+@media (max-width: 480px) { table.totalt-tabell th, table.totalt-tabell td { padding-left: 3px; padding-right: 3px; font-size: 14px; } table.totalt-tabell th { font-size: 12px; } }

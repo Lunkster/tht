@@ -1,5 +1,12 @@
 [
  {
+  "datum": "2026-10-18",
+  "punkter": [
+   "Ny flik **Totalt** i All-time: rundor, banor, hål, poäng, slag, puttar och kilometer per spelare och för alla tillsammans (v0.24.0)",
+   "Tryck på ett hålnummer på bansidan eller under fliken Hål för att se **allas resultat på hålet**, med snitt, bästa resultat och fördelning (v0.24.0)"
+  ]
+ },
+ {
   "datum": "2026-10-17",
   "punkter": [
    "Tabellen **Par 3/4/5** går att sortera – tryck på Spelare, Par 3, Par 4, Par 5 eller Hål (v0.23.1)",
