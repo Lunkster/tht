@@ -49,8 +49,8 @@ async function renderValjDeltavling() {
     api('tht?select=nr,artal,ort,klar&order=nr.desc&limit=1', { fresh: true }),
   ]);
   const markor = arMarkor();
-  // Markör: bara den senaste THT:n och bara innan den är avslutad (samma regel som i databasen).
-  const delt = markor ? allaDelt.filter((d) => d.tht_nr === senaste?.nr && !senaste.klar) : allaDelt;
+  // Markör: bara THT som inte är avslutade (samma regel som i databasen).
+  const delt = markor ? allaDelt.filter((d) => !d.tht?.klar) : allaDelt;
   const idag = new Date().toISOString().slice(0, 10);
   const thts = [...new Map(delt.map((d) => [d.tht_nr, d.tht])).entries()]; // nyast först
   let valt = Number(sessionStorage.getItem('mata-tht')) || thts[0]?.[0];
@@ -59,7 +59,7 @@ async function renderValjDeltavling() {
     if (!aktuell(myNav)) return; app.innerHTML = `
       <div class="row-between"><h1>Mata in</h1><button class="link" id="logout">Logga ut</button></div>
       <p class="sub">Inloggad som markör.</p>
-      <div class="card"><p>${senaste?.klar ? `THT ${senaste.nr} är avslutad – det finns inget att mata in.` : `Inga deltävlingar är upplagda för ${esc(senaste?.ort ?? 'årets THT')} ${senaste?.artal ?? ''} ännu.`}</p>
+      <div class="card"><p>${senaste?.klar ? `THT ${senaste.nr} är avslutad – det finns ingen öppen THT att mata in.` : `Inga deltävlingar är upplagda för ${esc(senaste?.ort ?? 'årets THT')} ${senaste?.artal ?? ''} ännu.`}</p>
       ${senaste?.klar ? '' : '<p class="hint">Deltävlingarna läggs upp av admin.</p>'}</div>`;
     document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
     return;
@@ -78,7 +78,7 @@ async function renderValjDeltavling() {
           <div class="win"><span class="arrow">›</span></div>
         </a>`).join('')}
     </div>
-    ${markor ? '<p class="hint">Inloggad som markör: du kan mata in årets THT och sätta spelare i bollar.</p>' : '<p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp under <a href="#/admin">Admin</a>.</p>'}`;
+    ${markor ? '<p class="hint">Inloggad som markör: du kan mata in THT som inte är avslutade, sätta spelare i bollar och under <a href="#/admin">Admin</a> ange priser och banbetyg.</p>' : '<p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp under <a href="#/admin">Admin</a>.</p>'}`;
   document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
   document.getElementById('matatht').onchange = (e) => { try { sessionStorage.setItem('mata-tht', e.target.value); } catch { /* */ } renderValjDeltavling(); };
 }

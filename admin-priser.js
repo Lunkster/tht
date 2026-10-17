@@ -1,6 +1,6 @@
 // Admin: närmast hål och longest drive – hål och vinnare per deltävling (även i efterhand).
 // En vinnare per deltävling och typ. "Ingen vinnare" tar bort raden – ibland blir priset inte av.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.17.0';
+import { api, write, esc, nuNav, aktuell, arMarkor } from './lib.js?v=0.17.0';
 
 const app = document.getElementById('app');
 const TYPER = [
@@ -16,12 +16,12 @@ function felText(e) {
 export async function renderPriser(meddelande = '') {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar …</p>';
-  const thts = await api('tht?select=nr,artal,ort,deltavling(id)&order=nr.desc', { fresh: true });
+  const thts = await api('tht?select=nr,artal,ort,klar,deltavling(id)&order=nr.desc', { fresh: true });
   if (!aktuell(myNav)) return;
-  const medDelt = thts.filter((t) => t.deltavling.length);
+  const medDelt = thts.filter((t) => t.deltavling.length && !(arMarkor() && t.klar)); // markör: bara öppna THT
   let valt = Number(sessionStorage.getItem('pris-tht')) || medDelt[0]?.nr;
   if (!medDelt.some((t) => t.nr === valt)) valt = medDelt[0]?.nr;
-  if (!valt) { app.innerHTML = '<a class="back" href="#/admin">‹ Admin</a><h1>Närmast hål och longest drive</h1><p class="muted">Inga deltävlingar ännu – lägg upp dem under THT och deltävlingar.</p>'; return; }
+  if (!valt) { app.innerHTML = `<a class="back" href="#/admin">‹ Admin</a><h1>Närmast hål och longest drive</h1><p class="muted">${arMarkor() ? 'Ingen öppen THT med deltävlingar – avslutade THT hanteras av admin.' : 'Inga deltävlingar ännu – lägg upp dem under THT och deltävlingar.'}</p>`; return; }
 
   const [delt, priser, personer] = await Promise.all([
     api(`deltavling?tht_nr=eq.${valt}&select=id,ordning,namn,datum,banversion_id,narmast_hal,longest_hal,banversion(bana(namn)),runda(person_id)&order=ordning`, { fresh: true }),

@@ -20,6 +20,11 @@ const SEKTIONER = [
 
 export async function renderAdmin([sida, ...rest]) {
   if (!isLoggedIn()) return visaLogin('Admin', () => renderAdmin([sida, ...rest]));
+  if (arMarkor()) {   // markör: priser och banbetyg för öppna THT
+    if (sida === 'priser') return renderPriser();
+    if (sida === 'banbetyg') return renderBanbetyg();
+    if (!sida) return renderMarkorMeny();
+  }
   if (!arAdmin()) return visaEjAdmin([sida, ...rest]);
   if (sida === 'spelare') return renderSpelare();
   if (sida === 'banor') return renderBanor(rest);
@@ -30,12 +35,25 @@ export async function renderAdmin([sida, ...rest]) {
   return renderMeny();
 }
 
+function renderMarkorMeny() {
+  const delar = SEKTIONER.filter((s) => s.id === 'priser' || s.id === 'banbetyg');
+  app.innerHTML = `
+    <div class="row-between"><h1>Admin</h1><button class="link" id="logout">Logga ut</button></div>
+    <p class="sub">Inloggad som markör. Gäller THT som inte är avslutade – slag, puttar och bollar matas in under <a href="#/mata">Mata in</a>.</p>
+    <div class="rounds">
+      ${delar.map((s) => `<a class="round link-card" href="#/admin/${s.id}"><div><div class="rn">${esc(s.t)}</div><div class="meta">${esc(s.d)}</div></div><div class="win"><span class="arrow">›</span></div></a>`).join('')}
+    </div>
+    <p class="hint">Banor, THT, deltävlingar, spelare och avslutade THT hanteras av admin. <button class="link" id="bytkonto">Logga in som admin</button></p>`;
+  document.getElementById('logout').onclick = () => { logout(); renderAdmin([]); };
+  document.getElementById('bytkonto').onclick = () => { logout(); renderAdmin([]); };
+}
+
 // Inloggad med markörkoden (eller ett konto utan roll): admin kräver admin-koden.
 function visaEjAdmin(args) {
   app.innerHTML = `
     <h1>Admin</h1>
     <div class="card">
-      <p>${arMarkor() ? 'Du är inloggad som <strong>markör</strong>. Markörer kan mata in årets THT och sätta spelare i bollar under <a href="#/mata">Mata in</a>.' : 'Kontot saknar behörighet för admin.'}</p>
+      <p>${arMarkor() ? 'Du är inloggad som <strong>markör</strong>. Den här delen kräver admin – markörer når <a href="#/admin">priser och banbetyg</a> och <a href="#/mata">Mata in</a>.' : 'Kontot saknar behörighet för admin.'}</p>
       <p class="sub">Admin kräver admin-koden.</p>
       <button class="btn primary" type="button" id="bytkonto">Logga in som admin</button>
     </div>`;

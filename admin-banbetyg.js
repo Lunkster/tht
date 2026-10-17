@@ -1,17 +1,17 @@
 // Admin: banbetyg – varje spelares betyg 1–5 på årets banor (tabellen ban_betyg).
-import { api, write, esc, fmt, nuNav, aktuell } from './lib.js?v=0.17.0';
+import { api, write, esc, fmt, nuNav, aktuell, arMarkor } from './lib.js?v=0.17.0';
 
 const app = document.getElementById('app');
 
 export async function renderBanbetyg(meddelande = '') {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar …</p>';
-  const thts = await api('tht?select=nr,artal,ort,deltavling(id)&order=nr.desc', { fresh: true });
+  const thts = await api('tht?select=nr,artal,ort,klar,deltavling(id)&order=nr.desc', { fresh: true });
   if (!aktuell(myNav)) return;
-  const med = thts.filter((t) => t.deltavling.length);
+  const med = thts.filter((t) => t.deltavling.length && !(arMarkor() && t.klar)); // markör: bara öppna THT
   let valt = Number(sessionStorage.getItem('betyg-tht')) || med[0]?.nr;
   if (!med.some((t) => t.nr === valt)) valt = med[0]?.nr;
-  if (!valt) { app.innerHTML = '<a class="back" href="#/admin">‹ Admin</a><h1>Banbetyg</h1><p class="muted">Inga deltävlingar ännu.</p>'; return; }
+  if (!valt) { app.innerHTML = `<a class="back" href="#/admin">‹ Admin</a><h1>Banbetyg</h1><p class="muted">${arMarkor() ? 'Ingen öppen THT med deltävlingar – avslutade THT hanteras av admin.' : 'Inga deltävlingar ännu.'}</p>`; return; }
 
   const [delt, rundor, betyg, personer] = await Promise.all([
     api(`deltavling?tht_nr=eq.${valt}&select=ordning,banversion(bana(id,namn))&order=ordning`, { fresh: true }),
