@@ -1,15 +1,16 @@
-// THT golfapp (v0.24.0) – statistik och inmatning.
+// THT golfapp (v0.25.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.24.0';
-import { renderMata } from './mata.js?v=0.24.0';
-import { renderAdmin } from './admin.js?v=0.24.0';
-import { renderSpelare } from './spelare.js?v=0.24.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.24.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.24.0';
-import { renderBetygLank } from './betyg.js?v=0.24.0';
-import { renderNyheter } from './nyheter.js?v=0.24.0';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.24.0';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.25.0';
+import { renderMata } from './mata.js?v=0.25.0';
+import { renderAdmin } from './admin.js?v=0.25.0';
+import { renderSpelare } from './spelare.js?v=0.25.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.25.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.25.0';
+import { renderBetygLank } from './betyg.js?v=0.25.0';
+import { renderNyheter } from './nyheter.js?v=0.25.0';
+import { renderRunda } from './runda.js?v=0.25.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.25.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -38,6 +39,7 @@ function route() {
   if (page === 'hal' && arg && rest[0]) return renderHal(Number(arg), Number(rest[0])).catch(fel);
   if (page === 'betyg' && arg) return renderBetygLank(arg).catch(fel);
   if (page === 'nyheter') return renderNyheter().catch(fel);
+  if (page === 'runda' && arg) return renderRunda(Number(arg)).catch(fel);
   if (page === 'ar') return renderYear(arg ? Number(arg) : null).catch(fel);
   return renderStart(id).catch(fel);
 }
@@ -73,7 +75,7 @@ async function renderYear(artal) {
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar ${artal} …</p>`;
   const [res, rundor, kurva, delt, pris] = await Promise.all([
     api(`v_tht_resultat?tht_nr=eq.${tht.nr}&order=placering`),
-    api(`v_runda?tht_nr=eq.${tht.nr}&select=person_id,ordning,poang,slag,antal_hal,spel_hcp`),
+    api(`v_runda?tht_nr=eq.${tht.nr}&select=runda_id,person_id,ordning,poang,slag,antal_hal,spel_hcp`),
     api(`v_tht_kurva?tht_nr=eq.${tht.nr}&order=hal_i_tht&select=person_id,hal_i_tht,poang_ack,poang_ack_mot_hcp`),
     api(`deltavling?tht_nr=eq.${tht.nr}&order=ordning&select=id,ordning,namn,datum,narmast_hal,longest_hal,vinnare_utan_kort,banversion(bana(id,namn))`),
     api(`pris?select=deltavling_id,typ,person(fornamn)`),
@@ -175,7 +177,7 @@ function resultatOchGraf(res, ordningar, perRunda, klar = true, utanGraf = false
           <td class="l ${klar && r.placering === 1 ? 'win' : ''}"><a class="namn" href="#/spelare/${r.person_id}">${esc(r.fornamn)}</a></td>
           <td><strong>${fmt(r.poang)}</strong></td>
           <td class="${motHcp(r) > 0 ? 'plus' : ''}">${motHcpText(r)}</td>
-          ${ordningar.map((o) => { const x = perRunda[r.person_id]?.[o]; return `<td class="hide-sm ${x ? '' : 'dim'}">${x ? fmt(x.poang) : '–'}</td>`; }).join('')}
+          ${ordningar.map((o) => { const x = perRunda[r.person_id]?.[o]; return `<td class="hide-sm ${x ? '' : 'dim'}">${x ? `<a class="namn" href="#/runda/${x.runda_id}" title="Scorekort">${fmt(x.poang)}</a>` : '–'}</td>`; }).join('')}
           <td>${fmt(r.slag)}</td>
           <td class="hide-sm">${fmt(r.puttar_per_hal, 2)}</td>
           <td class="hide-sm">${fmt(senasteHcp(r))}</td>
@@ -408,7 +410,7 @@ async function renderLeaderboard(navId) {
     const f = { fresh: true };
     const [res, rundor, kurva, delt] = await Promise.all([
       api(`v_tht_resultat?tht_nr=eq.${nr}&order=placering`, f),
-      api(`v_runda?tht_nr=eq.${nr}&select=person_id,ordning,poang,slag,antal_hal,spel_hcp`, f),
+      api(`v_runda?tht_nr=eq.${nr}&select=runda_id,person_id,ordning,poang,slag,antal_hal,spel_hcp`, f),
       api(`v_tht_kurva?tht_nr=eq.${nr}&order=hal_i_tht&select=person_id,hal_i_tht,poang_ack,poang_ack_mot_hcp`, f),
       api(`deltavling?tht_nr=eq.${nr}&order=ordning&select=ordning`, f),
     ]);

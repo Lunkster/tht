@@ -1,6 +1,6 @@
 // Statistik från 2016-rapporten: hålvinster, resultatfördelning, par 3/4/5, rekord och svåraste hålen.
 // Beräknas i databasvyerna v_stat_* (migrering 17) – här bara sammanställning och tabeller.
-import { api, allaRader, esc, fmt } from './lib.js?v=0.24.0';
+import { api, allaRader, esc, fmt } from './lib.js?v=0.25.0';
 
 const namnLank = (id, namn) => `<a class="namn" href="#/spelare/${id}">${esc(namn)}</a>`;
 const summa = (xs, f) => xs.reduce((a, x) => a + (Number(f(x)) || 0), 0);
@@ -103,7 +103,7 @@ async function rekordHtml() {
     api('deltavling?select=id,banversion(bana(namn))'),
     api('v_tht_resultat?select=artal,person_id,fornamn,placering,poang&placering=lte.2'),
     api('tht?select=artal,klar'),
-    api('v_score?select=person_id,artal,ordning,deltavling_id,hal_nr,par,slag,poang&slag=not.is.null&order=poang.desc,artal.desc&limit=5'),
+    api('v_score?select=runda_id,person_id,artal,ordning,deltavling_id,hal_nr,par,slag,poang&slag=not.is.null&order=poang.desc,artal.desc&limit=5'),
   ]);
   const bana = Object.fromEntries(delt.map((d) => [d.id, d.banversion?.bana?.namn ?? '']));
   const ext = Object.fromEntries(extra.map((e) => [e.runda_id, e]));
@@ -113,7 +113,7 @@ async function rekordHtml() {
   const topp = (lista, f, stigande = false) => lista.filter((r) => f(r) != null).sort((a, b) => (stigande ? f(a) - f(b) : f(b) - f(a)) || b.artal - a.artal).slice(0, 5);
   const kort = (rubrik, beskr, rader, varde) => `
     <div class="card rekord"><h3>${rubrik}</h3><p class="hint">${beskr}</p>
-      <ol>${rader.map((r) => `<li><span class="rek-v">${varde(r)}</span> ${namnLank(r.person_id, r.fornamn ?? namn[r.person_id] ?? '?')} <span class="muted">${var_(r)}</span></li>`).join('')}</ol></div>`;
+      <ol>${rader.map((r) => `<li><span class="rek-v">${r.runda_id ? `<a class="namn" href="#/runda/${r.runda_id}">${varde(r)}</a>` : varde(r)}</span> ${namnLank(r.person_id, r.fornamn ?? namn[r.person_id] ?? '?')} <span class="muted">${var_(r)}</span></li>`).join('')}</ol></div>`;
   // Största segermarginal (bara avslutade THT)
   const klar = new Set(thts.filter((t) => t.klar).map((t) => t.artal));
   const marg = Object.values(res.reduce((acc, r) => { if (!klar.has(r.artal)) return acc; const a = (acc[r.artal] ??= { artal: r.artal }); if (r.placering === 1) Object.assign(a, { person_id: r.person_id, fornamn: r.fornamn, p1: Number(r.poang) }); else a.p2 = Math.max(a.p2 ?? 0, Number(r.poang)); return acc; }, {}))
@@ -259,7 +259,7 @@ export async function renderHal(bid, nr) {
   ]);
   if (!bana) { app.innerHTML = '<p class="err">Banan finns inte.</p>'; return; }
   const did = versioner.flatMap((v) => v.deltavling.map((d) => d.id));
-  const rader = did.length ? await api(`v_score?deltavling_id=in.(${did.join(',')})&hal_nr=eq.${nr}&slag=not.is.null&select=person_id,artal,ordning,par,spel_hcp,slag,slag_tak,poang,puttar&order=artal.desc,ordning.desc,slag.asc`) : [];
+  const rader = did.length ? await api(`v_score?deltavling_id=in.(${did.join(',')})&hal_nr=eq.${nr}&slag=not.is.null&select=runda_id,person_id,artal,ordning,par,spel_hcp,slag,slag_tak,poang,puttar&order=artal.desc,ordning.desc,slag.asc`) : [];
   const namn = Object.fromEntries(personer.map((p) => [p.id, p.fornamn]));
   const hal = versioner.map((v) => v.hal.find((h) => h.nr === nr)).find(Boolean);
   const langder = (hal?.hal_langd ?? []).map((l) => `${esc(l.tee?.namn ?? '')} ${l.langd} m`).join(' · ');
@@ -283,7 +283,7 @@ export async function renderHal(bid, nr) {
     <h2>Allas resultat</h2>
     ${n ? `<div class="tablewrap"><table class="stat-tabell">
       <thead><tr><th class="l">År</th><th class="l">Spelare</th><th>Slag</th><th class="l">Resultat</th><th>Poäng</th><th class="hide-sm">Puttar</th><th class="hide-sm">Spel-HCP</th></tr></thead>
-      <tbody>${rader.map((r) => `<tr><td class="l"><a href="#/ar/${r.artal}">${r.artal}</a> <span class="muted">R${r.ordning}</span></td><td class="l">${namnLank(r.person_id, namn[r.person_id] ?? '?')}</td><td><strong>${r.slag}</strong></td><td class="l">${RES(r)}</td><td>${r.poang}</td><td class="hide-sm">${r.puttar ?? '–'}</td><td class="hide-sm">${r.spel_hcp ?? '–'}</td></tr>`).join('')}</tbody>
+      <tbody>${rader.map((r) => `<tr><td class="l"><a href="#/ar/${r.artal}">${r.artal}</a> <span class="muted">R${r.ordning}</span></td><td class="l">${namnLank(r.person_id, namn[r.person_id] ?? '?')}</td><td><a class="namn" href="#/runda/${r.runda_id}" title="Scorekort"><strong>${r.slag}</strong></a></td><td class="l">${RES(r)}</td><td>${r.poang}</td><td class="hide-sm">${r.puttar ?? '–'}</td><td class="hide-sm">${r.spel_hcp ?? '–'}</td></tr>`).join('')}</tbody>
     </table></div>
     <p class="hint">Nyaste först. Resultat räknat mot par med tak par + 5.</p>` : '<p class="muted">Ingen har spelat hålet i THT ännu.</p>'}`;
 }

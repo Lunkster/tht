@@ -1,5 +1,5 @@
 // Personsida: en spelares nyckeltal, resultat per år, snittpoäng över tid och resultatfördelning.
-import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.24.0';
+import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.25.0';
 
 const app = document.getElementById('app');
 const BLA = '#3987e5';                       // seriefärg 1 (validerad mot mörk yta)
@@ -11,20 +11,22 @@ const mot = (v) => v === null ? '–' : v > 0 ? `+${v}` : v < 0 ? `−${-v}` : '
 export async function renderSpelare(pid) {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar …</p>';
-  const [[p], thts, res, rundor, priser, score, alla, utanKort] = await Promise.all([
+  const [[p], thts, res, rundor, priser, score, alla, deltBanor, utanKort] = await Promise.all([
     api(`person?id=eq.${pid}&select=id,fornamn,efternamn,aktiv`),
     api('tht?select=nr,artal,ort,klar&order=artal'),
     api(`v_tht_resultat?person_id=eq.${pid}&select=tht_nr,artal,placering,poang,slag,puttar_per_hal,rundor`),
-    api(`v_runda?person_id=eq.${pid}&select=tht_nr,artal,ordning,deltavling,poang,slag,antal_hal,puttar,hal_med_puttar,placering,spel_hcp&order=artal,ordning`),
+    api(`v_runda?person_id=eq.${pid}&select=runda_id,deltavling_id,tht_nr,artal,ordning,deltavling,poang,slag,antal_hal,puttar,hal_med_puttar,placering,spel_hcp&order=artal,ordning`),
     api(`pris?person_id=eq.${pid}&select=typ,deltavling(tht_nr,ordning)`),
     allaRader(`v_score?person_id=eq.${pid}&select=resultat,par,slag_tak,poang&order=runda_id,hal_nr`),
     api('person?select=id,fornamn&order=fornamn'),
+    api('deltavling?select=id,banversion(bana(namn))'),
     api(`deltavling?vinnare_utan_kort=eq.${pid}&select=tht_nr,ordning`),
   ]);
   if (!aktuell(myNav)) return;
   if (!p) { app.innerHTML = '<p class="err">Spelaren finns inte.</p>'; return; }
 
   const thtMap = Object.fromEntries(thts.map((t) => [t.nr, t]));
+  const banNamn = Object.fromEntries(deltBanor.map((d) => [d.id, d.banversion?.bana?.namn ?? '']));
   const senasteHcp = rundor.filter((r) => r.spel_hcp != null).at(-1)?.spel_hcp ?? null;
   const klar = (nr) => !!thtMap[nr]?.klar;
   const fulla = rundor.filter((r) => r.antal_hal > 0);
@@ -107,13 +109,20 @@ export async function renderSpelare(pid) {
         <td class="${r.klar && r.placering === 1 ? 'win' : ''}">${r.klar ? r.placering : `<span class="dim" title="Pågår">(${r.placering})</span>`}</td>
         <td><strong>${fmt(r.poang)}</strong></td>
         <td class="${r.mot > 0 ? 'plus' : ''}">${mot(r.mot)}</td>
-        <td class="hide-sm">${r.rs.map((x) => fmt(x.poang)).join(' · ')}</td>
+        <td class="hide-sm">${r.rs.map((x) => `<a class="namn" href="#/runda/${x.runda_id}" title="Scorekort R${x.ordning}">${fmt(x.poang)}</a>`).join(' · ')}</td>
         <td class="hide-sm">${fmt(r.slag)}</td>
         <td class="hide-sm">${fmt(r.puttar_per_hal, 2)}</td>
         <td class="hide-sm">${fmt(r.hcp)}</td>
       </tr>`).join('')}</tbody>
     </table></div>
-    <p class="hint">Placering inom parentes = THT:n pågår. Rundor = poäng i varje deltävling.</p>
+    <p class="hint">Placering inom parentes = THT:n pågår. Rundor = poäng i varje deltävling – tryck för scorekortet.</p>
+
+    ${fulla.length ? `<details class="card sp-rundor"><summary><strong>Alla rundor</strong> <span class="muted">– ${fulla.length} st, tryck för scorekortet</span></summary>
+      <div class="tablewrap"><table class="stat-tabell">
+        <thead><tr><th class="l">Runda</th><th class="l">Bana</th><th>Poäng</th><th>Slag</th><th class="hide-sm">Puttar</th><th>Plac.</th></tr></thead>
+        <tbody>${fulla.slice().reverse().map((x) => `<tr><td class="l"><a class="namn" href="#/runda/${x.runda_id}">${x.artal} R${x.ordning}</a></td><td class="l bana-kort">${esc(banNamn[x.deltavling_id] ?? '')}</td><td><strong>${fmt(x.poang)}</strong></td><td>${x.antal_hal === 18 ? fmt(x.slag) : `${fmt(x.slag)}<span class="muted">*</span>`}</td><td class="hide-sm">${x.hal_med_puttar ? fmt(x.puttar) : '–'}</td><td>${x.placering ?? '–'}</td></tr>`).join('')}</tbody>
+      </table></div>
+      <p class="hint">Nyast först. * = inte alla 18 hål inmatade.</p></details>` : ''}
 
     <h2>Resultat per hål</h2>
     <div class="chartcard"><div id="sp-staplar"></div>

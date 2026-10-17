@@ -1,7 +1,7 @@
 // Bansida: en banas betyg, när den spelats, bästa rundor och hålen.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.24.0';
-import { punktKarta } from './karta.js?v=0.24.0';
-import { halStatistik } from './statistik.js?v=0.24.0';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.25.0';
+import { punktKarta } from './karta.js?v=0.25.0';
+import { halStatistik } from './statistik.js?v=0.25.0';
 
 const app = document.getElementById('app');
 const stjarnor = (v) => v == null ? '' : `<span class="stjarnor" aria-hidden="true" style="--v:${(v / 5) * 100}%">★★★★★</span>`;
@@ -23,7 +23,7 @@ export async function renderBana(bid) {
   const [hal, tees, rundor] = await Promise.all([
     senaste ? api(`hal?banversion_id=eq.${senaste.id}&select=nr,par,hcp_index,hal_langd(tee_id,langd)&order=nr`) : [],
     senaste ? api(`tee?banversion_id=eq.${senaste.id}&select=id,namn&order=id`) : [],
-    delt.length ? api(`v_runda?deltavling_id=in.(${delt.map((d) => d.id).join(',')})&select=person_id,fornamn,artal,ordning,poang,slag,antal_hal&order=poang.desc`) : [],
+    delt.length ? api(`v_runda?deltavling_id=in.(${delt.map((d) => d.id).join(',')})&select=runda_id,person_id,fornamn,artal,ordning,poang,slag,antal_hal&order=poang.desc`) : [],
   ]);
   const halStat = hal.length ? await halStatistik(bid).catch(() => ({})) : {};
   if (!aktuell(myNav)) return;
@@ -58,7 +58,7 @@ export async function renderBana(bid) {
 
     ${basta.length ? `<h2>Bästa rundor</h2>
     <div class="tablewrap"><table><thead><tr><th class="l">Spelare</th><th class="l">År</th><th>Poäng</th><th>Slag</th></tr></thead>
-      <tbody>${basta.map((r) => `<tr><td class="l"><a class="namn" href="#/spelare/${r.person_id}">${esc(r.fornamn)}</a></td><td class="l">${r.artal} R${r.ordning}</td><td><strong>${r.poang}</strong></td><td>${r.slag}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      <tbody>${basta.map((r) => `<tr><td class="l"><a class="namn" href="#/spelare/${r.person_id}">${esc(r.fornamn)}</a></td><td class="l"><a class="namn" href="#/runda/${r.runda_id}">${r.artal} R${r.ordning}</a></td><td><strong>${r.poang}</strong></td><td>${r.slag}</td></tr>`).join('')}</tbody></table></div>` : ''}
 
     ${hal.length ? `<details class="card bana-hal"><summary><strong>Hålen</strong> <span class="muted">– version från ${esc(senaste.giltig_fran)}</span></summary>
       <div class="tablewrap"><table><thead><tr><th>Hål</th><th>Par</th><th>Index</th>${tees.map((t) => `<th>${esc(t.namn)}</th>`).join('')}<th title="Snitt slag över par, alla som spelat hålet">Över par</th><th class="hide-sm">Poäng</th></tr></thead>

@@ -602,3 +602,17 @@ th .kort { display: none; }
 .hal-ford { margin: 4px 0 6px; }
 .hal-ford .chip b { color: var(--gold-2); margin-left: 4px; }
 @media (max-width: 480px) { table.totalt-tabell th, table.totalt-tabell td { padding-left: 3px; padding-right: 3px; font-size: 14px; } table.totalt-tabell th { font-size: 12px; } }
+
+/* Scorekort för en runda */
+.scorekort-vy td, .scorekort-vy th { padding: 7px 8px; }
+.scorekort-vy .sk-summa th, .scorekort-vy .sk-summa td { background: rgba(227, 194, 120, 0.08); }
+.sk-slag { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; font-weight: 700; }
+.sk-slag.res-eagle { border: 2px double var(--gold-2); border-radius: 50%; color: var(--gold-2); }
+.sk-slag.res-birdie { border: 2px solid var(--gold-2); border-radius: 50%; color: var(--gold-2); }
+.sk-slag.res-bogey { border: 1px solid var(--cream-3); }
+.sk-slag.res-dubbel, .sk-slag.res-trippel { border: 3px double var(--cream-3); }
+.sk-extra { color: var(--cream-3); font-size: 10px; margin-left: 2px; letter-spacing: -1px; vertical-align: super; }
+.sp-rundor { margin-top: 14px; }
+.sp-rundor > summary { cursor: pointer; }
+.sp-rundor .tablewrap { margin-top: 10px; }
+.bana-kort { white-space: normal; font-size: 14px; }
