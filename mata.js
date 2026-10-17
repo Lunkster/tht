@@ -60,7 +60,8 @@ async function renderValjDeltavling() {
       <div class="row-between"><h1>Mata in</h1><button class="link" id="logout">Logga ut</button></div>
       <p class="sub">Inloggad som markör.</p>
       <div class="card"><p>${senaste?.klar ? `THT ${senaste.nr} är avslutad – det finns ingen öppen THT att mata in.` : `Inga deltävlingar är upplagda för ${esc(senaste?.ort ?? 'årets THT')} ${senaste?.artal ?? ''} ännu.`}</p>
-      ${senaste?.klar ? '' : '<p class="hint">Deltävlingarna läggs upp av admin.</p>'}</div>`;
+      ${senaste?.klar ? '' : '<p class="hint">Deltävlingarna läggs upp av admin.</p>'}</div>
+      <div class="rounds"><a class="round link-card" href="#/admin/banbetyg"><div><div class="rn">Banbetyg</div><div class="meta">Betyg 1–5 på banorna – även för avslutade THT</div></div><div class="win"><span class="arrow">›</span></div></a></div>`;
     document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
     return;
   }

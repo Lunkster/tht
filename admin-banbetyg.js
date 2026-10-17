@@ -9,14 +9,14 @@ export async function renderBanbetyg(meddelande = '') {
   app.innerHTML = '<p class="muted center">Laddar …</p>';
   const thts = await api('tht?select=nr,artal,ort,klar,deltavling(id)&order=nr.desc', { fresh: true });
   if (!aktuell(myNav)) return;
-  const med = thts.filter((t) => t.deltavling.length && !(arMarkor() && t.klar)); // markör: bara öppna THT
+  const med = thts.filter((t) => t.deltavling.length); // banbetyg får anges även för avslutade THT (även av markör)
   let valt = Number(sessionStorage.getItem('betyg-tht')) || med[0]?.nr;
   if (!med.some((t) => t.nr === valt)) valt = med[0]?.nr;
-  if (!valt) { app.innerHTML = `${tillbaka()}<h1>Banbetyg</h1><p class="muted">${arMarkor() ? 'Ingen öppen THT med deltävlingar – avslutade THT hanteras av admin.' : 'Inga deltävlingar ännu.'}</p>`; return; }
+  if (!valt) { app.innerHTML = `${tillbaka()}<h1>Banbetyg</h1><p class="muted">Inga deltävlingar ännu.</p>`; return; }
 
   const [delt, rundor, betyg, personer] = await Promise.all([
     api(`deltavling?tht_nr=eq.${valt}&select=ordning,banversion(bana(id,namn))&order=ordning`, { fresh: true }),
-    api(`v_runda?tht_nr=eq.${valt}&select=person_id`, { fresh: true }),
+    api(`v_runda?tht_nr=eq.${valt}&select=person_id,ordning`, { fresh: true }),
     api(`ban_betyg?tht_nr=eq.${valt}&select=bana_id,person_id,betyg`, { fresh: true }),
     api('person?select=id,fornamn,efternamn&order=fornamn', { fresh: true }),
   ]);
@@ -27,11 +27,15 @@ export async function renderBanbetyg(meddelande = '') {
   // Spelare: de som spelade året, plus de som redan har betyg
   const ids = new Set([...rundor.map((r) => r.person_id), ...betyg.map((b) => b.person_id)]);
   const spelare = personer.filter((p) => ids.has(p.id));
+  // Bara den som spelade banan det året får betygsätta den (befintliga betyg visas ändå).
+  const banaFor = Object.fromEntries(delt.map((d) => [d.ordning, d.banversion?.bana?.id]));
+  const spelat = new Set(rundor.map((r) => `${r.person_id}-${banaFor[r.ordning]}`));
   const orig = Object.fromEntries(betyg.map((b) => [`${b.person_id}-${b.bana_id}`, b.betyg]));
   const tht = thts.find((t) => t.nr === valt);
 
   const cell = (p, b) => {
     const v = orig[`${p.id}-${b.id}`] ?? '';
+    if (v === '' && !spelat.has(`${p.id}-${b.id}`)) return '<td class="dim" title="Spelade inte banan">·</td>';
     return `<td><select class="betyg" data-p="${p.id}" data-b="${b.id}" aria-label="${esc(p.fornamn)}, ${esc(b.namn)}">
       <option value="" ${v === '' ? 'selected' : ''}>–</option>${[1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${v === n ? 'selected' : ''}>${n}</option>`).join('')}</select></td>`;
   };
@@ -44,7 +48,7 @@ export async function renderBanbetyg(meddelande = '') {
       ${med.map((t) => `<option value="${t.nr}" ${t.nr === valt ? 'selected' : ''}>THT ${t.nr} · ${esc(t.ort)} ${t.artal}</option>`).join('')}
     </select></div>
     ${meddelande ? `<p class="ok" role="status">${esc(meddelande)}</p>` : ''}
-    <p class="sub">Betyg 1–5 per spelare och bana för ${esc(tht.ort)} ${tht.artal}. 5 = bäst. Lämna "–" om spelaren inte betygsatt banan.</p>
+    <p class="sub">Betyg 1–5 per spelare och bana för ${esc(tht.ort)} ${tht.artal}. 5 = bäst. Lämna "–" om spelaren inte betygsatt banan. Bara den som spelade banan kan få betyg (· = spelade inte).</p>
     <div class="tablewrap betygtabell"><table>
       <thead><tr><th class="l">Spelare</th>${banor.map((b) => `<th title="${esc(b.namn)}">${esc(b.namn.replace(/ (GK|Golfklubb|Golf & Countryclub|Golfbana)$/i, ''))}</th>`).join('')}</tr></thead>
       <tbody>${spelare.map((p) => `<tr><th scope="row" class="l">${esc(p.fornamn)}</th>${banor.map((b) => cell(p, b)).join('')}</tr>`).join('')}</tbody>
