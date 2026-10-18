@@ -1,7 +1,8 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, arMarkor, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.28.0';
+import { api, write, login, logout, isLoggedIn, arMarkor, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.29.0';
 
-import { renderScorekort } from './scorekort.js?v=0.28.0';
+import { renderScorekort } from './scorekort.js?v=0.29.0';
+import { minnenWidget } from './minnen.js?v=0.29.0';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
@@ -113,13 +114,15 @@ async function renderBollar(did) {
       ${Object.keys(bollar).length ? Object.entries(bollar).map(([nr, rs]) => `
         <div class="round boll">
           <a class="link-card bollhead" href="#/mata/${did}/${nr}"><span class="rn">${nr === '0' ? 'Utan boll' : 'Boll ' + nr}</span><span class="dim small">hela bollen</span><span class="arrow">›</span></a>
-          <div class="who">${rs.map((r) => `<a class="chip" href="#/mata/${did}/${nr}/0/${r.person_id}">${esc(pnamn[r.person_id])} <span class="dim">${r.spel_hcp}</span></a>`).join('')}</div>
+          <div class="who">${rs.map((r) => `<a class="chip" href="#/mata/${did}/${nr}/0/${r.person_id}">${esc(pnamn[r.person_id])} <span class="dim">${r.spel_hcp}</span></a>`).join('')}${nr !== '0' ? `<button type="button" class="chip mm-boll" data-boll="${nr}" title="Skriv ett minnesvärt moment för bollen">＋ Minnesvärt</button>` : ''}</div>
         </div>`).join('') : '<p class="muted">Inga bollar ännu.</p>'}
     </div>
     <p class="hint">Tryck på en boll för att mata in för alla i den, eller på ett namn för att mata in eller rätta bara den spelaren.</p>
     <a class="round link-card sk-lank" href="#/mata/${did}/kort"><div><div class="rn">Scorekort i efterhand</div><div class="meta">Hela rundor från scorekorten – 18 hål per spelare på en gång. Här byter du också boll.</div></div><div class="win"><span class="arrow">›</span></div></a>
-    <div>
-    </div>
+
+    <h2 id="mm-rubrik">Minnesvärda moment</h2>
+    <div id="minnen"><p class="muted">Laddar …</p></div>
+    <p class="hint">Något som ska kommas ihåg – för hela deltävlingen, en boll eller en spelare. Går att skriva och ändra även efter att THT:n är avslutad (på årssidan).</p>
 
     <h2>Ny boll</h2>
     ${lediga.length ? `
@@ -134,6 +137,13 @@ async function renderBollar(did) {
       <button class="btn primary" type="submit">Skapa boll</button>
       <p class="hint" id="nybollmsg"></p>
     </form>` : '<p class="muted">Alla spelare är redan i en boll.</p>'}`;
+
+  minnenWidget(document.getElementById('minnen'), Number(did)).then((w) => {
+    app.querySelectorAll('.mm-boll').forEach((b) => b.onclick = () => {
+      document.getElementById('mm-rubrik').scrollIntoView({ behavior: 'smooth' });
+      w.valj(`b${b.dataset.boll}`);
+    });
+  }).catch((e) => { document.getElementById('minnen').innerHTML = `<p class="err">${esc(e.message)}</p>`; });
 
   const form = document.getElementById('nyboll');
   if (!form) return;

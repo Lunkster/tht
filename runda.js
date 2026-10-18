@@ -1,5 +1,5 @@
 // Scorekort för en runda (#/runda/<id>): hål för hål med slag, poäng och puttar, plus de andra i bollen.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.28.0';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.29.0';
 
 const app = document.getElementById('app');
 const RES = (h) => {
@@ -19,11 +19,11 @@ export async function renderRunda(rid) {
   ]);
   if (!aktuell(myNav)) return;
   if (!r) { app.innerHTML = '<p class="err">Rundan finns inte.</p>'; return; }
-  const [[d], boll, deltagare, [rk]] = await Promise.all([
+  const [[d], boll, deltagare, minnen] = await Promise.all([
     api(`deltavling?id=eq.${r.deltavling_id}&select=datum,banversion_id,tee_id,tee(namn),banversion(bana(id,namn))`),
     r.boll_nr != null ? api(`v_runda?deltavling_id=eq.${r.deltavling_id}&boll_nr=eq.${r.boll_nr}&select=runda_id,person_id,fornamn,poang,slag`) : [],
     api(`v_runda?deltavling_id=eq.${r.deltavling_id}&select=runda_id`),
-    api(`runda?id=eq.${rid}&select=kommentar`),
+    api(`kommentar?runda_id=eq.${rid}&select=text&order=skapad,id`),
   ]);
   const langd = d?.banversion_id ? await api(`hal?banversion_id=eq.${d.banversion_id}&select=nr,hal_langd(langd,tee_id)`) : [];
   if (!aktuell(myNav)) return;
@@ -45,7 +45,7 @@ export async function renderRunda(rid) {
     <a class="back" href="#/spelare/${r.person_id}">‹ ${esc(r.fornamn)}</a>
     <h1>${esc(r.fornamn)} · ${r.artal} R${r.ordning}</h1>
     <p class="sub">${esc(r.deltavling ?? '')}${bana ? ` · <a class="namn" href="#/bana/${bana.id}">${esc(bana.namn)}</a>` : ''}${d?.datum ? ` · ${esc(d.datum)}` : ''}${d?.tee?.namn ? ` · tee ${esc(d.tee.namn)}` : ''}</p>
-    ${rk?.kommentar ? `<p class="runda-kommentar">${esc(rk.kommentar)}</p>` : ''}
+    ${minnen.map((k) => `<p class="runda-kommentar">${esc(k.text)}</p>`).join('')}
     <div class="sp-nyckel">
       <div class="sp-tile"><div class="sp-v">${fmt(r.poang)}</div><div class="sp-t">Poäng</div><div class="sp-d">${r.antal_hal ? `mot hcp ${r.poang - 2 * r.antal_hal > 0 ? '+' : ''}${r.poang - 2 * r.antal_hal}` : ''}</div></div>
       <div class="sp-tile"><div class="sp-v">${fmt(r.slag)}</div><div class="sp-t">Slag</div><div class="sp-d">${motPar > 0 ? '+' : ''}${motPar} mot par · tak par + 5</div></div>

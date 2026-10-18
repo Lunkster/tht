@@ -1,19 +1,20 @@
-// THT golfapp (v0.28.0) – statistik och inmatning.
+// THT golfapp (v0.29.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.28.0';
-import { renderMata } from './mata.js?v=0.28.0';
-import { renderAdmin } from './admin.js?v=0.28.0';
-import { renderSpelare } from './spelare.js?v=0.28.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.28.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.28.0';
-import { renderBetygLank } from './betyg.js?v=0.28.0';
-import { renderNyheter } from './nyheter.js?v=0.28.0';
-import { renderRunda } from './runda.js?v=0.28.0';
-import './kollaps.js?v=0.28.0';
-import { renderRapport } from './rapport.js?v=0.28.0';
-import { renderDuell } from './inbordes.js?v=0.28.0';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.28.0';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.29.0';
+import { renderMata } from './mata.js?v=0.29.0';
+import { renderAdmin } from './admin.js?v=0.29.0';
+import { renderSpelare } from './spelare.js?v=0.29.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.29.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.29.0';
+import { renderBetygLank } from './betyg.js?v=0.29.0';
+import { renderNyheter } from './nyheter.js?v=0.29.0';
+import { renderRunda } from './runda.js?v=0.29.0';
+import './kollaps.js?v=0.29.0';
+import { renderRapport } from './rapport.js?v=0.29.0';
+import { renderDuell } from './inbordes.js?v=0.29.0';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.29.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.29.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -138,6 +139,7 @@ async function renderYear(artal) {
           <div class="meta">${d.banversion?.bana ? `<a class="namn" href="#/bana/${d.banversion.bana.id}">${esc(d.banversion.bana.namn)}</a>` : ''} · ${datum(d.datum)}</div></div>
           <div class="win">${vNamn ? `<div class="rn"><a class="namn" href="#/spelare/${vinnare.person_id}">${esc(vNamn)}</a></div><div class="meta">${fmt(vinnare.poang)} p${tht.klar ? '' : ' · leder'}</div>` : kand ? `<div class="rn"><a class="namn" href="#/spelare/${kand.person_id}">${esc(kand.fornamn)}</a></div><div class="meta">vann · poäng saknas</div>` : '<div class="meta">Inga resultat</div>'}</div>
           ${extra ? `<div class="extra">${extra}</div>` : ''}
+          <div class="mm-plats" data-did="${d.id}"></div>
         </div>`;
       }).join('')}
     </div>
@@ -156,6 +158,25 @@ async function renderYear(artal) {
 
   if (!utanKort) drawKurva(res, kurva, ordningar.length);
   if (!utanKort) arsStatistik(document.getElementById('arsstat'), tht.nr).catch(() => {});
+  if (!utanKort) arsMinnen(delt.map((d) => d.id)).catch(() => {});
+}
+
+// Minnesvärda moment under varje deltävling (hopfällt, antal i rubriken). Admin/markör kan skriva även i avslutade THT.
+async function arsMinnen(dids) {
+  const data = await hamtaMinnen(dids);
+  const skriv = kanSkriva();
+  document.querySelectorAll('.mm-plats').forEach((plats) => {
+    const did = Number(plats.dataset.did);
+    const n = data.kom.filter((k) => k.deltavling_id === did).length;
+    if (!n && !skriv) return;
+    plats.innerHTML = `<details class="mm-ar"><summary>Minnesvärda moment <span class="mm-antal">${n ? `(${n})` : ''}</span></summary><div class="mm-inne"></div></details>`;
+    const det = plats.querySelector('details');
+    det.addEventListener('toggle', () => {
+      if (!det.open || det.dataset.ritad) return;
+      det.dataset.ritad = '1';
+      minnenWidget(det.querySelector('.mm-inne'), did, data, { onAndrat: (k) => { det.querySelector('.mm-antal').textContent = k.length ? `(${k.length})` : ''; } });
+    });
+  });
 }
 
 

@@ -700,3 +700,20 @@ h2.fallbar:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; 
 .du-prick.o { background: var(--stout-3); color: var(--cream-2); border: 1px solid var(--line); }
 .du-chart { height: 200px; }
 @media (max-width: 719px) { .du-siffror { font-size: 32px; } .duell-score .du-namn { font-size: 17px; } }
+
+/* Minnesvärda moment (v0.29.0) */
+.mm-lista { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+.mm-lista li { border-left: 3px solid var(--gold); padding: 6px 10px; background: var(--stout-2); border-radius: 0 8px 8px 0; display: grid; gap: 2px; }
+.mm-vem { font-size: 13px; font-weight: 700; color: var(--gold-2); }
+.mm-text { color: var(--cream); white-space: pre-line; }
+.mm-fot { font-size: 12px; }
+.mm-fot .link { font-size: 13px; margin-left: 6px; min-height: 32px; }
+.mm-fot .link.bekrafta { color: #f0b4a6; }
+.mm-ny, .mm-form textarea { width: 100%; font: inherit; }
+.mm-form { display: grid; gap: 8px; }
+.mm-form label { display: grid; gap: 4px; }
+.mm-tom { margin: 4px 0 10px; }
+.round .mm-plats { grid-column: 1 / -1; }
+.mm-ar summary { cursor: pointer; font-size: 14px; color: var(--cream-2); padding: 4px 0; }
+.mm-ar[open] summary { margin-bottom: 8px; }
+.chip.mm-boll { background: transparent; border-style: dashed; cursor: pointer; font: inherit; font-size: 14px; }

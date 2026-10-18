@@ -18,6 +18,8 @@ erDiagram
   deltavling ||--o{ runda : "en per spelare"
   person ||--o{ runda : ""
   runda ||--o{ score : "slag per hål"
+  deltavling ||--o{ kommentar : "minnesvärda moment"
+  runda |o--o{ kommentar : ""
   deltavling ||--o{ pris : "närmast hål / longest drive"
   person ||--o{ pris : "vinnare"
   person ||--o| person_kontakt : "Golf-ID, e-post"
@@ -35,7 +37,8 @@ erDiagram
   tee { int id PK int banversion_id FK text namn numeric slope numeric course_rating }
   hal_langd { int hal_id PK int tee_id PK smallint langd }
   deltavling { int id PK int tht_nr FK int banversion_id FK int tee_id FK smallint ordning text namn date datum smallint narmast_hal smallint longest_hal int vinnare_utan_kort FK }
-  runda { int id PK int deltavling_id FK int person_id FK smallint spel_hcp smallint boll_nr int tee_id FK text kommentar bool last }
+  runda { int id PK int deltavling_id FK int person_id FK smallint spel_hcp smallint boll_nr int tee_id FK text kommentar_gammal_tas_bort bool last }
+  kommentar { int id PK int deltavling_id FK int runda_id FK smallint boll_nr text text timestamptz skapad timestamptz andrad }
   score { int runda_id PK smallint hal_nr PK smallint slag smallint puttar timestamptz andrad }
   pris { int deltavling_id PK text typ PK int person_id FK }
   overnattning { int id PK int tht_nr FK text platsnamn smallint antal_natter text organisator float lat float lon }
@@ -62,6 +65,8 @@ erDiagram
 | `v_inbordes_summa` | Vinster–oavgjort–förluster per spelare och motståndare (poäng och slag), poängdiff, senaste år |
 
 ## Regler i databasen
+
+- **Minnesvärda moment** (`kommentar`, migrering 21): gäller hela deltävlingen, en boll (`boll_nr`) eller en runda (`runda_id`; deltävlingen sätts då från rundan). Admin och markör får skriva, ändra och ta bort även i avslutade THT. `runda.kommentar` ersatt – tas bort med `21b`.
 
 - **Läsa:** alla (utom `person_kontakt` och länkkoderna, som bara admin/markör ser).
 - **Skriva:** admin allt; markör bara rundor, slag, bollar och priser i THT som inte är avslutade, samt banbetyg (alla år). Se `supabase/10_behorighet.sql`, `11_…`, `13_…`.

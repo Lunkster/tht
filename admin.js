@@ -1,11 +1,11 @@
 // Admin: grunddata som läggs upp sällan – spelare, banor, THT, priser och övernattningar.
-import { api, allaRader, write, isLoggedIn, arAdmin, arMarkor, logout, esc, nuNav, aktuell } from './lib.js?v=0.28.0';
-import { visaLogin } from './mata.js?v=0.28.0';
-import { renderBanor } from './admin-banor.js?v=0.28.0';
-import { renderTht } from './admin-tht.js?v=0.28.0';
-import { renderPriser } from './admin-priser.js?v=0.28.0';
-import { renderOvernattning } from './admin-overnattning.js?v=0.28.0';
-import { renderBanbetyg } from './admin-banbetyg.js?v=0.28.0';
+import { api, allaRader, write, isLoggedIn, arAdmin, arMarkor, logout, esc, nuNav, aktuell } from './lib.js?v=0.29.0';
+import { visaLogin } from './mata.js?v=0.29.0';
+import { renderBanor } from './admin-banor.js?v=0.29.0';
+import { renderTht } from './admin-tht.js?v=0.29.0';
+import { renderPriser } from './admin-priser.js?v=0.29.0';
+import { renderOvernattning } from './admin-overnattning.js?v=0.29.0';
+import { renderBanbetyg } from './admin-banbetyg.js?v=0.29.0';
 
 const app = document.getElementById('app');
 
@@ -95,7 +95,7 @@ const BACKUP = [
   { t: 'tht', o: 'nr' }, { t: 'person', o: 'id', id: true }, { t: 'tht_resultat_utan_kort', o: 'tht_nr,person_id' }, { t: 'bana', o: 'id', id: true },
   { t: 'banversion', o: 'id', id: true }, { t: 'tee', o: 'id', id: true }, { t: 'hal', o: 'id', id: true },
   { t: 'hal_langd', o: 'hal_id,tee_id' }, { t: 'deltavling', o: 'id', id: true }, { t: 'runda', o: 'id', id: true },
-  { t: 'score', o: 'runda_id,hal_nr' }, { t: 'pris', o: 'deltavling_id,typ' }, { t: 'overnattning', o: 'id', id: true },
+  { t: 'score', o: 'runda_id,hal_nr' }, { t: 'kommentar', o: 'id', id: true }, { t: 'pris', o: 'deltavling_id,typ' }, { t: 'overnattning', o: 'id', id: true },
   { t: 'ban_betyg', o: 'tht_nr,bana_id,person_id' }, { t: 'spelar_lank', o: 'person_id' },
 ];
 const sqlVarde = (v) => v === null || v === undefined ? 'NULL'

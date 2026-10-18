@@ -1,6 +1,7 @@
 // Årsrapport (#/rapport/<år>): allt om en THT på en sida i stil med 2016-rapporten – går att skriva ut eller spara som PDF.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.28.0';
-import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.28.0';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.29.0';
+import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.29.0';
+import { hamtaMinnen, vem } from './minnen.js?v=0.29.0';
 
 const app = document.getElementById('app');
 const FARGER = ['#3987e5', '#d95926', '#199e70', '#e3c278', '#a35cc8', '#d4417c', '#5bb7c9', '#8fa83a', '#c98a3e', '#7a86d6', '#b5b0a6', '#e07a5f'];
@@ -47,7 +48,10 @@ export async function renderRapport(artal) {
     api(`v_stat_par?tht_nr=eq.${nr}&select=tht_nr,person_id,fornamn,par,hal,poang,slag`),
     api(`v_stat_runda?tht_nr=eq.${nr}&select=runda_id,person_id,fornamn,ordning,birdies,basta_svit`),
   ]);
-  const pris = delt.length ? await api(`pris?deltavling_id=in.(${delt.map((d) => d.id).join(',')})&select=deltavling_id,typ,person(fornamn)`) : [];
+  const [pris, minnen] = await Promise.all([
+    delt.length ? api(`pris?deltavling_id=in.(${delt.map((d) => d.id).join(',')})&select=deltavling_id,typ,person(fornamn)`) : [],
+    hamtaMinnen(delt.map((d) => d.id)),
+  ]);
   if (!aktuell(myNav)) return;
 
   const harKort = rundor.length > 0;
@@ -106,6 +110,8 @@ export async function renderRapport(artal) {
 
       ${hojd.length ? `<section><h2>Årets höjdpunkter</h2>
       <ul class="rapport-hojd">${hojd.map(([t, r, v]) => `<li><span class="muted">${t}:</span> <strong>${v(r)}</strong> – ${esc(r.fornamn)}, R${r.ordning}</li>`).join('')}</ul></section>` : ''}
+
+      ${minnen.kom.length ? `<section><h2>Minnesvärda moment</h2>${delt.filter((d) => minnen.kom.some((k) => k.deltavling_id === d.id)).map((d) => `<h3>R${d.ordning} · ${esc(d.banversion?.bana?.namn ?? d.namn ?? '')}</h3><ul class="rapport-hojd">${minnen.kom.filter((k) => k.deltavling_id === d.id).map((k) => `<li><span class="muted">${esc(vem(k, minnen.rundor))}:</span> ${esc(k.text)}</li>`).join('')}</ul>`).join('')}</section>` : ''}
 
       ${hv.length ? `<section><h2>Hålvinster</h2>${halvinstTabell(hv, { visaTht: false })}<p class="hint">Minst antal slag på hålet i deltävlingen. Ensamma = vunna utan att dela.</p></section>` : ''}
       ${ford.length ? `<section><h2>Birdies, par, bogeys …</h2>${fordelningTabell(ford, 'antal')}</section>` : ''}

@@ -2,7 +2,7 @@
 // Ett möte = en deltävling där båda har en hel runda. Lika poäng = oavgjort. Beräknas i vyerna
 // v_inbordes och v_inbordes_summa (migrering 20). Tre vyer i appen: rutan på spelarsidan,
 // matrisen i All-time (#/alltime/inbordes) och duellsidan (#/duell/<a>/<b>).
-import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.28.0';
+import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.29.0';
 
 const RAD = 'person_id,fornamn,mot_id,mot_fornamn,moten,vinster,oavgjort,forluster,vinster_slag,oavgjort_slag,forluster_slag,poang_diff,senast';
 const lage = { satt: 'poang', alla: false };            // Poäng/Slag och Alla spelare, delas mellan vyerna
