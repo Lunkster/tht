@@ -1,6 +1,6 @@
 // Deltävlingssida (#/deltavling/<id>): topplista för rundan, priser, bollar, hål för hål, hålvinster och minnesvärda moment.
-import { api, esc, fmt, datum, nuNav, aktuell } from './lib.js?v=0.34.0';
-import { minnenWidget } from './minnen.js?v=0.34.0';
+import { api, esc, fmt, datum, nuNav, aktuell } from './lib.js?v=0.34.1';
+import { minnenWidget } from './minnen.js?v=0.34.1';
 
 const app = document.getElementById('app');
 const namnLank = (id, n) => `<a class="namn" href="#/spelare/${id}">${esc(n)}</a>`;
