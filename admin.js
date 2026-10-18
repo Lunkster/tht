@@ -6,7 +6,6 @@ import { renderTht } from './admin-tht.js?v=0.33.0';
 import { renderPriser } from './admin-priser.js?v=0.33.0';
 import { renderOvernattning } from './admin-overnattning.js?v=0.33.0';
 import { renderBanbetyg } from './admin-banbetyg.js?v=0.33.0';
-import { renderQuizAdmin } from './quiz.js?v=0.33.0';
 
 const app = document.getElementById('app');
 
@@ -34,7 +33,7 @@ export async function renderAdmin([sida, ...rest]) {
   if (sida === 'priser') return renderPriser();
   if (sida === 'overnattning') return renderOvernattning();
   if (sida === 'banbetyg') return renderBanbetyg();
-  if (sida === 'quiz') return renderQuizAdmin(rest);
+  if (sida === 'quiz') return (await import('./quiz.js?v=0.33.0')).renderQuizAdmin(rest);   // laddas bara när den behövs
   return renderMeny();
 }
 
