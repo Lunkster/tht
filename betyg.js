@@ -1,7 +1,7 @@
 // Banbetyg via personlig länk (#/betyg/<kod>) – ingen inloggning, en länk per spelare för alla år.
 // Databasen kontrollerar koden och tar bara emot betyg på banor som spelaren spelade respektive THT.
 // Här skriver spelaren också ETT eget minnesvärt moment per deltävling hen spelat (bara om sig själv, migrering 23).
-import { rpc, esc } from './lib.js?v=0.31.0';
+import { rpc, esc } from './lib.js?v=0.32.0';
 
 const app = document.getElementById('app');
 
@@ -23,9 +23,9 @@ export async function renderBetygLank(kod) {
   const minneOrig = { ...minne };
   const minnenFor = (t) => (minnen ?? []).filter((m) => m.tht_nr === t.tht_nr).sort((a, b) => a.ordning - b.ordning);
   const minnesRutor = (t) => { const ms = minnenFor(t); return ms.length ? `
-        <div class="mm-lank"><h3>Ditt minnesvärda moment</h3><p class="hint">Något du minns från rundan – ett per deltävling, om dig själv.</p>
+        <div class="mm-lank"><h3>Det du minns</h3><p class="hint">Ett minnesvärt moment per deltävling – om dig själv eller någon annan i gänget.</p>
         ${ms.map((m) => `<label class="mm-lank-rad"><span class="meta">R${m.ordning}${m.bana ? ' · ' + esc(m.bana) : ''}</span>
-          <textarea rows="2" maxlength="500" data-did="${m.deltavling_id}" placeholder="t.ex. min första birdie på THT">${esc(m.text ?? '')}</textarea></label>`).join('')}</div>` : ''; };
+          <textarea rows="2" maxlength="500" data-did="${m.deltavling_id}" placeholder="t.ex. Robert sänkte bunkerslaget på 17:an">${esc(m.text ?? '')}</textarea></label>`).join('')}</div>` : ''; };
 
   const rad = (t, b) => `
     <div class="round betyg-rad">
@@ -37,7 +37,7 @@ export async function renderBetygLank(kod) {
 
   app.innerHTML = `
     <h1>Banbetyg och minnen</h1>
-    <div class="card"><p>Hej ${esc(info.fornamn)}! Ge banorna du har spelat på THT ett betyg från 1 till 5 – <strong>5 = bäst</strong>. Betyg du redan har satt syns med guldstjärnor och kan ändras. Tryck på samma stjärna igen för att ta bort ett betyg.</p><p>Under varje år kan du också skriva ett <strong>minnesvärt moment</strong> för varje deltävling du spelade. Det syns på årssidan och på ditt scorekort.</p></div>
+    <div class="card"><p>Hej ${esc(info.fornamn)}! Ge banorna du har spelat på THT ett betyg från 1 till 5 – <strong>5 = bäst</strong>. Betyg du redan har satt syns med guldstjärnor och kan ändras. Tryck på samma stjärna igen för att ta bort ett betyg.</p><p>Under varje år kan du också skriva ett <strong>minnesvärt moment</strong> för varje deltävling du spelade – om dig själv eller om någon annan. Det syns på årssidan och under All-time → Minnen.</p></div>
     ${info.tht.map((t, i) => `
       <details class="betyg-ar" ${i < 2 ? 'open' : ''}>
         <summary><strong>THT ${t.tht_nr} · ${esc(t.ort)} ${t.artal}</strong> <span class="muted" data-antal="${t.tht_nr}"></span></summary>

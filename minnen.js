@@ -1,7 +1,7 @@
 // Minnesvärda moment: kommentarer för en deltävling, en boll eller en spelares runda (tabellen kommentar, migrering 21).
 // Admin och markör kan alltid skriva, ändra och ta bort – även i avslutade THT. Alla kan läsa.
 // Används i Mata in (deltävlingens bollar), på årssidan under varje deltävling, på scorekortet och i årsrapporten.
-import { api, write, esc, arAdmin, arMarkor } from './lib.js?v=0.31.0';
+import { api, allaRader, write, esc, arAdmin, arMarkor } from './lib.js?v=0.32.0';
 
 export const kanSkriva = () => arAdmin() || arMarkor();
 const RUNDOR = 'id,deltavling_id,person_id,boll_nr,person(fornamn)';
@@ -19,7 +19,7 @@ export async function hamtaMinnen(dids, { fresh = false } = {}) {
 
 // Vem/vad kommentaren gäller
 export function vem(k, rundor) {
-  if (k.runda_id) { const r = rundor.find((x) => x.id === k.runda_id); return (r?.person?.fornamn ?? 'Spelare') + (k.fran_lank ? ' själv' : ''); }
+  if (k.runda_id) { const r = rundor.find((x) => x.id === k.runda_id); return (r?.person?.fornamn ?? 'Spelare') + (k.fran_lank ? ' minns' : ''); }
   if (k.boll_nr != null) return `Boll ${k.boll_nr}`;
   return 'Alla';
 }
@@ -95,4 +95,36 @@ export async function minnenWidget(el, did, data = null, { onAndrat } = {}) {
   }
   rita();
   return { valj: (v) => { const f = el.querySelector('.mm-form'); if (f) { f.vem.value = v; f.text.focus(); } } };
+}
+
+// ---------- All-time → Minnen: krönikor och minnesvärda moment år för år ----------
+const kronika = (t) => t.trim().split(/\n\s*\n/).map((st) => `<p>${esc(st).replace(/\n/g, '<br>')}</p>`).join('');
+let nyastForst = false;
+export async function minnenAlltime(el) {
+  const [thts, delt, kom] = await Promise.all([
+    api('tht?select=nr,artal,ort,kronika&nr=gt.0&order=artal'),
+    api('deltavling?select=id,tht_nr,ordning,banversion(bana(namn))&tht_nr=gt.0&order=tht_nr,ordning'),
+    allaRader('kommentar?select=id,deltavling_id,runda_id,boll_nr,text,skapad,fran_lank&order=skapad,id'),
+  ]);
+  const rid = [...new Set(kom.map((k) => k.runda_id).filter(Boolean))];
+  const rundor = rid.length ? await api(`runda?id=in.(${rid.join(',')})&select=${RUNDOR}`) : [];
+  const ar = thts.map((t) => {
+    const ds = delt.filter((d) => d.tht_nr === t.nr).map((d) => ({ ...d, kom: kom.filter((k) => k.deltavling_id === d.id) })).filter((d) => d.kom.length);
+    return { ...t, ds, n: ds.reduce((a, d) => a + d.kom.length, 0) };
+  }).filter((t) => t.n || t.kronika?.trim());
+  const rita = () => {
+    const lista = nyastForst ? ar.slice().reverse() : ar;
+    const tot = ar.reduce((a, t) => a + t.n, 0);
+    el.innerHTML = `
+      <div class="seg" role="group" aria-label="Ordning"><button type="button" data-o="0" class="${nyastForst ? '' : 'on'}">Äldst först</button><button type="button" data-o="1" class="${nyastForst ? 'on' : ''}">Nyast först</button></div>
+      <p class="hint">${((k) => `${k} ${k === 1 ? 'krönika' : 'krönikor'}`)(ar.filter((t) => t.kronika?.trim()).length)} och ${tot} minnesvärda moment. Tryck på ett år för att fälla ut.</p>
+      ${lista.map((t) => `<details class="card mm-ar-alla">
+        <summary><strong>${t.artal}</strong> · ${esc(t.ort)} <span class="muted">(${t.n}${t.kronika?.trim() ? ' + krönika' : ''})</span></summary>
+        ${t.kronika?.trim() ? `<h3>Krönika</h3><div class="kronika">${kronika(t.kronika)}</div>` : ''}
+        ${t.ds.map((d) => `<h3>R${d.ordning}${d.banversion?.bana?.namn ? ' · ' + esc(d.banversion.bana.namn) : ''} <span class="muted">(${d.kom.length})</span></h3>${minnenLista(d.kom, rundor)}`).join('')}
+        <p><a class="lank-pil" href="#/ar/${t.artal}">Årssidan ${t.artal} ›</a></p>
+      </details>`).join('') || '<p class="muted">Inga krönikor eller minnesvärda moment ännu.</p>'}`;
+    el.querySelectorAll('[data-o]').forEach((b) => b.onclick = () => { nyastForst = b.dataset.o === '1'; rita(); });
+  };
+  rita();
 }

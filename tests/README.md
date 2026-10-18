@@ -17,4 +17,4 @@ Varje test skriver ut vad det ser och sparar skärmbilder (`*.png`) i mappen. `k
 | --- | --- |
 | `parse.test.mjs` | Inklistrade scorekort (`banparse.js`) – körs med bara Node |
 | `backup.test.mjs` | Backupens SQL (`byggBackup`) – skriver en fil att läsa in i en tom Postgres |
-| övriga `*.mjs` | Sidorna: start, år, leaderboard, all-time, statistik, inbördes möten och duell, minnesvärda moment (även via länk), övningsrunda, spelare, bana, hål, runda, karta, årsrapport, inmatning, scorekort i efterhand, admin, markör, banbetyg/länkar, nyheter, ihopfällbara rubriker |
+| övriga `*.mjs` | Sidorna: start, år, leaderboard, all-time, statistik, inbördes möten och duell, minnesvärda moment (även via länk och All-time → Minnen), övningsrunda, spelare, bana, hål, runda, karta, årsrapport, inmatning, scorekort i efterhand, admin, markör, banbetyg/länkar, nyheter, ihopfällbara rubriker |

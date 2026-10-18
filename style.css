@@ -729,3 +729,9 @@ h2.fallbar:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; 
 .mm-lank h3 { margin: 0 0 4px; font-size: 16px; }
 .mm-lank-rad { display: grid; gap: 4px; margin-top: 8px; }
 .mm-lank-rad textarea { width: 100%; font: inherit; }
+
+/* All-time → Minnen (v0.32.0) */
+.mm-ar-alla { margin-bottom: 8px; }
+.mm-ar-alla summary { cursor: pointer; font-size: 17px; }
+.mm-ar-alla[open] summary { margin-bottom: 8px; }
+.mm-ar-alla h3 { font-size: 15px; margin: 14px 0 6px; }
