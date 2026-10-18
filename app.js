@@ -1,17 +1,18 @@
-// THT golfapp (v0.26.0) – statistik och inmatning.
+// THT golfapp (v0.27.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.26.0';
-import { renderMata } from './mata.js?v=0.26.0';
-import { renderAdmin } from './admin.js?v=0.26.0';
-import { renderSpelare } from './spelare.js?v=0.26.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.26.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.26.0';
-import { renderBetygLank } from './betyg.js?v=0.26.0';
-import { renderNyheter } from './nyheter.js?v=0.26.0';
-import { renderRunda } from './runda.js?v=0.26.0';
-import './kollaps.js?v=0.26.0';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.26.0';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.27.0';
+import { renderMata } from './mata.js?v=0.27.0';
+import { renderAdmin } from './admin.js?v=0.27.0';
+import { renderSpelare } from './spelare.js?v=0.27.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.27.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.27.0';
+import { renderBetygLank } from './betyg.js?v=0.27.0';
+import { renderNyheter } from './nyheter.js?v=0.27.0';
+import { renderRunda } from './runda.js?v=0.27.0';
+import './kollaps.js?v=0.27.0';
+import { renderRapport } from './rapport.js?v=0.27.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.27.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -41,6 +42,7 @@ function route() {
   if (page === 'betyg' && arg) return renderBetygLank(arg).catch(fel);
   if (page === 'nyheter') return renderNyheter().catch(fel);
   if (page === 'runda' && arg) return renderRunda(Number(arg)).catch(fel);
+  if (page === 'rapport' && arg) return renderRapport(Number(arg)).catch(fel);
   if (page === 'ar') return renderYear(arg ? Number(arg) : null).catch(fel);
   return renderStart(id).catch(fel);
 }
@@ -61,10 +63,13 @@ function showError(e) {
   app.innerHTML = `<div class="err"><strong>Kunde inte hämta data.</strong><br><span class="muted">${esc(e.message)}</span></div>`;
 }
 
+// Krönikan: tomrad = nytt stycke, radbrytning behålls
+export const kronikaHtml = (t) => t.trim().split(/\n\s*\n/).map((st) => `<p>${esc(st).replace(/\n/g, '<br>')}</p>`).join('');
+
 // ---------- år ----------
 async function renderYear(artal) {
   const myNav = nuNav();
-  const thts = await api('tht?select=nr,artal,ort,klar&order=artal');
+  const thts = await api('tht?select=nr,artal,ort,klar,kronika&order=artal');
   const medData = await api('v_tht_resultat?select=artal');
   const arMedData = new Set(medData.map((r) => r.artal));
   const lista = thts.filter((t) => arMedData.has(t.artal));
@@ -99,7 +104,9 @@ async function renderYear(artal) {
     </div>
     <h1>${esc(tht.ort)} ${artal}</h1>
     <p class="sub">THT ${tht.nr} · ${delt.length} deltävlingar · ${res.length} spelare</p>
+    <p class="rapport-lank"><a class="lank-pil" href="#/rapport/${artal}">Årsrapport ›</a></p>
 
+    ${tht.kronika ? `<section class="kronika-sek"><h2>Krönika</h2><div class="card kronika">${kronikaHtml(tht.kronika)}</div></section>` : ''}
     ${tht.klar ? '' : pagarRuta(res)}
     <div class="podium" ${tht.klar ? '' : 'hidden'}>
       ${[1, 0, 2].map((i) => topp[i] ? `

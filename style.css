@@ -623,3 +623,50 @@ h2.fallbar::after { content: "▾"; font-size: 14px; color: var(--cream-3); tran
 h2.fallbar.stangd::after { transform: rotate(-90deg); }
 h2.fallbar:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
 .kollapsad { display: none !important; }
+
+.sk-kommentar { display: block; margin-top: 10px; }
+.sk-kommentar input { width: 100%; margin-top: 4px; }
+.runda-kommentar { border-left: 3px solid var(--gold); padding: 8px 12px; margin: 10px 0 4px; color: var(--cream-2); font-style: italic; background: var(--stout-2); border-radius: 0 8px 8px 0; }
+.kronika { line-height: 1.6; }
+.kronika p { margin: 0 0 10px; }
+
+/* Årsrapport */
+.rapport-lank { margin: -4px 0 10px; }
+.rapport-knappar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+.rapport { max-width: 820px; margin: 0 auto; }
+.rapport-huvud { text-align: center; margin-bottom: 18px; }
+.rapport-logo { width: min(260px, 70vw); height: auto; display: block; margin: 6px auto 10px; }
+.rapport-vinnare { font-size: 18px; color: var(--gold-2); margin: 6px 0 0; }
+.rapport section { margin-top: 22px; }
+.rapport h3 { font-size: 17px; margin: 14px 0 2px; }
+.rapport-delt .meta { margin: 0 0 6px; color: var(--cream-3); }
+.rapport-hojd { padding-left: 20px; line-height: 1.6; }
+.rapport-graf { margin: 0; }
+.rapport-graf svg { width: 100%; height: auto; display: block; background: var(--stout-2); border-radius: 10px; }
+.rapport-graf .rg-linje { stroke: rgba(242, 232, 213, 0.1); }
+.rapport-graf .rg-linje.noll { stroke: rgba(242, 232, 213, 0.35); }
+.rapport-graf .rg-text { fill: var(--cream-3); font-size: 11px; }
+.rapport-graf figcaption { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 14px; }
+.rapport-graf figcaption i { display: inline-block; width: 12px; height: 3px; margin-right: 6px; vertical-align: middle; }
+.rapport-fot { margin: 30px 0 10px; text-align: center; color: var(--cream-3); font-size: 13px; }
+
+@media print {
+  @page { margin: 14mm; }
+  :root { --stout: #fff; --stout-2: #fff; --stout-3: #e6e6e6; --cream: #111; --cream-2: #333; --cream-3: #666; --gold: #8a6d1e; --gold-2: #7a5d10; --line: #ccc; }
+  html, body { background: #fff !important; color: #111 !important; }
+  .topbar, .foot, .no-print, .underflikar { display: none !important; }
+  main { padding: 0; max-width: none; }
+  h1, h2, h3, .rapport-vinnare { color: #111 !important; }
+  h2.fallbar::after { display: none; }
+  .kollapsad { display: revert !important; }
+  a, a.namn { color: inherit !important; text-decoration: none !important; border: 0 !important; }
+  .tablewrap { border: 1px solid #bbb; background: #fff; overflow: visible; }
+  th, td { color: #111 !important; border-bottom-color: #ddd !important; background: transparent !important; }
+  .card, .kronika { background: #fff !important; border-color: #ccc !important; color: #111 !important; }
+  .muted, .hint, .meta, .rapport-fot { color: #555 !important; }
+  .rapport-delt, .rapport-graf, .rapport .tablewrap, .rapport-hojd { break-inside: avoid; }
+  .rapport h2, .rapport h3 { break-after: avoid; }
+  .rapport-graf svg { background: #fff; border: 1px solid #ccc; }
+  .rapport-graf .rg-linje { stroke: #ddd; } .rapport-graf .rg-linje.noll { stroke: #888; } .rapport-graf .rg-text { fill: #555; }
+  .rapport-logo { filter: invert(1) hue-rotate(180deg); }
+}

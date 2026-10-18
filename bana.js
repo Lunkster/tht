@@ -1,7 +1,7 @@
 // Bansida: en banas betyg, när den spelats, bästa rundor och hålen.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.26.0';
-import { punktKarta } from './karta.js?v=0.26.0';
-import { halStatistik } from './statistik.js?v=0.26.0';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.27.0';
+import { punktKarta } from './karta.js?v=0.27.0';
+import { halStatistik } from './statistik.js?v=0.27.0';
 
 const app = document.getElementById('app');
 const stjarnor = (v) => v == null ? '' : `<span class="stjarnor" aria-hidden="true" style="--v:${(v / 5) * 100}%">★★★★★</span>`;

@@ -2,6 +2,10 @@
  {
   "datum": "2026-10-18",
   "punkter": [
+   "**Årsrapport** för varje THT: krönika, tabellerna på poäng och slag, alla deltävlingar, THT-grafen, årets höjdpunkter, hålvinster, fördelning och övernattning – på en sida som kan skrivas ut eller sparas som PDF. Länk på årssidan (v0.27.0)",
+   "Krönikan syns överst på årssidan när den är ifylld (v0.27.0)",
+   "Kommentarer på rundor visas på scorekortet, och kan skrivas och ändras i Scorekort i efterhand (v0.27.0)",
+   "Appen kan **läggas på hemskärmen** – i webbläsarens meny: *Lägg till på startskärmen* (Android) eller Dela → *Lägg till på hemskärmen* (iPhone). Den öppnas då som en egen app med THT-ikonen (v0.27.0)",
    "Alla rubriker går att **fälla ihop** – tryck på rubriken. Appen kommer ihåg vad du fällt ihop, t.ex. gäller en ihopfälld rubrik på årssidan alla år (v0.26.0)",
    "**Scorekort för varje runda:** se en runda hål för hål med slag, poäng och puttar, summor ut/in och vilka som gick i samma boll. Nås från spelarsidan (**Alla rundor**), rundpoängen på årssidan, bansidans bästa rundor, rekorden och hålsidan (v0.25.0)",
    "Ny flik **Totalt** i All-time: rundor, banor, hål, poäng, slag, puttar och kilometer per spelare och för alla tillsammans (v0.24.0)",

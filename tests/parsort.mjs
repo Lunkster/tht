@@ -1,0 +1,16 @@
+import { chromium } from 'playwright';
+const P = [[1, 'Jörgen'], [2, 'Marcus'], [3, 'Robert'], [9, 'Henrik']];
+const par = P.flatMap(([id, f], i) => [3, 4, 5].map((pp) => ({ tht_nr: 28, person_id: id, fornamn: f, par: pp, hal: 10, poang: [12, 25, 18, 30][i] + pp * (i % 2), slag: 10 * pp + [5, 9, 2, 7][(i + pp) % 4] })));
+const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+p.on('pageerror', (e) => console.log('ERR', e.message));
+await p.route('**/*', (r) => { const u = new URL(r.request().url()); if (!u.hostname.includes('supabase')) return r.continue();
+  const t = u.pathname.replace('/rest/v1/', ''); return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(t === 'v_stat_par' ? par : []) }); });
+await p.goto('http://localhost:8765/#/alltime/par'); await p.waitForTimeout(800);
+const rad = async () => (await p.locator('tbody tr').allTextContents()).map((x) => x.replace(/\s+/g, ' ').trim()).join(' | ');
+const rub = async () => (await p.locator('thead th').allTextContents()).join('/');
+console.log('START  ', await rad());
+await p.click('th[data-ps="4"]'); await p.waitForTimeout(100); console.log('PAR4 ▼ ', await rub(), '|', await rad());
+await p.click('th[data-ps="4"]'); await p.waitForTimeout(100); console.log('PAR4 ▲ ', await rad());
+await p.click('th[data-ps="fornamn"]'); await p.waitForTimeout(100); console.log('NAMN   ', await rad());
+await p.click('[data-lage="par:slag"]'); await p.waitForTimeout(100); await p.click('th[data-ps="3"]'); await p.waitForTimeout(100); console.log('SLAG P3', await rub(), '|', await rad());
+await b.close();

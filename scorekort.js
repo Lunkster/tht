@@ -1,6 +1,6 @@
 // Scorekort i efterhand: hela rundor per spelare – 18 slag (och valfritt puttar) på en gång.
 // Samma tabeller och regler som Mata in: runda + score, poäng räknas på samma sätt som vyn v_score.
-import { api, write, esc, datum, poang, nuNav, aktuell } from './lib.js?v=0.26.0';
+import { api, write, esc, datum, poang, nuNav, aktuell } from './lib.js?v=0.27.0';
 
 const app = document.getElementById('app');
 const HAL = Array.from({ length: 18 }, (_, i) => i + 1);
@@ -22,7 +22,7 @@ export async function renderScorekort(did, meddelande = '') {
   if (!d) { app.innerHTML = '<p class="err">Deltävlingen finns inte.</p>'; return; }
   const [halDb, rundor] = await Promise.all([
     api(`hal?banversion_id=eq.${d.banversion_id}&select=nr,par,hcp_index&order=nr`, { fresh: true }),
-    api(`runda?deltavling_id=eq.${did}&select=id,person_id,spel_hcp,boll_nr,score(hal_nr,slag,puttar)&order=id`, { fresh: true }),
+    api(`runda?deltavling_id=eq.${did}&select=id,person_id,spel_hcp,boll_nr,kommentar,score(hal_nr,slag,puttar)&order=id`, { fresh: true }),
   ]);
   if (!aktuell(myNav)) return;
   const hal = Object.fromEntries(halDb.map((h) => [h.nr, h]));
@@ -34,7 +34,7 @@ export async function renderScorekort(did, meddelande = '') {
 
   // Kort = en spelares runda. Befintliga från databasen, nya läggs till med knappen.
   const kort = rundor.map((r) => ({
-    key: 'r' + r.id, runda_id: r.id, person_id: r.person_id, spel_hcp: r.spel_hcp, boll_nr: r.boll_nr,
+    key: 'r' + r.id, runda_id: r.id, person_id: r.person_id, spel_hcp: r.spel_hcp, boll_nr: r.boll_nr, kommentar: r.kommentar ?? null,
     orig: Object.fromEntries((r.score ?? []).map((s) => [s.hal_nr, { slag: s.slag, puttar: s.puttar }])),
   }));
   let nyNr = 0;
@@ -60,6 +60,7 @@ export async function renderScorekort(did, meddelande = '') {
         <div class="sk-tot"><span id="tot-${k.key}">–</span><small>poäng</small></div>
       </div>
       ${halvRad(k, 0)}${halvRad(k, 9)}
+      <label class="sk-kommentar"><span class="meta">Kommentar <span class="muted">(valfritt, syns på scorekortet)</span></span><input type="text" id="kom-${k.key}" value="${esc(k.kommentar ?? '')}" maxlength="300" placeholder="t.ex. regn sista nio, hole in one på 7:an"></label>
       <p class="hint" id="msg-${k.key}" role="status"></p>
     </section>`;
   };
@@ -100,6 +101,7 @@ export async function renderScorekort(did, meddelande = '') {
   const statusRad = () => { document.getElementById('sparmsg').textContent = andrade.size ? `${andrade.size} scorekort ej sparade` : ''; };
   const las = (k) => ({
     hcp: heltal(document.getElementById(`hcp-${k.key}`).value),
+    kommentar: document.getElementById(`kom-${k.key}`).value.trim() || null,
     boll: document.getElementById(`boll-${k.key}`).value === '' ? null : Number(document.getElementById(`boll-${k.key}`).value),
     hal: Object.fromEntries(HAL.map((n) => [n, {
       slag: heltal(app.querySelector(`.sk-slag[data-k="${k.key}"][data-h="${n}"]`).value),
@@ -207,12 +209,12 @@ export async function renderScorekort(did, meddelande = '') {
       for (const { k, v } of data) {
         msg.textContent = `Sparar ${pMap[k.person_id]?.fornamn ?? ''} …`;
         if (!k.runda_id) {
-          const [r] = await write('POST', 'runda', { deltavling_id: did, person_id: k.person_id, spel_hcp: v.hcp, boll_nr: v.boll });
+          const [r] = await write('POST', 'runda', { deltavling_id: did, person_id: k.person_id, spel_hcp: v.hcp, boll_nr: v.boll, kommentar: v.kommentar });
           k.runda_id = r.id;
-        } else if (v.hcp !== k.spel_hcp || v.boll !== k.boll_nr) {
-          await write('PATCH', `runda?id=eq.${k.runda_id}`, { spel_hcp: v.hcp, boll_nr: v.boll }, 'return=minimal');
+        } else if (v.hcp !== k.spel_hcp || v.boll !== k.boll_nr || v.kommentar !== k.kommentar) {
+          await write('PATCH', `runda?id=eq.${k.runda_id}`, { spel_hcp: v.hcp, boll_nr: v.boll, kommentar: v.kommentar }, 'return=minimal');
         }
-        k.spel_hcp = v.hcp; k.boll_nr = v.boll;
+        k.spel_hcp = v.hcp; k.boll_nr = v.boll; k.kommentar = v.kommentar;
         const upsert = HAL.filter((n) => v.hal[n].slag !== null && (v.hal[n].slag !== k.orig[n]?.slag || v.hal[n].puttar !== (k.orig[n]?.puttar ?? null)))
           .map((n) => ({ runda_id: k.runda_id, hal_nr: n, slag: v.hal[n].slag, puttar: v.hal[n].puttar }));
         if (upsert.length) await write('POST', 'score?on_conflict=runda_id,hal_nr', upsert, 'resolution=merge-duplicates,return=minimal');

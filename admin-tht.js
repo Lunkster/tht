@@ -1,5 +1,5 @@
 // Admin: THT (nr, år, ort, startdatum, krönika) och dess deltävlingar (bana/version/tee, datum, namn).
-import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.26.0';
+import { api, write, esc, nuNav, aktuell, tolkaDatum } from './lib.js?v=0.27.0';
 
 const app = document.getElementById('app');
 const idag = () => new Date().toISOString().slice(0, 10);
