@@ -1,6 +1,6 @@
 // Årsrapport (#/rapport/<år>): allt om en THT på en sida i stil med 2016-rapporten – går att skriva ut eller spara som PDF.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.27.0';
-import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.27.0';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.28.0';
+import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.28.0';
 
 const app = document.getElementById('app');
 const FARGER = ['#3987e5', '#d95926', '#199e70', '#e3c278', '#a35cc8', '#d4417c', '#5bb7c9', '#8fa83a', '#c98a3e', '#7a86d6', '#b5b0a6', '#e07a5f'];

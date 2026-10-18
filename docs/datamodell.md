@@ -58,6 +58,8 @@ erDiagram
 | `v_stat_runda` | Birdies och längsta svit par eller bättre per runda |
 | `v_stat_hal` | Snitt över par och poäng per bana och hål |
 | `v_stat_totalt` | Rundor, banor, hål, poäng, slag, puttar och meter per spelare |
+| `v_inbordes` | Inbördes möten: en rad per spelare, motståndare och deltävling där båda har en hel runda; utfall på poäng och slag (1/0/−1) |
+| `v_inbordes_summa` | Vinster–oavgjort–förluster per spelare och motståndare (poäng och slag), poängdiff, senaste år |
 
 ## Regler i databasen
 

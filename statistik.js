@@ -1,6 +1,7 @@
 // Statistik från 2016-rapporten: hålvinster, resultatfördelning, par 3/4/5, rekord och svåraste hålen.
 // Beräknas i databasvyerna v_stat_* (migrering 17) – här bara sammanställning och tabeller.
-import { api, allaRader, esc, fmt } from './lib.js?v=0.27.0';
+import { api, allaRader, esc, fmt } from './lib.js?v=0.28.0';
+import { inbordesMatris } from './inbordes.js?v=0.28.0';
 
 const namnLank = (id, namn) => `<a class="namn" href="#/spelare/${id}">${esc(namn)}</a>`;
 const summa = (xs, f) => xs.reduce((a, x) => a + (Number(f(x)) || 0), 0);
@@ -154,6 +155,7 @@ export const STAT_FLIKAR = [
   { id: 'par', t: 'Par 3/4/5' },
   { id: 'rekord', t: 'Rekord' },
   { id: 'hal', t: 'Hål' },
+  { id: 'inbordes', t: 'Inbördes' },
 ];
 
 export async function renderStatFlik(flik, el) {
@@ -183,6 +185,7 @@ export async function renderStatFlik(flik, el) {
     rita();
     return;
   }
+  if (flik === 'inbordes') { await inbordesMatris(el); return; }
   if (flik === 'rekord') { el.innerHTML = await rekordHtml(); return; }
   if (flik === 'hal') { el.innerHTML = await halHtml(); return; }
   if (flik === 'totalt') {

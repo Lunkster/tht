@@ -670,3 +670,33 @@ h2.fallbar:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; 
   .rapport-graf .rg-linje { stroke: #ddd; } .rapport-graf .rg-linje.noll { stroke: #888; } .rapport-graf .rg-text { fill: #555; }
   .rapport-logo { filter: invert(1) hue-rotate(180deg); }
 }
+
+/* Inbördes möten (v0.28.0) */
+.ib-summa { margin: 0 0 10px; }
+.ib-tabell td:nth-child(n+3):nth-child(-n+5) { color: var(--cream-2); }
+.ib-matris th, .ib-matris td { padding-left: 6px; padding-right: 6px; text-align: center; white-space: nowrap; }
+.ib-matris th .kort { display: none; }
+.ib-matris td.ib-sjalv { color: var(--cream-3); }
+.ib-matris a.ib-cell { color: var(--cream); text-decoration: none; display: block; }
+@media (max-width: 719px) {
+  .ib-matris th .lang { display: none; }
+  .ib-matris th .kort { display: inline; }
+  .ib-matris th, .ib-matris td { padding-left: 3px; padding-right: 3px; font-size: 12px; }
+  .ib-matris td.l { max-width: 64px; overflow: hidden; text-overflow: ellipsis; }
+}
+.duell-val { display: flex; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.duell-val select { flex: 1; min-width: 0; }
+.duell-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 6px; }
+.duell-score .du-namn { font-size: 20px; font-weight: 700; }
+.duell-score .du-namn:first-child { text-align: right; }
+.du-siffror { display: flex; gap: 10px; align-items: baseline; font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--cream-2); }
+.du-siffror .leder { color: var(--gold-2); }
+.du-siffror .du-o { font-size: 22px; color: var(--cream-3); }
+.du-under { margin: 2px 0 12px; font-size: 13px; }
+.du-form { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.du-prick { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; text-decoration: none; }
+.du-prick.v { background: var(--gold); color: var(--stout); }
+.du-prick.f { background: #d95926; color: var(--stout); }
+.du-prick.o { background: var(--stout-3); color: var(--cream-2); border: 1px solid var(--line); }
+.du-chart { height: 200px; }
+@media (max-width: 719px) { .du-siffror { font-size: 32px; } .duell-score .du-namn { font-size: 17px; } }

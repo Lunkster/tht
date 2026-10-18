@@ -1,5 +1,6 @@
 // Personsida: en spelares nyckeltal, resultat per år, snittpoäng över tid och resultatfördelning.
-import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.27.0';
+import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.28.0';
+import { inbordesSpelare } from './inbordes.js?v=0.28.0';
 
 const app = document.getElementById('app');
 const BLA = '#3987e5';                       // seriefärg 1 (validerad mot mörk yta)
@@ -124,6 +125,8 @@ export async function renderSpelare(pid) {
       </table></div>
       <p class="hint">Nyast först. * = inte alla 18 hål inmatade.</p></details>` : ''}
 
+    <div id="sp-inbordes"></div>
+
     <h2>Resultat per hål</h2>
     <div class="chartcard"><div id="sp-staplar"></div>
       <p class="hint">${spelade.length} spelade hål. Slag räknas med tak par + 5.</p></div>
@@ -142,6 +145,7 @@ export async function renderSpelare(pid) {
   app.querySelectorAll('.sp-seg button').forEach((b) => b.onclick = () => { lage = b.dataset.lage; ritaLage(); });
   ritaLage();
   ritaStaplar(fordelning, spelade.length);
+  inbordesSpelare(document.getElementById('sp-inbordes'), p.id).catch(() => {});
   window.onresize = () => { if (document.getElementById('sp-linje')) ritaLage(); };
 }
 
