@@ -1,6 +1,6 @@
 // Scorekort i efterhand: hela rundor per spelare – 18 slag (och valfritt puttar) på en gång.
 // Samma tabeller och regler som Mata in: runda + score, poäng räknas på samma sätt som vyn v_score.
-import { api, write, esc, datum, poang, nuNav, aktuell } from './lib.js?v=0.33.0';
+import { api, write, esc, datum, poang, nuNav, aktuell } from './lib.js?v=0.33.1';
 
 const app = document.getElementById('app');
 const HAL = Array.from({ length: 18 }, (_, i) => i + 1);

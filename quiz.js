@@ -1,8 +1,8 @@
 // Quiz och flashcards (admin, migrering 24): frågor skapas automatiskt ur databasen och kan kompletteras med egna.
 // #/admin/quiz – lista och ny quiz · #/admin/quiz/<id> – redigera · #/quiz/<id> – visa på storskärm (quiz eller flashcards).
-import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.33.0';
-import { visaLogin } from './mata.js?v=0.33.0';
-import { banTopplista } from './bana.js?v=0.33.0';
+import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.33.1';
+import { visaLogin } from './mata.js?v=0.33.1';
+import { banTopplista } from './bana.js?v=0.33.1';
 
 const app = document.getElementById('app');
 export const AMNEN = [
@@ -135,6 +135,7 @@ export async function renderQuizAdmin([id] = []) {
     <form class="card form quiz-form" id="nyquiz">
       <label>Namn<input type="text" name="namn" required maxlength="100" placeholder="t.ex. Middagsquiz 2027"></label>
       <fieldset class="quiz-amnen"><legend class="meta">Ämnen</legend>
+        <label class="check quiz-blandat"><input type="checkbox" id="blandat" checked> <strong>Blandat</strong> <span class="dim small">frågor ur alla kategorier, huller om buller</span></label>
         ${AMNEN.map((a) => `<label class="check"><input type="checkbox" name="amne" value="${a.id}" checked> ${a.t} <span class="dim small">${a.d}</span></label>`).join('')}
       </fieldset>
       <label>Antal frågor<select name="antal">${[10, 15, 20, 25, 30, 40].map((n) => `<option ${n === 20 ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
@@ -142,6 +143,10 @@ export async function renderQuizAdmin([id] = []) {
       <p class="hint" id="nymsg">Frågorna slumpas fram och kan sedan bytas, tas bort eller kompletteras med egna.</p>
     </form>`;
   const form = document.getElementById('nyquiz');
+  // Blandat = alla ämnen ikryssade; ändras ett ämne följer Blandat med
+  const blandat = document.getElementById('blandat'), amnesRutor = [...form.querySelectorAll('input[name=amne]')];
+  blandat.onchange = () => amnesRutor.forEach((x) => { x.checked = blandat.checked; });
+  amnesRutor.forEach((x) => x.onchange = () => { blandat.checked = amnesRutor.every((y) => y.checked); });
   form.onsubmit = async (e) => {
     e.preventDefault();
     const msg = document.getElementById('nymsg');
@@ -240,7 +245,7 @@ export async function renderQuizVisa(id) {
   const topp = () => `<div class="qs-topp"><a href="#/admin/quiz/${id}" class="qs-ut">✕ Avsluta</a><span>${esc(q.namn)}</span><button type="button" class="qs-hel" title="Helskärm (F)">⛶</button></div>`;
   const rita = () => {
     if (!lage) {
-      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.33.0" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
+      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.33.1" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
         <div class="qs-val"><button type="button" class="btn primary" data-lage="quiz">Quiz</button><button type="button" class="btn" data-lage="kort">Flashcards</button></div>
         <p class="hint">Mellanslag eller → = nästa steg · ← = tillbaka · F = helskärm</p></div>`;
     } else if (i >= fr.length) {

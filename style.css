@@ -774,3 +774,4 @@ body.storskarm #app { max-width: none; min-height: 100vh; display: flex; flex-di
 .quiz-form label .dim { font-weight: 400; }
 .quiz-form input[type=text], .quiz-form select { width: 100%; }
 .quiz-form .check { display: flex; gap: 8px; font-weight: 400; align-items: baseline; }
+.quiz-blandat { padding-bottom: 6px; margin-bottom: 2px; border-bottom: 1px solid var(--line); }
