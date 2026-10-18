@@ -2,6 +2,8 @@
  {
   "datum": "2026-10-18",
   "punkter": [
+   "Via din **personliga länk** (den för banbetyg) kan du nu också skriva ett eget **minnesvärt moment** för varje deltävling du spelat. Det syns på årssidan och på ditt scorekort (v0.31.0)",
+   "**Övningsrunda:** under *Mata in* finns en övningsrunda där du kan prova att skapa bollar och mata in slag. Inget därifrån räknas i statistik, resultat eller leaderboard (v0.30.0)",
    "**Minnesvärda moment:** skriv ner det som hände – för hela deltävlingen, en boll eller en spelare. Under deltävlingen i *Mata in* (tryck **＋ Minnesvärt** på en boll) och i efterhand på årssidan under varje deltävling, även när THT:n är avslutad. De syns på årssidan, på scorekortet och i årsrapporten. De gamla rundkommentarerna finns kvar där (v0.29.0)",
    "**Inbördes möten:** se hur det gått mot varje motståndare – vinster, oavgjorda och förluster i deltävlingar där ni båda spelat. Finns på spelarsidan, som tabell för alla under All-time → **Inbördes**, och som **duell** mellan två spelare med ställning, form, de senaste mötena och största segrar. Växla mellan poäng och slag (v0.28.0)",
    "**Årsrapport** för varje THT: krönika, tabellerna på poäng och slag, alla deltävlingar, THT-grafen, årets höjdpunkter, hålvinster, fördelning och övernattning – på en sida som kan skrivas ut eller sparas som PDF. Länk på årssidan (v0.27.0)",

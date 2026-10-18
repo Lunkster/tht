@@ -37,7 +37,7 @@ erDiagram
   tee { int id PK int banversion_id FK text namn numeric slope numeric course_rating }
   hal_langd { int hal_id PK int tee_id PK smallint langd }
   deltavling { int id PK int tht_nr FK int banversion_id FK int tee_id FK smallint ordning text namn date datum smallint narmast_hal smallint longest_hal int vinnare_utan_kort FK }
-  runda { int id PK int deltavling_id FK int person_id FK smallint spel_hcp smallint boll_nr int tee_id FK text kommentar_gammal_tas_bort bool last }
+  runda { int id PK int deltavling_id FK int person_id FK smallint spel_hcp smallint boll_nr int tee_id FK bool last }
   kommentar { int id PK int deltavling_id FK int runda_id FK smallint boll_nr text text timestamptz skapad timestamptz andrad bool fran_lank }
   score { int runda_id PK smallint hal_nr PK smallint slag smallint puttar timestamptz andrad }
   pris { int deltavling_id PK text typ PK int person_id FK }
@@ -67,7 +67,7 @@ erDiagram
 
 ## Regler i databasen
 
-- **Minnesvärda moment** (`kommentar`, migrering 21): gäller hela deltävlingen, en boll (`boll_nr`) eller en runda (`runda_id`; deltävlingen sätts då från rundan). Admin och markör får skriva, ändra och ta bort även i avslutade THT. `runda.kommentar` ersatt – tas bort med `21b`.
+- **Minnesvärda moment** (`kommentar`, migrering 21): gäller hela deltävlingen, en boll (`boll_nr`) eller en runda (`runda_id`; deltävlingen sätts då från rundan). Admin och markör får skriva, ändra och ta bort även i avslutade THT. Ersätter `runda.kommentar` (borttagen 2026-10-18).
 
 - **Läsa:** alla (utom `person_kontakt` och länkkoderna, som bara admin/markör ser).
 - **Skriva:** admin allt; markör bara rundor, slag, bollar och priser i THT som inte är avslutade, samt banbetyg (alla år). Se `supabase/10_behorighet.sql`, `11_…`, `13_…`.
