@@ -775,3 +775,16 @@ body.storskarm #app { max-width: none; min-height: 100vh; display: flex; flex-di
 .quiz-form input[type=text], .quiz-form select { width: 100%; }
 .quiz-form .check { display: flex; gap: 8px; font-weight: 400; align-items: baseline; }
 .quiz-blandat { padding-bottom: 6px; margin-bottom: 2px; border-bottom: 1px solid var(--line); }
+
+/* Deltävlingssida (v0.34.0) */
+.dt-nav { display: flex; gap: 6px; }
+.dt-bollar { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.dt-boll { padding: 10px 12px; }
+.dt-boll ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; }
+.dt-boll li.basta a { color: var(--gold-2); font-weight: 700; }
+.dt-hal { font-size: 13px; }
+.dt-hal th, .dt-hal td { padding: 4px 3px; text-align: center; white-space: nowrap; }
+.dt-hal .l { text-align: left; position: sticky; left: 0; background: var(--stout-2); z-index: 1; }
+.dt-hal .sk-slag { min-width: 24px; height: 24px; }
+.dt-hal td.hv { background: rgba(227, 194, 120, 0.16); }
+.dt-par th { color: var(--cream-3); font-weight: 400; }

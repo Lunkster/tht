@@ -1,5 +1,5 @@
 // Scorekort för en runda (#/runda/<id>): hål för hål med slag, poäng och puttar, plus de andra i bollen.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.33.1';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.34.0';
 
 const app = document.getElementById('app');
 const RES = (h) => {
@@ -44,7 +44,7 @@ export async function renderRunda(rid) {
   app.innerHTML = `
     <a class="back" href="#/spelare/${r.person_id}">‹ ${esc(r.fornamn)}</a>
     <h1>${esc(r.fornamn)} · ${r.artal} R${r.ordning}</h1>
-    <p class="sub">${esc(r.deltavling ?? '')}${bana ? ` · <a class="namn" href="#/bana/${bana.id}">${esc(bana.namn)}</a>` : ''}${d?.datum ? ` · ${esc(d.datum)}` : ''}${d?.tee?.namn ? ` · tee ${esc(d.tee.namn)}` : ''}</p>
+    <p class="sub"><a class="namn" href="#/deltavling/${r.deltavling_id}">R${r.ordning}${r.deltavling ? ' · ' + esc(r.deltavling) : ''}</a>${bana ? ` · <a class="namn" href="#/bana/${bana.id}">${esc(bana.namn)}</a>` : ''}${d?.datum ? ` · ${esc(d.datum)}` : ''}${d?.tee?.namn ? ` · tee ${esc(d.tee.namn)}` : ''}</p>
     ${minnen.map((k) => `<p class="runda-kommentar">${esc(k.text)}</p>`).join('')}
     <div class="sp-nyckel">
       <div class="sp-tile"><div class="sp-v">${fmt(r.poang)}</div><div class="sp-t">Poäng</div><div class="sp-d">${r.antal_hal ? `mot hcp ${r.poang - 2 * r.antal_hal > 0 ? '+' : ''}${r.poang - 2 * r.antal_hal}` : ''}</div></div>

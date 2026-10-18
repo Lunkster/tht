@@ -1,7 +1,7 @@
 // Årsrapport (#/rapport/<år>): allt om en THT på en sida i stil med 2016-rapporten – går att skriva ut eller spara som PDF.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.33.1';
-import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.33.1';
-import { hamtaMinnen, vem } from './minnen.js?v=0.33.1';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.34.0';
+import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.34.0';
+import { hamtaMinnen, vem } from './minnen.js?v=0.34.0';
 
 const app = document.getElementById('app');
 const FARGER = ['#3987e5', '#d95926', '#199e70', '#e3c278', '#a35cc8', '#d4417c', '#5bb7c9', '#8fa83a', '#c98a3e', '#7a86d6', '#b5b0a6', '#e07a5f'];
@@ -76,7 +76,7 @@ export async function renderRapport(artal) {
     <div class="rapport-knappar no-print"><a class="back" href="#/ar/${artal}">‹ ${artal}</a><button class="btn" type="button" id="skrivut">Skriv ut eller spara som PDF</button></div>
     <article class="rapport">
       <header class="rapport-huvud">
-        <img src="logo.svg?v=0.33.1" alt="The Helkväll Tour" class="rapport-logo">
+        <img src="logo.svg?v=0.34.0" alt="The Helkväll Tour" class="rapport-logo">
         <h1>THT ${nr} – ${esc(tht.ort)} ${artal}</h1>
         <p class="sub">${period}${delt.length ? ` · ${delt.length} deltävlingar` : ''}${res.length ? ` · ${res.length} spelare` : ''}</p>
         ${vinnare && tht.klar ? `<p class="rapport-vinnare">Vinnare: <strong>${esc(vinnare.fornamn)}</strong> med ${fmt(vinnare.poang)} poäng</p>` : tht.klar ? '' : '<p class="rapport-vinnare">THT:n pågår – ingen vinnare ännu</p>'}
@@ -99,7 +99,7 @@ export async function renderRapport(artal) {
         const rs = rundor.filter((r) => r.deltavling_id === d.id);
         const uk = !rs.length && d.vinnare_utan_kort ? res.find((r) => r.person_id === d.vinnare_utan_kort)?.fornamn : null;
         const priser = [prisFor(d, 'narmast') && `Närmast hål${d.narmast_hal ? ` (${d.narmast_hal})` : ''}: ${esc(prisFor(d, 'narmast'))}`, prisFor(d, 'longest') && `Longest drive${d.longest_hal ? ` (${d.longest_hal})` : ''}: ${esc(prisFor(d, 'longest'))}`].filter(Boolean).join(' · ');
-        return `<div class="rapport-delt"><h3>R${d.ordning} · ${esc(d.namn)}</h3>
+        return `<div class="rapport-delt"><h3><a class="namn" href="#/deltavling/${d.id}">R${d.ordning} · ${esc(d.namn)}</a></h3>
           <p class="meta">${esc(d.banversion?.bana?.namn ?? '')}${d.datum ? ` · ${esc(d.datum)}` : ''}${priser ? ` · ${priser}` : ''}</p>
           ${rs.length ? `<div class="tablewrap"><table class="stat-tabell"><thead><tr><th>#</th><th class="l">Namn</th><th>Poäng</th><th>Slag</th><th>Puttmedel</th></tr></thead>
             <tbody>${rs.map((r) => `<tr><td>${r.placering}</td><td class="l"><a class="namn" href="#/runda/${r.runda_id}">${esc(r.fornamn)}</a></td><td><strong>${fmt(r.poang)}</strong></td><td>${fmt(r.slag)}</td><td>${r.hal_med_puttar ? fmt(r.puttar / r.hal_med_puttar, 1) : '–'}</td></tr>`).join('')}</tbody></table></div>`

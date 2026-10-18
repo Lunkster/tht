@@ -1,21 +1,22 @@
-// THT golfapp (v0.33.1) – statistik och inmatning.
+// THT golfapp (v0.34.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.33.1';
-import { renderMata } from './mata.js?v=0.33.1';
-import { renderAdmin } from './admin.js?v=0.33.1';
-import { renderSpelare } from './spelare.js?v=0.33.1';
-import { renderKarta, miniKarta } from './karta.js?v=0.33.1';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.33.1';
-import { renderBetygLank } from './betyg.js?v=0.33.1';
-import { renderNyheter } from './nyheter.js?v=0.33.1';
-import { renderRunda } from './runda.js?v=0.33.1';
-import './kollaps.js?v=0.33.1';
-import { renderRapport } from './rapport.js?v=0.33.1';
-import { renderDuell } from './inbordes.js?v=0.33.1';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.33.1';
-import { renderQuizVisa } from './quiz.js?v=0.33.1';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.33.1';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.34.0';
+import { renderMata } from './mata.js?v=0.34.0';
+import { renderAdmin } from './admin.js?v=0.34.0';
+import { renderSpelare } from './spelare.js?v=0.34.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.34.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.34.0';
+import { renderBetygLank } from './betyg.js?v=0.34.0';
+import { renderNyheter } from './nyheter.js?v=0.34.0';
+import { renderRunda } from './runda.js?v=0.34.0';
+import './kollaps.js?v=0.34.0';
+import { renderRapport } from './rapport.js?v=0.34.0';
+import { renderDuell } from './inbordes.js?v=0.34.0';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.34.0';
+import { renderQuizVisa } from './quiz.js?v=0.34.0';
+import { renderDeltavling } from './deltavling.js?v=0.34.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.34.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -46,6 +47,7 @@ function route() {
   if (page === 'betyg' && arg) return renderBetygLank(arg).catch(fel);
   if (page === 'nyheter') return renderNyheter().catch(fel);
   if (page === 'runda' && arg) return renderRunda(Number(arg)).catch(fel);
+  if (page === 'deltavling' && arg) return renderDeltavling(Number(arg)).catch(fel);
   if (page === 'quiz' && arg) return renderQuizVisa(Number(arg)).catch(fel);
   if (page === 'duell' && arg) return renderDuell(Number(arg), rest[0] ? Number(rest[0]) : null).catch(fel);
   if (page === 'rapport' && arg) return renderRapport(Number(arg)).catch(fel);
@@ -125,7 +127,7 @@ async function renderYear(artal) {
     ${tieNote}
 
     ${utanKort ? `<p class="hint">Scorekorten från ${artal} saknas – här finns bara totalresultatet och vem som vann varje deltävling.</p>` : ''}
-    ${resultatOchGraf(res, ordningar, perRunda, tht.klar, utanKort)}
+    ${resultatOchGraf(res, ordningar, perRunda, tht.klar, utanKort, Object.fromEntries(delt.map((d) => [d.ordning, d.id])))}
 
     <h2>Deltävlingar</h2>
     <div class="rounds">
@@ -138,7 +140,7 @@ async function renderYear(artal) {
         const extra = [nh && `Närmast hål${d.narmast_hal ? ' (' + d.narmast_hal + ')' : ''}: ${esc(nh.person.fornamn)}`,
                        ld && `Longest drive${d.longest_hal ? ' (' + d.longest_hal + ')' : ''}: ${esc(ld.person.fornamn)}`].filter(Boolean).join(' · ');
         return `<div class="round">
-          <div><div class="rn">R${d.ordning} · ${esc(d.namn)}</div>
+          <div><div class="rn"><a class="namn" href="#/deltavling/${d.id}">R${d.ordning} · ${esc(d.namn)}</a></div>
           <div class="meta">${d.banversion?.bana ? `<a class="namn" href="#/bana/${d.banversion.bana.id}">${esc(d.banversion.bana.namn)}</a>` : ''} · ${datum(d.datum)}</div></div>
           <div class="win">${vNamn ? `<div class="rn"><a class="namn" href="#/spelare/${vinnare.person_id}">${esc(vNamn)}</a></div><div class="meta">${fmt(vinnare.poang)} p${tht.klar ? '' : ' · leder'}</div>` : kand ? `<div class="rn"><a class="namn" href="#/spelare/${kand.person_id}">${esc(kand.fornamn)}</a></div><div class="meta">vann · poäng saknas</div>` : '<div class="meta">Inga resultat</div>'}</div>
           ${extra ? `<div class="extra">${extra}</div>` : ''}
@@ -190,7 +192,7 @@ function pagarRuta(res) {
   return `<div class="pagar"><strong>Pågår</strong> – ingen vinnare utses förrän THT:n är avslutad.${ledare.length ? ` Leder just nu: ${ledare.map((r) => `<a class="namn" href="#/spelare/${r.person_id}">${esc(r.fornamn)}</a>`).join(', ')} (${fmt(ledare[0].poang)} p).` : ''}</div>`;
 }
 
-function resultatOchGraf(res, ordningar, perRunda, klar = true, utanGraf = false) {
+function resultatOchGraf(res, ordningar, perRunda, klar = true, utanGraf = false, deltId = {}) {
   const rundorFor = (r) => Object.values(perRunda[r.person_id] ?? {});
   // Poäng mot handicap = poäng − 2 per spelat hål (samma mått som "Mot handicap" i grafen).
   const motHcp = (r) => { const hal = rundorFor(r).reduce((a, x) => a + (x.antal_hal ?? 0), 0); return hal ? r.poang - 2 * hal : null; };
@@ -202,7 +204,7 @@ function resultatOchGraf(res, ordningar, perRunda, klar = true, utanGraf = false
     <div class="tablewrap"><table>
       <thead><tr>
         <th>#</th><th class="l">Spelare</th><th>Poäng</th><th title="Poäng mot handicap: poäng minus 2 per spelat hål">Mot HCP</th>
-        ${ordningar.map((o) => `<th class="hide-sm">R${o}</th>`).join('')}
+        ${ordningar.map((o) => `<th class="hide-sm">${deltId[o] ? `<a class="namn" href="#/deltavling/${deltId[o]}" title="Deltävlingen">R${o}</a>` : `R${o}`}</th>`).join('')}
         <th>Slag</th><th class="hide-sm">Puttar/hål</th><th class="hide-sm">Spel-HCP</th>
       </tr></thead>
       <tbody>
@@ -397,7 +399,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.33.1" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.34.0" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>
@@ -446,7 +448,7 @@ async function renderLeaderboard(navId) {
       api(`v_tht_resultat?tht_nr=eq.${nr}&order=placering`, f),
       api(`v_runda?tht_nr=eq.${nr}&select=runda_id,person_id,ordning,poang,slag,antal_hal,spel_hcp`, f),
       api(`v_tht_kurva?tht_nr=eq.${nr}&order=hal_i_tht&select=person_id,hal_i_tht,poang_ack,poang_ack_mot_hcp`, f),
-      api(`deltavling?tht_nr=eq.${nr}&order=ordning&select=ordning`, f),
+      api(`deltavling?tht_nr=eq.${nr}&order=ordning&select=id,ordning`, f),
     ]);
     if (!aktuell(navId)) return;
     const tid = document.getElementById('lbtid');
@@ -460,7 +462,7 @@ async function renderLeaderboard(navId) {
     const perRunda = {};
     rundor.forEach((r) => { (perRunda[r.person_id] ??= {})[r.ordning] = r; });
     const tieNote = res.length > 1 && res[0].poang === res[1].poang ? '<p class="hint">Lika poäng – lägst spel-HCP vinner.</p>' : '';
-    lb.innerHTML = (tht.klar ? '' : pagarRuta(res)) + tieNote + resultatOchGraf(res, ordningar, perRunda, tht.klar);
+    lb.innerHTML = (tht.klar ? '' : pagarRuta(res)) + tieNote + resultatOchGraf(res, ordningar, perRunda, tht.klar, false, Object.fromEntries(delt.map((d) => [d.ordning, d.id])));
     if (kurva.length) drawKurva(res, kurva, ordningar.length, lbState);
   }
   await hamta();
