@@ -1,11 +1,12 @@
 // Admin: grunddata som läggs upp sällan – spelare, banor, THT, priser och övernattningar.
-import { api, allaRader, write, isLoggedIn, arAdmin, arMarkor, logout, esc, nuNav, aktuell } from './lib.js?v=0.32.0';
-import { visaLogin } from './mata.js?v=0.32.0';
-import { renderBanor } from './admin-banor.js?v=0.32.0';
-import { renderTht } from './admin-tht.js?v=0.32.0';
-import { renderPriser } from './admin-priser.js?v=0.32.0';
-import { renderOvernattning } from './admin-overnattning.js?v=0.32.0';
-import { renderBanbetyg } from './admin-banbetyg.js?v=0.32.0';
+import { api, allaRader, write, isLoggedIn, arAdmin, arMarkor, logout, esc, nuNav, aktuell } from './lib.js?v=0.33.0';
+import { visaLogin } from './mata.js?v=0.33.0';
+import { renderBanor } from './admin-banor.js?v=0.33.0';
+import { renderTht } from './admin-tht.js?v=0.33.0';
+import { renderPriser } from './admin-priser.js?v=0.33.0';
+import { renderOvernattning } from './admin-overnattning.js?v=0.33.0';
+import { renderBanbetyg } from './admin-banbetyg.js?v=0.33.0';
+import { renderQuizAdmin } from './quiz.js?v=0.33.0';
 
 const app = document.getElementById('app');
 
@@ -16,6 +17,7 @@ const SEKTIONER = [
   { id: 'priser', t: 'Närmast hål och longest drive', d: 'Hål och vinnare per deltävling' },
   { id: 'banbetyg', t: 'Banbetyg', d: 'Varje spelares betyg 1–5 på årets banor' },
   { id: 'overnattning', t: 'Övernattningar', d: 'Plats, nätter, organisatör och koordinater per THT' },
+  { id: 'quiz', t: 'Quiz och flashcards', d: 'Frågor ur statistik, resultat och minnen – visa på storskärm' },
 ];
 
 export async function renderAdmin([sida, ...rest]) {
@@ -32,6 +34,7 @@ export async function renderAdmin([sida, ...rest]) {
   if (sida === 'priser') return renderPriser();
   if (sida === 'overnattning') return renderOvernattning();
   if (sida === 'banbetyg') return renderBanbetyg();
+  if (sida === 'quiz') return renderQuizAdmin(rest);
   return renderMeny();
 }
 
@@ -96,11 +99,12 @@ const BACKUP = [
   { t: 'banversion', o: 'id', id: true }, { t: 'tee', o: 'id', id: true }, { t: 'hal', o: 'id', id: true },
   { t: 'hal_langd', o: 'hal_id,tee_id' }, { t: 'deltavling', o: 'id', id: true }, { t: 'runda', o: 'id', id: true },
   { t: 'score', o: 'runda_id,hal_nr' }, { t: 'kommentar', o: 'id', id: true }, { t: 'pris', o: 'deltavling_id,typ' }, { t: 'overnattning', o: 'id', id: true },
-  { t: 'ban_betyg', o: 'tht_nr,bana_id,person_id' }, { t: 'spelar_lank', o: 'person_id' },
+  { t: 'ban_betyg', o: 'tht_nr,bana_id,person_id' }, { t: 'spelar_lank', o: 'person_id' }, { t: 'quiz', o: 'id', id: true },
 ];
 const sqlVarde = (v) => v === null || v === undefined ? 'NULL'
   : typeof v === 'boolean' ? (v ? 'true' : 'false')
   : typeof v === 'number' ? String(v)
+  : typeof v === 'object' ? `'${JSON.stringify(v).replace(/'/g, "''")}'`   // jsonb (quiz)
   : `'${String(v).replace(/'/g, "''")}'`;
 
 export function byggBackup(data, nu = new Date()) {

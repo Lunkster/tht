@@ -1,5 +1,5 @@
 // Admin: banbetyg – varje spelares betyg 1–5 på årets banor (tabellen ban_betyg).
-import { api, write, esc, fmt, nuNav, aktuell, arMarkor, arAdmin } from './lib.js?v=0.32.0';
+import { api, write, esc, fmt, nuNav, aktuell, arMarkor, arAdmin } from './lib.js?v=0.33.0';
 
 const app = document.getElementById('app');
 const tillbaka = () => arMarkor() ? '<a class="back" href="#/mata">‹ Mata in</a>' : '<a class="back" href="#/admin">‹ Admin</a>';

@@ -1,7 +1,7 @@
 # THT – datamodell
 
 Databasen ligger i Supabase (Postgres). Schemat byggs upp av filerna i `supabase/` i nummerordning. All statistik **beräknas i vyer** från slagen – inget lagras dubbelt.
-*Uppdaterad 2026-10-18 (v0.31.0): minnesvärda moment, övningsrunda (THT 0), inbördes möten.*
+*Uppdaterad 2026-10-18 (v0.33.0): quiz, minnesvärda moment, övningsrunda (THT 0), inbördes möten.*
 
 ```mermaid
 erDiagram
@@ -45,6 +45,7 @@ erDiagram
   ban_betyg { int tht_nr PK int bana_id PK int person_id PK numeric betyg }
   tht_resultat_utan_kort { int tht_nr PK int person_id PK int poang }
   spelar_lank { text kod PK int person_id FK timestamptz skapad timestamptz anvand }
+  quiz { int id PK text namn jsonb fragor timestamptz skapad timestamptz andrad }
 ```
 
 ## Vyer (beräknad statistik)
@@ -73,4 +74,5 @@ erDiagram
 - **Skriva:** admin allt; markör bara rundor, slag, bollar och priser i THT som inte är avslutade, samt banbetyg (alla år). Se `supabase/10_behorighet.sql`, `11_…`, `13_…`.
 - **Övningsrunda:** THT 0 "Övning" med en deltävling. Alltid öppen för markören, filtreras bort i `v_score`/`v_runda` och därmed i all statistik. Inga priser eller banbetyg (trigger `inte_ovning`). Admin tömmer den med knappen i Mata in (migrering 22).
 - **Minnesvärt moment via länk:** `minne_lank_info(kod)` och `lamna_minne(kod, deltävling, text)` – ett eget moment per deltävling och spelare, bara om den egna rundan (`fran_lank = true`, migrering 23).
+- **Quiz** (migrering 24): fristående tabell, bara admin läser och skriver. `fragor` är en ögonblicksbild (jsonb): fråga, svar, fel (0–3), info, ämne, egen.
 - **Banbetyg via länk:** funktionerna `betyg_lank_info(kod)` och `lamna_banbetyg(kod, betyg)` – anropas utan inloggning och kontrollerar koden.
