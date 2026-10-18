@@ -1,8 +1,8 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, arMarkor, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.29.0';
+import { api, write, login, logout, isLoggedIn, arMarkor, arAdmin, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.30.0';
 
-import { renderScorekort } from './scorekort.js?v=0.29.0';
-import { minnenWidget } from './minnen.js?v=0.29.0';
+import { renderScorekort } from './scorekort.js?v=0.30.0';
+import { minnenWidget } from './minnen.js?v=0.30.0';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
@@ -50,8 +50,11 @@ async function renderValjDeltavling() {
     api('tht?select=nr,artal,ort,klar&order=nr.desc&limit=1', { fresh: true }),
   ]);
   const markor = arMarkor();
+  // Övningen (THT 0) visas som ett eget kort, inte i listan över THT
+  const ovning = allaDelt.find((d) => d.tht_nr === 0);
+  const ovningKort = ovning ? `<h2>Öva</h2><div class="rounds"><a class="round link-card ovning-kort" href="#/mata/${ovning.id}"><div><div class="rn">Övningsrunda</div><div class="meta">Prova att mata in – räknas inte i någon statistik · ${esc(ovning.banversion?.bana?.namn ?? '')}</div></div><div class="win"><span class="arrow">›</span></div></a></div>` : '';
   // Markör: bara THT som inte är avslutade (samma regel som i databasen).
-  const delt = markor ? allaDelt.filter((d) => !d.tht?.klar) : allaDelt;
+  const delt = (markor ? allaDelt.filter((d) => !d.tht?.klar) : allaDelt).filter((d) => d.tht_nr !== 0);
   const idag = new Date().toISOString().slice(0, 10);
   const thts = [...new Map(delt.map((d) => [d.tht_nr, d.tht])).entries()]; // nyast först
   let valt = Number(sessionStorage.getItem('mata-tht')) || thts[0]?.[0];
@@ -62,7 +65,8 @@ async function renderValjDeltavling() {
       <p class="sub">Inloggad som markör.</p>
       <div class="card"><p>${senaste?.klar ? `THT ${senaste.nr} är avslutad – det finns ingen öppen THT att mata in.` : `Inga deltävlingar är upplagda för ${esc(senaste?.ort ?? 'årets THT')} ${senaste?.artal ?? ''} ännu.`}</p>
       ${senaste?.klar ? '' : '<p class="hint">Deltävlingarna läggs upp av admin.</p>'}</div>
-      <div class="rounds"><a class="round link-card" href="#/admin/banbetyg"><div><div class="rn">Banbetyg</div><div class="meta">Betyg 1–5 på banorna – även för avslutade THT</div></div><div class="win"><span class="arrow">›</span></div></a></div>`;
+      <div class="rounds"><a class="round link-card" href="#/admin/banbetyg"><div><div class="rn">Banbetyg</div><div class="meta">Betyg 1–5 på banorna – även för avslutade THT</div></div><div class="win"><span class="arrow">›</span></div></a></div>
+      ${ovningKort}`;
     document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
     return;
   }
@@ -85,7 +89,8 @@ async function renderValjDeltavling() {
       <a class="round link-card" href="#/admin/priser"><div><div class="rn">Närmast hål och longest drive</div><div class="meta">Hål och vinnare per deltävling</div></div><div class="win"><span class="arrow">›</span></div></a>
       <a class="round link-card" href="#/admin/banbetyg"><div><div class="rn">Banbetyg</div><div class="meta">Varje spelares betyg 1–5 på årets banor</div></div><div class="win"><span class="arrow">›</span></div></a>
     </div>
-    <p class="hint">Inloggad som markör: du kan mata in THT som inte är avslutade, sätta spelare i bollar, och ange priser och banbetyg.</p>` : '<p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp under <a href="#/admin">Admin</a>.</p>'}`;
+    <p class="hint">Inloggad som markör: du kan mata in THT som inte är avslutade, sätta spelare i bollar, och ange priser och banbetyg.</p>` : '<p class="hint">Välj tidigare år i listan för att rätta gamla rundor. Nya tävlingar och deltävlingar läggs upp under <a href="#/admin">Admin</a>.</p>'}
+    ${ovningKort}`;
   document.getElementById('logout').onclick = () => { logout(); renderMata([]); };
   document.getElementById('matatht').onchange = (e) => { try { sessionStorage.setItem('mata-tht', e.target.value); } catch { /* */ } renderValjDeltavling(); };
 }
@@ -107,8 +112,10 @@ async function renderBollar(did) {
 
   if (!aktuell(myNav)) return; app.innerHTML = `
     <a class="back" href="#/mata">‹ Deltävlingar</a>
-    <h1>R${d.ordning} · ${esc(d.namn)}</h1>
-    <p class="sub">${esc(d.banversion?.bana?.namn ?? '')} · ${datum(d.datum)}</p>
+    ${d.tht_nr === 0 ? `<h1>Övningsrunda</h1>
+    <p class="sub">${esc(d.banversion?.bana?.namn ?? '')}</p>
+    <div class="ovning-ruta"><strong>Övning</strong> – här kan alla prova att skapa bollar och mata in. Inget härifrån räknas i statistik, resultat eller leaderboard.${arAdmin() ? ' <button type="button" class="btn small fara" id="tom-ovning">Töm övningen</button><span class="hint" id="tom-msg"></span>' : ''}</div>` : `<h1>R${d.ordning} · ${esc(d.namn)}</h1>
+    <p class="sub">${esc(d.banversion?.bana?.namn ?? '')} · ${datum(d.datum)}</p>`}
 
     <div class="rounds">
       ${Object.keys(bollar).length ? Object.entries(bollar).map(([nr, rs]) => `
@@ -137,6 +144,18 @@ async function renderBollar(did) {
       <button class="btn primary" type="submit">Skapa boll</button>
       <p class="hint" id="nybollmsg"></p>
     </form>` : '<p class="muted">Alla spelare är redan i en boll.</p>'}`;
+
+  const tom = document.getElementById('tom-ovning');
+  if (tom) tom.onclick = async () => {
+    const msg = document.getElementById('tom-msg');
+    if (!tom.classList.contains('bekrafta')) { tom.classList.add('bekrafta'); tom.textContent = `Säker? Ta bort ${rundor.length} rundor`; return; }
+    tom.disabled = true; msg.textContent = ' Tömmer …';
+    try {
+      await write('DELETE', `kommentar?deltavling_id=eq.${did}`, undefined, 'return=minimal');
+      await write('DELETE', `runda?deltavling_id=eq.${did}`, undefined, 'return=minimal');   // slagen följer med
+      renderBollar(did);
+    } catch (err) { msg.textContent = ` Kunde inte tömma: ${err.message}`; tom.disabled = false; }
+  };
 
   minnenWidget(document.getElementById('minnen'), Number(did)).then((w) => {
     app.querySelectorAll('.mm-boll').forEach((b) => b.onclick = () => {
@@ -329,7 +348,7 @@ async function andraHcp(r, did, boll, hal, pid) {
 async function visaStallning(did, ordning) {
   const el = document.getElementById('stallning'); if (!el) return;
   try {
-    const rows = await api(`v_runda?deltavling_id=eq.${did}&select=fornamn,boll_nr,antal_hal,poang,placering&order=placering`, { fresh: true });
+    const rows = await api(`v_runda_alla?deltavling_id=eq.${did}&select=fornamn,boll_nr,antal_hal,poang,placering&order=placering`, { fresh: true });   // _alla: även övningen
     if (!document.body.contains(el)) return;
     el.innerHTML = `<table><thead><tr><th>#</th><th class="l">Spelare</th><th>Boll</th><th>Hål</th><th>Poäng</th></tr></thead><tbody>
       ${rows.map((r) => `<tr><td>${r.antal_hal ? r.placering : '–'}</td><td class="l">${esc(r.fornamn)}</td><td>${r.boll_nr ?? ''}</td><td>${r.antal_hal}</td><td><strong>${fmt(r.poang ?? 0)}</strong></td></tr>`).join('')}

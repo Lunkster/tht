@@ -1,7 +1,7 @@
 // Bansida: en banas betyg, när den spelats, bästa rundor och hålen.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.29.0';
-import { punktKarta } from './karta.js?v=0.29.0';
-import { halStatistik } from './statistik.js?v=0.29.0';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.30.0';
+import { punktKarta } from './karta.js?v=0.30.0';
+import { halStatistik } from './statistik.js?v=0.30.0';
 
 const app = document.getElementById('app');
 const stjarnor = (v) => v == null ? '' : `<span class="stjarnor" aria-hidden="true" style="--v:${(v / 5) * 100}%">★★★★★</span>`;
@@ -18,7 +18,7 @@ export async function renderBana(bid) {
   if (!aktuell(myNav)) return;
   if (!b) { app.innerHTML = '<p class="err">Banan finns inte.</p>'; return; }
   const thtMap = Object.fromEntries(thts.map((t) => [t.nr, t]));
-  const delt = versioner.flatMap((v) => v.deltavling.map((d) => ({ ...d, artal: thtMap[d.tht_nr]?.artal, ort: thtMap[d.tht_nr]?.ort }))).sort((a, c) => a.datum.localeCompare(c.datum));
+  const delt = versioner.flatMap((v) => v.deltavling.filter((d) => d.tht_nr !== 0).map((d) => ({ ...d, artal: thtMap[d.tht_nr]?.artal, ort: thtMap[d.tht_nr]?.ort }))).sort((a, c) => a.datum.localeCompare(c.datum));
   const senaste = versioner[0];
   const [hal, tees, rundor] = await Promise.all([
     senaste ? api(`hal?banversion_id=eq.${senaste.id}&select=nr,par,hcp_index,hal_langd(tee_id,langd)&order=nr`) : [],

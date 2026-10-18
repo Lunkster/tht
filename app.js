@@ -1,20 +1,20 @@
-// THT golfapp (v0.29.0) – statistik och inmatning.
+// THT golfapp (v0.30.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.29.0';
-import { renderMata } from './mata.js?v=0.29.0';
-import { renderAdmin } from './admin.js?v=0.29.0';
-import { renderSpelare } from './spelare.js?v=0.29.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.29.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.29.0';
-import { renderBetygLank } from './betyg.js?v=0.29.0';
-import { renderNyheter } from './nyheter.js?v=0.29.0';
-import { renderRunda } from './runda.js?v=0.29.0';
-import './kollaps.js?v=0.29.0';
-import { renderRapport } from './rapport.js?v=0.29.0';
-import { renderDuell } from './inbordes.js?v=0.29.0';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.29.0';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.29.0';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.30.0';
+import { renderMata } from './mata.js?v=0.30.0';
+import { renderAdmin } from './admin.js?v=0.30.0';
+import { renderSpelare } from './spelare.js?v=0.30.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.30.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.30.0';
+import { renderBetygLank } from './betyg.js?v=0.30.0';
+import { renderNyheter } from './nyheter.js?v=0.30.0';
+import { renderRunda } from './runda.js?v=0.30.0';
+import './kollaps.js?v=0.30.0';
+import { renderRapport } from './rapport.js?v=0.30.0';
+import { renderDuell } from './inbordes.js?v=0.30.0';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.30.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.30.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -335,8 +335,8 @@ const datumLang = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('sv-SE
 
 async function renderStart(navId) {
   const [thts, delt] = await Promise.all([
-    api('tht?select=nr,artal,ort,start,klar&order=nr', { fresh: true }),
-    api('deltavling?select=tht_nr,datum', { fresh: true }),
+    api('tht?select=nr,artal,ort,start,klar&nr=gt.0&order=nr', { fresh: true }),   // THT 0 = övningen
+    api('deltavling?select=tht_nr,datum&tht_nr=gt.0', { fresh: true }),
   ]);
   if (!aktuell(navId)) return;
 
@@ -425,7 +425,7 @@ const LB_INTERVALL = 30_000;
 
 async function renderLeaderboard(navId) {
   app.innerHTML = '<p class="muted center">Laddar leaderboard …</p>';
-  const senaste = await api('deltavling?select=tht_nr&order=tht_nr.desc&limit=1', { fresh: true });
+  const senaste = await api('deltavling?select=tht_nr&tht_nr=gt.0&order=tht_nr.desc&limit=1', { fresh: true });
   if (!aktuell(navId)) return;
   if (!senaste.length) { app.innerHTML = '<p class="muted center">Ingen THT inlagd ännu.</p>'; return; }
   const nr = senaste[0].tht_nr;

@@ -1,5 +1,5 @@
 // Admin: banbetyg – varje spelares betyg 1–5 på årets banor (tabellen ban_betyg).
-import { api, write, esc, fmt, nuNav, aktuell, arMarkor, arAdmin } from './lib.js?v=0.29.0';
+import { api, write, esc, fmt, nuNav, aktuell, arMarkor, arAdmin } from './lib.js?v=0.30.0';
 
 const app = document.getElementById('app');
 const tillbaka = () => arMarkor() ? '<a class="back" href="#/mata">‹ Mata in</a>' : '<a class="back" href="#/admin">‹ Admin</a>';
@@ -7,7 +7,7 @@ const tillbaka = () => arMarkor() ? '<a class="back" href="#/mata">‹ Mata in</
 export async function renderBanbetyg(meddelande = '') {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar …</p>';
-  const thts = await api('tht?select=nr,artal,ort,klar,deltavling(id)&order=nr.desc', { fresh: true });
+  const thts = await api('tht?select=nr,artal,ort,klar,deltavling(id)&nr=gt.0&order=nr.desc', { fresh: true });
   if (!aktuell(myNav)) return;
   const med = thts.filter((t) => t.deltavling.length); // banbetyg får anges även för avslutade THT (även av markör)
   let valt = Number(sessionStorage.getItem('betyg-tht')) || med[0]?.nr;

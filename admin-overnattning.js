@@ -1,6 +1,6 @@
 // Admin: övernattningar per THT – plats, antal nätter, organisatör, koordinater.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.29.0';
-import { kopplaKoordinater } from './admin-banor.js?v=0.29.0';
+import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.30.0';
+import { kopplaKoordinater } from './admin-banor.js?v=0.30.0';
 
 const app = document.getElementById('app');
 const tal = (v) => { const t = String(v ?? '').trim().replace(',', '.'); if (t === '') return null; const n = Number(t); return Number.isFinite(n) ? n : NaN; };
@@ -14,7 +14,7 @@ export async function renderOvernattning(meddelande = '', oppna = null) {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Laddar …</p>';
   const [thts, personer, utan] = await Promise.all([
-    api('tht?select=nr,artal,ort&order=nr.desc', { fresh: true }),
+    api('tht?select=nr,artal,ort&nr=gt.0&order=nr.desc', { fresh: true }),
     api('person?select=fornamn,efternamn,aktiv&order=fornamn', { fresh: true }),
     api('overnattning?lat=is.null&select=id,tht_nr,platsnamn&order=tht_nr', { fresh: true }),
   ]);

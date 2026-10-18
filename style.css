@@ -717,3 +717,9 @@ h2.fallbar:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; 
 .mm-ar summary { cursor: pointer; font-size: 14px; color: var(--cream-2); padding: 4px 0; }
 .mm-ar[open] summary { margin-bottom: 8px; }
 .chip.mm-boll { background: transparent; border-style: dashed; cursor: pointer; font: inherit; font-size: 14px; }
+
+/* Övningsrunda (v0.30.0) */
+.ovning-ruta { border: 1px dashed var(--gold); border-radius: var(--radius); padding: 10px 12px; margin: 8px 0 14px; color: var(--cream-2); }
+.ovning-ruta .btn { margin-left: 8px; margin-top: 6px; }
+.ovning-ruta .btn.bekrafta { background: #7a3326; color: var(--cream); }
+.ovning-kort { border-style: dashed; }
