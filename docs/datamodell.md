@@ -1,7 +1,7 @@
 # THT – datamodell
 
 Databasen ligger i Supabase (Postgres). Schemat byggs upp av filerna i `supabase/` i nummerordning. All statistik **beräknas i vyer** från slagen – inget lagras dubbelt.
-*Uppdaterad 2026-10-18 (v0.27.0).*
+*Uppdaterad 2026-10-18 (v0.31.0): minnesvärda moment, övningsrunda (THT 0), inbördes möten.*
 
 ```mermaid
 erDiagram
@@ -28,7 +28,7 @@ erDiagram
   tht ||--o{ ban_betyg : ""
   person ||--o| spelar_lank : "personlig betygslänk"
 
-  tht { int nr PK "löpnummer" int artal text ort text kronika date start bool klar }
+  tht { int nr PK "löpnummer, 0 = övning" int artal text ort text kronika date start bool klar }
   person { int id PK text fornamn text efternamn bool aktiv }
   person_kontakt { int person_id PK text golf_id text epost }
   bana { int id PK text namn numeric slope bool restaurang bool rattigheter float lat float lon bigint osm_id }
@@ -38,7 +38,7 @@ erDiagram
   hal_langd { int hal_id PK int tee_id PK smallint langd }
   deltavling { int id PK int tht_nr FK int banversion_id FK int tee_id FK smallint ordning text namn date datum smallint narmast_hal smallint longest_hal int vinnare_utan_kort FK }
   runda { int id PK int deltavling_id FK int person_id FK smallint spel_hcp smallint boll_nr int tee_id FK text kommentar_gammal_tas_bort bool last }
-  kommentar { int id PK int deltavling_id FK int runda_id FK smallint boll_nr text text timestamptz skapad timestamptz andrad }
+  kommentar { int id PK int deltavling_id FK int runda_id FK smallint boll_nr text text timestamptz skapad timestamptz andrad bool fran_lank }
   score { int runda_id PK smallint hal_nr PK smallint slag smallint puttar timestamptz andrad }
   pris { int deltavling_id PK text typ PK int person_id FK }
   overnattning { int id PK int tht_nr FK text platsnamn smallint antal_natter text organisator float lat float lon }
@@ -51,6 +51,7 @@ erDiagram
 
 | Vy | Innehåll |
 | --- | --- |
+| `v_score_alla`, `v_runda_alla` | Som `v_score`/`v_runda` men med övningen (THT 0) – bara för ställningen vid inmatning |
 | `v_score` | Varje hål: par, index, extraslag, slag, slag med tak (par + 5), poäng (Stableford), resultat (birdie, par …) |
 | `v_runda` | Varje runda: antal hål, slag, poäng, puttar, placering i deltävlingen (lika poäng → lägst spel-HCP) |
 | `v_tht_resultat` | Varje spelare och THT: rundor, poäng, slag, puttar, placering. Tar med `tht_resultat_utan_kort` för år utan scorekort |
@@ -70,4 +71,6 @@ erDiagram
 
 - **Läsa:** alla (utom `person_kontakt` och länkkoderna, som bara admin/markör ser).
 - **Skriva:** admin allt; markör bara rundor, slag, bollar och priser i THT som inte är avslutade, samt banbetyg (alla år). Se `supabase/10_behorighet.sql`, `11_…`, `13_…`.
+- **Övningsrunda:** THT 0 "Övning" med en deltävling. Alltid öppen för markören, filtreras bort i `v_score`/`v_runda` och därmed i all statistik. Inga priser eller banbetyg (trigger `inte_ovning`). Admin tömmer den med knappen i Mata in (migrering 22).
+- **Minnesvärt moment via länk:** `minne_lank_info(kod)` och `lamna_minne(kod, deltävling, text)` – ett eget moment per deltävling och spelare, bara om den egna rundan (`fran_lank = true`, migrering 23).
 - **Banbetyg via länk:** funktionerna `betyg_lank_info(kod)` och `lamna_banbetyg(kod, betyg)` – anropas utan inloggning och kontrollerar koden.

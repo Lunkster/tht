@@ -723,3 +723,9 @@ h2.fallbar:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; 
 .ovning-ruta .btn { margin-left: 8px; margin-top: 6px; }
 .ovning-ruta .btn.bekrafta { background: #7a3326; color: var(--cream); }
 .ovning-kort { border-style: dashed; }
+
+/* Minnesvärt moment via personlig länk (v0.31.0) */
+.mm-lank { margin-top: 12px; }
+.mm-lank h3 { margin: 0 0 4px; font-size: 16px; }
+.mm-lank-rad { display: grid; gap: 4px; margin-top: 8px; }
+.mm-lank-rad textarea { width: 100%; font: inherit; }

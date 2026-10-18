@@ -1,7 +1,7 @@
 // Minnesvärda moment: kommentarer för en deltävling, en boll eller en spelares runda (tabellen kommentar, migrering 21).
 // Admin och markör kan alltid skriva, ändra och ta bort – även i avslutade THT. Alla kan läsa.
 // Används i Mata in (deltävlingens bollar), på årssidan under varje deltävling, på scorekortet och i årsrapporten.
-import { api, write, esc, arAdmin, arMarkor } from './lib.js?v=0.30.0';
+import { api, write, esc, arAdmin, arMarkor } from './lib.js?v=0.31.0';
 
 export const kanSkriva = () => arAdmin() || arMarkor();
 const RUNDOR = 'id,deltavling_id,person_id,boll_nr,person(fornamn)';
@@ -11,7 +11,7 @@ export async function hamtaMinnen(dids, { fresh = false } = {}) {
   if (!dids.length) return { kom: [], rundor: [] };
   const lista = dids.join(',');
   const [kom, rundor] = await Promise.all([
-    api(`kommentar?deltavling_id=in.(${lista})&select=id,deltavling_id,runda_id,boll_nr,text,skapad&order=skapad,id`, { fresh }),
+    api(`kommentar?deltavling_id=in.(${lista})&select=id,deltavling_id,runda_id,boll_nr,text,skapad,fran_lank&order=skapad,id`, { fresh }),
     api(`runda?deltavling_id=in.(${lista})&select=${RUNDOR}&order=boll_nr,id`, { fresh }),
   ]);
   return { kom, rundor };
@@ -19,7 +19,7 @@ export async function hamtaMinnen(dids, { fresh = false } = {}) {
 
 // Vem/vad kommentaren gäller
 export function vem(k, rundor) {
-  if (k.runda_id) { const r = rundor.find((x) => x.id === k.runda_id); return r?.person?.fornamn ?? 'Spelare'; }
+  if (k.runda_id) { const r = rundor.find((x) => x.id === k.runda_id); return (r?.person?.fornamn ?? 'Spelare') + (k.fran_lank ? ' själv' : ''); }
   if (k.boll_nr != null) return `Boll ${k.boll_nr}`;
   return 'Alla';
 }
