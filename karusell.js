@@ -1,9 +1,9 @@
 // Karusell (#/karusell eller #/karusell/<år>) – storskärmsläge för tv:n vid middagen (önskemål Henrik 2026-10-27).
 // Bläddrar automatiskt mellan leaderboard, dagens deltävling, dagens höjdpunkter, minnesvärda moment och foton.
 // Ingen inloggning behövs. Data hämtas på nytt varje minut; fotona blandas in mellan statistikbilderna.
-import { api, esc, fmt, aktuell } from './lib.js?v=0.35.0';
-import { hamtaFoton, fotoUrl } from './foto.js?v=0.35.0';
-import { hamtaMinnen, vem } from './minnen.js?v=0.35.0';
+import { api, esc, fmt, aktuell } from './lib.js?v=0.35.1';
+import { hamtaFoton, fotoUrl } from './foto.js?v=0.35.1';
+import { hamtaMinnen, vem } from './minnen.js?v=0.35.1';
 
 const app = document.getElementById('app');
 const TID_STAT = 15_000, TID_FOTO = 8_000, HAMTA = 60_000, FOTON_PER_STAT = 2;
@@ -15,11 +15,13 @@ let tangent = null, wakeLock = null;
 
 export async function renderKarusell(navId, artal = null) {
   app.innerHTML = '<p class="muted center">Laddar karusellen …</p>';
-  // Vilken THT: angivet år, annars den senaste med deltävlingar (som leaderboarden)
+  // Vilken THT: angivet år, annars den senaste med inmatade poäng. Är årets deltävlingar inlagda men
+  // inget spelat än visas förra årets (önskemål Henrik 2026-10-27). Inga resultat alls: senaste med deltävlingar.
   let tht;
   if (artal) [tht] = await api(`tht?artal=eq.${artal}&nr=gt.0&select=nr,artal,ort,klar`, { fresh: true });
   else {
-    const [senaste] = await api('deltavling?select=tht_nr&tht_nr=gt.0&order=tht_nr.desc&limit=1', { fresh: true });
+    const [medPoang] = await api('v_runda?select=tht_nr&antal_hal=gt.0&order=tht_nr.desc&limit=1', { fresh: true });
+    const [senaste] = medPoang ? [medPoang] : await api('deltavling?select=tht_nr&tht_nr=gt.0&order=tht_nr.desc&limit=1', { fresh: true });
     if (senaste) [tht] = await api(`tht?nr=eq.${senaste.tht_nr}&select=nr,artal,ort,klar`, { fresh: true });
   }
   if (!aktuell(navId)) return;
@@ -53,7 +55,7 @@ export async function renderKarusell(navId, artal = null) {
     const tid = b.typ === 'foto' ? TID_FOTO : TID_STAT;
     app.innerHTML = `<div class="ka ${b.typ === 'foto' ? 'ka-fotolage' : ''}">
       <div class="ka-topp">
-        <span class="ka-titel"><img src="logo.svg?v=0.35.0" alt="" class="ka-logo"> THT ${tht.nr} · ${esc(tht.ort)} ${tht.artal}</span>
+        <span class="ka-titel"><img src="logo.svg?v=0.35.1" alt="" class="ka-logo"> THT ${tht.nr} · ${esc(tht.ort)} ${tht.artal}</span>
         <span class="ka-hoger"><span class="ka-klocka">${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
           <button type="button" class="ka-knapp" id="ka-paus" title="Paus (mellanslag)">${paus ? '▶' : '❚❚'}</button>
           <button type="button" class="ka-knapp" id="ka-hel" title="Helskärm (F)">⛶</button>

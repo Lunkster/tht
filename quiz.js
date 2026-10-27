@@ -1,8 +1,8 @@
 // Quiz och flashcards (admin, migrering 24): frågor skapas automatiskt ur databasen och kan kompletteras med egna.
 // #/admin/quiz – lista och ny quiz · #/admin/quiz/<id> – redigera · #/quiz/<id> – visa på storskärm (quiz eller flashcards).
-import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.35.0';
-import { visaLogin } from './mata.js?v=0.35.0';
-import { banTopplista } from './bana.js?v=0.35.0';
+import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.35.1';
+import { visaLogin } from './mata.js?v=0.35.1';
+import { banTopplista } from './bana.js?v=0.35.1';
 
 const app = document.getElementById('app');
 export const AMNEN = [
@@ -245,7 +245,7 @@ export async function renderQuizVisa(id) {
   const topp = () => `<div class="qs-topp"><a href="#/admin/quiz/${id}" class="qs-ut">✕ Avsluta</a><span>${esc(q.namn)}</span><button type="button" class="qs-hel" title="Helskärm (F)">⛶</button></div>`;
   const rita = () => {
     if (!lage) {
-      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.35.0" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
+      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.35.1" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
         <div class="qs-val"><button type="button" class="btn primary" data-lage="quiz">Quiz</button><button type="button" class="btn" data-lage="kort">Flashcards</button></div>
         <p class="hint">Mellanslag eller → = nästa steg · ← = tillbaka · F = helskärm</p></div>`;
     } else if (i >= fr.length) {

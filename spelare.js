@@ -1,6 +1,6 @@
 // Personsida: en spelares nyckeltal, resultat per år, snittpoäng över tid och resultatfördelning.
-import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.35.0';
-import { inbordesSpelare } from './inbordes.js?v=0.35.0';
+import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.35.1';
+import { inbordesSpelare } from './inbordes.js?v=0.35.1';
 
 const app = document.getElementById('app');
 const BLA = '#3987e5';                       // seriefärg 1 (validerad mot mörk yta)

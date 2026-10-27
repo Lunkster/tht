@@ -1,24 +1,24 @@
-// THT golfapp (v0.35.0) – statistik och inmatning.
+// THT golfapp (v0.35.1) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.35.0';
-import { renderMata } from './mata.js?v=0.35.0';
-import { renderAdmin } from './admin.js?v=0.35.0';
-import { renderSpelare } from './spelare.js?v=0.35.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.35.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.35.0';
-import { renderBetygLank } from './betyg.js?v=0.35.0';
-import { renderNyheter } from './nyheter.js?v=0.35.0';
-import { renderRunda } from './runda.js?v=0.35.0';
-import './kollaps.js?v=0.35.0';
-import { renderRapport } from './rapport.js?v=0.35.0';
-import { renderDuell } from './inbordes.js?v=0.35.0';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.35.0';
-import { renderQuizVisa } from './quiz.js?v=0.35.0';
-import { renderDeltavling } from './deltavling.js?v=0.35.0';
-import { fotoSektion } from './foto.js?v=0.35.0';
-import { renderKarusell } from './karusell.js?v=0.35.0';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.35.0';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.35.1';
+import { renderMata } from './mata.js?v=0.35.1';
+import { renderAdmin } from './admin.js?v=0.35.1';
+import { renderSpelare } from './spelare.js?v=0.35.1';
+import { renderKarta, miniKarta } from './karta.js?v=0.35.1';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.35.1';
+import { renderBetygLank } from './betyg.js?v=0.35.1';
+import { renderNyheter } from './nyheter.js?v=0.35.1';
+import { renderRunda } from './runda.js?v=0.35.1';
+import './kollaps.js?v=0.35.1';
+import { renderRapport } from './rapport.js?v=0.35.1';
+import { renderDuell } from './inbordes.js?v=0.35.1';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.35.1';
+import { renderQuizVisa } from './quiz.js?v=0.35.1';
+import { renderDeltavling } from './deltavling.js?v=0.35.1';
+import { fotoSektion } from './foto.js?v=0.35.1';
+import { renderKarusell } from './karusell.js?v=0.35.1';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.35.1';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -405,7 +405,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.35.0" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.35.1" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>

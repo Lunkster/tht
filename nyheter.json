@@ -2,6 +2,7 @@
  {
   "datum": "2026-10-27",
   "punkter": [
+   "Karusellen visar förra årets THT tills det finns poäng i årets – så den har något att visa även när nästa THT är inlagd men inte har börjat (v0.35.1)",
    "**Karusell på tv:n:** en egen sida för storbild vid middagen som bläddrar av sig själv mellan leaderboarden, dagens runda (ledare, lägsta score, närmast hål och longest drive), dagens höjdpunkter (birdies, hålvinster), minnesvärda moment och foton från dagen. Den hämtar nya resultat och foton varje minut. Öppna den via **Karusell på tv ›** på leaderboarden eller årssidan och tryck ⛶ för helskärm – mellanslag pausar, piltangenterna bläddrar (v0.35.0)",
    "**Foton:** ladda upp bilder från dagen – alla kan, via sin **personliga länk** (samma som för banbetyg). Bilderna krymps automatiskt i telefonen och hamnar på rätt deltävling efter datumet de togs. Fotona syns på årssidan, på deltävlingssidan, under All-time → **Minnen** och i karusellen. Tryck på ett foto för att se det stort och svep mellan bilderna. Har du laddat upp fel bild kan du ta bort den via länken (v0.35.0)",
    "Admin och markör laddar upp foton under **Foton** på årssidan eller deltävlingssidan – också till gamla THT:er, så att gamla bilder kan läggas in på rätt år (v0.35.0)"
