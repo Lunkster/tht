@@ -788,3 +788,95 @@ body.storskarm #app { max-width: none; min-height: 100vh; display: flex; flex-di
 .dt-hal .sk-slag { min-width: 24px; height: 24px; }
 .dt-hal td.hv { background: rgba(227, 194, 120, 0.16); }
 .dt-par th { color: var(--cream-3); font-weight: 400; }
+
+/* ---------- Foton (v0.35.0) ---------- */
+.foto-sek:empty { display: none; }
+.foto-sek, .foto-lank { margin-top: 8px; }
+.foto-rubrik .muted { font-weight: 400; }
+.foto-rutnat { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.foto-ruta { padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--stout-3); aspect-ratio: 1; cursor: zoom-in; }
+.foto-ruta img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.foto-ruta:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+.foto-ny { margin-top: 10px; }
+.foto-ny > summary { cursor: pointer; color: var(--gold-2); font-weight: 600; padding: 6px 0; }
+.fu { display: flex; flex-direction: column; gap: 8px; }
+.fu-valj { align-self: flex-start; cursor: pointer; }
+.fu-lista { display: flex; flex-direction: column; gap: 8px; }
+.fu-rad { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: start; background: var(--stout-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.fu-rad.klar { opacity: .7; }
+.fu-rad.fel { border-color: #b5523b; }
+.fu-rad img, .fu-tom { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; background: var(--stout-3); display: block; }
+.fu-falt { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fu-falt select, .fu-falt input { width: 100%; min-width: 0; }
+.fu-fot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fu-msg { margin: 0; }
+body.ljus-oppen { overflow: hidden; }
+.foto-ljus { position: fixed; inset: 0; z-index: 100; background: #080706; display: flex; flex-direction: column; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+.fl-topp { display: flex; justify-content: space-between; align-items: center; color: var(--cream-2); font-size: 14px; gap: 12px; }
+.fl-knappar { display: flex; gap: 14px; align-items: center; }
+.fl-stang { background: none; border: 1px solid var(--line); color: var(--cream); border-radius: 8px; font-size: 18px; padding: 2px 10px; cursor: pointer; }
+.fl-bild { flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; margin: 8px 0; }
+.fl-bild img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
+.fl-pil { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(18, 17, 16, .6); border: 1px solid var(--line); color: var(--cream); font-size: 30px; line-height: 1; width: 44px; height: 56px; border-radius: 8px; cursor: pointer; }
+.fl-forra { left: 0; } .fl-nasta { right: 0; }
+.fl-text { text-align: center; color: var(--cream-2); }
+.fl-bildtext { color: var(--cream); font-size: 16px; margin-bottom: 2px; }
+.mm-foton { margin-bottom: 10px; }
+
+/* ---------- Karusell på tv:n (v0.35.0) ---------- */
+body.storskarm #app:has(.ka) { padding: 0; }
+.ka { flex: 1; display: flex; flex-direction: column; min-height: 100vh; padding: clamp(10px, 2vh, 28px) clamp(16px, 3vw, 56px) 0; overflow: hidden; }
+.ka-topp { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--cream-2); font-size: clamp(14px, 1.5vw, 24px); }
+.ka-titel { display: flex; align-items: center; gap: 12px; }
+.ka-logo { height: clamp(28px, 4vh, 56px); }
+.ka-hoger { display: flex; align-items: center; gap: 8px; }
+.ka-klocka { color: var(--gold-2); font-variant-numeric: tabular-nums; margin-right: 8px; }
+.ka-knapp { background: none; border: 1px solid var(--line); color: var(--cream-2); border-radius: 8px; font-size: 16px; padding: 2px 10px; cursor: pointer; text-decoration: none; opacity: .55; }
+.ka-knapp:hover, .ka-knapp:focus-visible { opacity: 1; }
+.ka-bild { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: clamp(10px, 2vh, 24px); padding: 1vh 0; animation: ka-in .6s ease; }
+@keyframes ka-in { from { opacity: 0; } to { opacity: 1; } }
+.ka-rubrik { font-size: clamp(28px, 4.2vw, 72px); margin: 0; color: var(--gold-2); line-height: 1.1; }
+.ka-under { font-size: clamp(16px, 2vw, 32px); margin: 0; color: var(--cream-2); }
+.ka-tabell { width: 100%; border-collapse: collapse; font-size: clamp(16px, 2.1vw, 36px); font-variant-numeric: tabular-nums; }
+.ka-tabell th { color: var(--cream-3); font-weight: 500; font-size: .7em; text-align: right; padding: .2em .5em; border-bottom: 1px solid var(--line); }
+.ka-tabell td { text-align: right; padding: .22em .5em; border-bottom: 1px solid rgba(58, 53, 48, .5); }
+.ka-tabell .l { text-align: left; }
+.ka-tabell small { color: var(--cream-3); font-size: .6em; }
+.ka-tabell .plus { color: var(--gold-2); }
+.ka-tabell .dim { color: var(--cream-3); }
+.ka-forst td { color: var(--gold-2); }
+.ka-rutor { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(8px, 1.4vw, 24px); }
+.ka-ruta { background: var(--stout-2); border: 1px solid var(--line); border-radius: 14px; padding: clamp(10px, 1.6vw, 28px); }
+.ka-v { font-size: clamp(22px, 3.4vw, 60px); font-weight: 700; color: var(--cream); line-height: 1.1; }
+.ka-t { color: var(--gold-2); font-size: clamp(13px, 1.4vw, 24px); margin-top: .3em; }
+.ka-u { color: var(--cream-3); font-size: clamp(12px, 1.2vw, 20px); }
+.ka-topp5 { margin: 0; padding: 0; list-style: none; counter-reset: k; display: grid; grid-template-columns: repeat(2, 1fr); gap: .3em 3vw; font-size: clamp(16px, 2vw, 34px); }
+.ka-topp5 li { counter-increment: k; display: flex; gap: .5em; align-items: baseline; border-bottom: 1px solid rgba(58, 53, 48, .5); padding: .15em 0; }
+.ka-topp5 li::before { content: counter(k); color: var(--cream-3); min-width: 1.2em; }
+.ka-topp5 span { flex: 1; } .ka-topp5 small { color: var(--cream-3); font-size: .6em; }
+.ka-kortrad { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: clamp(10px, 1.6vw, 28px); align-items: start; }
+.ka-kort { background: var(--stout-2); border: 1px solid var(--line); border-radius: 14px; padding: clamp(12px, 1.6vw, 28px); font-size: clamp(16px, 1.9vw, 32px); }
+.ka-kort h3 { margin: 0 0 .4em; font-size: .8em; color: var(--gold-2); }
+@media (min-width: 1100px) { .ka-kortrad { grid-template-columns: 1.5fr 1fr 1fr; } }
+.ka-kort ul { margin: 0; padding: 0; list-style: none; }
+.ka-kort li { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35em; padding: .15em 0; }
+.ka-kort li > span:first-child { min-width: 5em; }
+.ka-kort small { color: var(--cream-3); font-size: .6em; }
+.ka-hal { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; border: 2px solid var(--gold-2); border-radius: 50%; font-size: .7em; color: var(--gold-2); }
+.ka-hal.ka-eagle { background: var(--gold-2); color: var(--stout); }
+.ka-minnen { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: clamp(10px, 2vh, 28px); }
+.ka-minnen li { font-size: clamp(18px, 2.6vw, 44px); line-height: 1.25; }
+.ka-minnen q { display: block; font-style: italic; }
+.ka-minnen span { display: block; color: var(--gold-2); font-size: .55em; margin-top: .2em; }
+.ka-foto { align-items: center; position: relative; padding: 1vh 0 2vh; }
+.ka-foto img { max-width: 100%; max-height: calc(100vh - 12vh - 60px); object-fit: contain; border-radius: 6px; box-shadow: 0 8px 40px rgba(0, 0, 0, .6); }
+.ka-bildtext { font-size: clamp(16px, 2vw, 32px); color: var(--cream-2); text-align: center; }
+.ka-tom { text-align: center; }
+.ka-progress { height: 4px; background: var(--stout-3); margin: 0 calc(-1 * clamp(16px, 3vw, 56px)); }
+.ka-progress span { display: block; height: 100%; width: 100%; background: var(--gold); transform-origin: left; animation: ka-tid linear forwards; }
+@keyframes ka-tid { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (max-width: 700px) {
+  .ka-rutor { grid-template-columns: repeat(2, 1fr); }
+  .ka-topp5 { grid-template-columns: 1fr; }
+  .ka-tabell .ka-r { display: none; }
+}

@@ -1,7 +1,7 @@
 // Årsrapport (#/rapport/<år>): allt om en THT på en sida i stil med 2016-rapporten – går att skriva ut eller spara som PDF.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.34.1';
-import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.34.1';
-import { hamtaMinnen, vem } from './minnen.js?v=0.34.1';
+import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.35.0';
+import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.35.0';
+import { hamtaMinnen, vem } from './minnen.js?v=0.35.0';
 
 const app = document.getElementById('app');
 const FARGER = ['#3987e5', '#d95926', '#199e70', '#e3c278', '#a35cc8', '#d4417c', '#5bb7c9', '#8fa83a', '#c98a3e', '#7a86d6', '#b5b0a6', '#e07a5f'];
@@ -76,7 +76,7 @@ export async function renderRapport(artal) {
     <div class="rapport-knappar no-print"><a class="back" href="#/ar/${artal}">‹ ${artal}</a><button class="btn" type="button" id="skrivut">Skriv ut eller spara som PDF</button></div>
     <article class="rapport">
       <header class="rapport-huvud">
-        <img src="logo.svg?v=0.34.1" alt="The Helkväll Tour" class="rapport-logo">
+        <img src="logo.svg?v=0.35.0" alt="The Helkväll Tour" class="rapport-logo">
         <h1>THT ${nr} – ${esc(tht.ort)} ${artal}</h1>
         <p class="sub">${period}${delt.length ? ` · ${delt.length} deltävlingar` : ''}${res.length ? ` · ${res.length} spelare` : ''}</p>
         ${vinnare && tht.klar ? `<p class="rapport-vinnare">Vinnare: <strong>${esc(vinnare.fornamn)}</strong> med ${fmt(vinnare.poang)} poäng</p>` : tht.klar ? '' : '<p class="rapport-vinnare">THT:n pågår – ingen vinnare ännu</p>'}

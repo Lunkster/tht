@@ -1,7 +1,7 @@
 # THT – datamodell
 
 Databasen ligger i Supabase (Postgres). Schemat byggs upp av filerna i `supabase/` i nummerordning. All statistik **beräknas i vyer** från slagen – inget lagras dubbelt.
-*Uppdaterad 2026-10-18 (v0.33.0): quiz, minnesvärda moment, övningsrunda (THT 0), inbördes möten.*
+*Uppdaterad 2026-10-27 (v0.35.0): foton. Tidigare 2026-10-18 (v0.33.0): quiz, minnesvärda moment, övningsrunda (THT 0), inbördes möten.*
 
 ```mermaid
 erDiagram
@@ -27,6 +27,9 @@ erDiagram
   bana ||--o{ ban_betyg : ""
   tht ||--o{ ban_betyg : ""
   person ||--o| spelar_lank : "personlig betygslänk"
+  tht ||--o{ foto : "foton"
+  deltavling |o--o{ foto : ""
+  person |o--o{ foto : "uppladdat via länk"
 
   tht { int nr PK "löpnummer, 0 = övning" int artal text ort text kronika date start bool klar }
   person { int id PK text fornamn text efternamn bool aktiv }
@@ -46,6 +49,7 @@ erDiagram
   tht_resultat_utan_kort { int tht_nr PK int person_id PK int poang }
   spelar_lank { text kod PK int person_id FK timestamptz skapad timestamptz anvand }
   quiz { int id PK text namn jsonb fragor timestamptz skapad timestamptz andrad }
+  foto { int id PK int tht_nr FK int deltavling_id FK int person_id FK text fil int bredd int hojd timestamptz tagen text text bool klar timestamptz skapad timestamptz borttagen }
 ```
 
 ## Vyer (beräknad statistik)
@@ -75,4 +79,5 @@ erDiagram
 - **Övningsrunda:** THT 0 "Övning" med en deltävling. Alltid öppen för markören, filtreras bort i `v_score`/`v_runda` och därmed i all statistik. Inga priser eller banbetyg (trigger `inte_ovning`). Admin tömmer den med knappen i Mata in (migrering 22).
 - **Minnesvärt moment via länk:** `minne_lank_info(kod)` och `lamna_minne(kod, deltävling, text)` – ett eget moment per deltävling och spelare, bara om den egna rundan (`fran_lank = true`, migrering 23).
 - **Quiz** (migrering 24): fristående tabell, bara admin läser och skriver. `fragor` är en ögonblicksbild (jsonb): fråga, svar, fel (0–3), info, ämne, egen.
+- **Foton** (migrering 25): filerna ligger i Storage-bucketen `foton` (publik läsning, bara JPEG, högst 600 kB): `fil` och en liten bild `<fil>-liten.jpg`. Raden skapas med `klar = false`, filerna laddas upp, sedan sätts `klar`. Bara klara rader som inte är `borttagen` syns. Admin och markör laddar upp och tar bort alltid (även avslutade THT). Via länken: `foto_lank_info`, `foto_lank_reservera` (spelaren måste ha spelat THT:n, högst 200 per THT), `foto_lank_klar` och `foto_lank_ta_bort` (sätter `borttagen`, appen tar sedan bort filerna). Storage-reglerna släpper bara in anon-uppladdning till ett reserverat filnamn (en timme) och anon-borttagning av filer som saknar synlig rad.
 - **Banbetyg via länk:** funktionerna `betyg_lank_info(kod)` och `lamna_banbetyg(kod, betyg)` – anropas utan inloggning och kontrollerar koden.

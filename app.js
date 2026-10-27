@@ -1,22 +1,24 @@
-// THT golfapp (v0.34.1) – statistik och inmatning.
+// THT golfapp (v0.35.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.34.1';
-import { renderMata } from './mata.js?v=0.34.1';
-import { renderAdmin } from './admin.js?v=0.34.1';
-import { renderSpelare } from './spelare.js?v=0.34.1';
-import { renderKarta, miniKarta } from './karta.js?v=0.34.1';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.34.1';
-import { renderBetygLank } from './betyg.js?v=0.34.1';
-import { renderNyheter } from './nyheter.js?v=0.34.1';
-import { renderRunda } from './runda.js?v=0.34.1';
-import './kollaps.js?v=0.34.1';
-import { renderRapport } from './rapport.js?v=0.34.1';
-import { renderDuell } from './inbordes.js?v=0.34.1';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.34.1';
-import { renderQuizVisa } from './quiz.js?v=0.34.1';
-import { renderDeltavling } from './deltavling.js?v=0.34.1';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.34.1';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.35.0';
+import { renderMata } from './mata.js?v=0.35.0';
+import { renderAdmin } from './admin.js?v=0.35.0';
+import { renderSpelare } from './spelare.js?v=0.35.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.35.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.35.0';
+import { renderBetygLank } from './betyg.js?v=0.35.0';
+import { renderNyheter } from './nyheter.js?v=0.35.0';
+import { renderRunda } from './runda.js?v=0.35.0';
+import './kollaps.js?v=0.35.0';
+import { renderRapport } from './rapport.js?v=0.35.0';
+import { renderDuell } from './inbordes.js?v=0.35.0';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.35.0';
+import { renderQuizVisa } from './quiz.js?v=0.35.0';
+import { renderDeltavling } from './deltavling.js?v=0.35.0';
+import { fotoSektion } from './foto.js?v=0.35.0';
+import { renderKarusell } from './karusell.js?v=0.35.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.35.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -48,6 +50,7 @@ function route() {
   if (page === 'nyheter') return renderNyheter().catch(fel);
   if (page === 'runda' && arg) return renderRunda(Number(arg)).catch(fel);
   if (page === 'deltavling' && arg) return renderDeltavling(Number(arg)).catch(fel);
+  if (page === 'karusell') return renderKarusell(id, arg ? Number(arg) : null).catch(fel);
   if (page === 'quiz' && arg) return renderQuizVisa(Number(arg)).catch(fel);
   if (page === 'duell' && arg) return renderDuell(Number(arg), rest[0] ? Number(rest[0]) : null).catch(fel);
   if (page === 'rapport' && arg) return renderRapport(Number(arg)).catch(fel);
@@ -112,7 +115,7 @@ async function renderYear(artal) {
     </div>
     <h1>${esc(tht.ort)} ${artal}</h1>
     <p class="sub">THT ${tht.nr} · ${delt.length} deltävlingar · ${res.length} spelare</p>
-    <p class="rapport-lank"><a class="lank-pil" href="#/rapport/${artal}">Årsrapport ›</a></p>
+    <p class="rapport-lank"><a class="lank-pil" href="#/rapport/${artal}">Årsrapport ›</a> · <a class="lank-pil" href="#/karusell/${artal}" title="Leaderboard, dagens runda, minnen och foton på storbild">Karusell på tv ›</a></p>
 
     ${tht.kronika ? `<section class="kronika-sek"><h2>Krönika</h2><div class="card kronika">${kronikaHtml(tht.kronika)}</div></section>` : ''}
     ${tht.klar ? '' : pagarRuta(res)}
@@ -149,6 +152,8 @@ async function renderYear(artal) {
       }).join('')}
     </div>
 
+    <section id="foto-sek" class="foto-sek"></section>
+
     <section id="arsstat"></section>
 
     <section class="minikarta">
@@ -161,6 +166,7 @@ async function renderYear(artal) {
   document.getElementById('prev').onclick = () => { location.hash = `#/ar/${lista[idx - 1].artal}`; };
   document.getElementById('next').onclick = () => { location.hash = `#/ar/${lista[idx + 1].artal}`; };
 
+  fotoSektion(document.getElementById('foto-sek'), { thtNr: tht.nr }).catch((e) => console.warn('Foton:', e));
   if (!utanKort) drawKurva(res, kurva, ordningar.length);
   if (!utanKort) arsStatistik(document.getElementById('arsstat'), tht.nr).catch(() => {});
   if (!utanKort) arsMinnen(delt.map((d) => d.id)).catch(() => {});
@@ -399,7 +405,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.34.1" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.35.0" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>
@@ -438,7 +444,7 @@ async function renderLeaderboard(navId) {
   if (!aktuell(navId)) return;
   app.innerHTML = `
     <h1>${esc(tht.ort)} ${tht.artal}</h1>
-    <p class="sub">THT ${tht.nr} · ${tht.klar ? 'Avslutad' : 'Pågår'} · <span id="lbtid">–</span></p>
+    <p class="sub">THT ${tht.nr} · ${tht.klar ? 'Avslutad' : 'Pågår'} · <span id="lbtid">–</span> · <a class="lank-pil" href="#/karusell">Karusell på tv ›</a></p>
     <div id="lb"></div>`;
 
   let senastJson = null;

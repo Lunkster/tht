@@ -1,7 +1,8 @@
 // Minnesvärda moment: kommentarer för en deltävling, en boll eller en spelares runda (tabellen kommentar, migrering 21).
 // Admin och markör kan alltid skriva, ändra och ta bort – även i avslutade THT. Alla kan läsa.
 // Används i Mata in (deltävlingens bollar), på årssidan under varje deltävling, på scorekortet och i årsrapporten.
-import { api, allaRader, write, esc, arAdmin, arMarkor } from './lib.js?v=0.34.1';
+import { api, allaRader, write, esc, arAdmin, arMarkor } from './lib.js?v=0.35.0';
+import { galleri, fotoInfo } from './foto.js?v=0.35.0';
 
 export const kanSkriva = () => arAdmin() || arMarkor();
 const RUNDOR = 'id,deltavling_id,person_id,boll_nr,person(fornamn)';
@@ -101,30 +102,40 @@ export async function minnenWidget(el, did, data = null, { onAndrat } = {}) {
 const kronika = (t) => t.trim().split(/\n\s*\n/).map((st) => `<p>${esc(st).replace(/\n/g, '<br>')}</p>`).join('');
 let nyastForst = false;
 export async function minnenAlltime(el) {
-  const [thts, delt, kom] = await Promise.all([
+  const [thts, delt, kom, foton] = await Promise.all([
     api('tht?select=nr,artal,ort,kronika&nr=gt.0&order=artal'),
     api('deltavling?select=id,tht_nr,ordning,banversion(bana(namn))&tht_nr=gt.0&order=tht_nr,ordning'),
     allaRader('kommentar?select=id,deltavling_id,runda_id,boll_nr,text,skapad,fran_lank&order=skapad,id'),
+    allaRader('foto?select=id,tht_nr,deltavling_id,fil,tagen,text,person(fornamn)&klar=is.true&borttagen=is.null&order=tagen.asc.nullslast,id').catch(() => []),
   ]);
+  const deltInfo = delt.map((d) => ({ id: d.id, ordning: d.ordning, bana: d.banversion?.bana?.namn ?? null }));
   const rid = [...new Set(kom.map((k) => k.runda_id).filter(Boolean))];
   const rundor = rid.length ? await api(`runda?id=in.(${rid.join(',')})&select=${RUNDOR}`) : [];
   const ar = thts.map((t) => {
     const ds = delt.filter((d) => d.tht_nr === t.nr).map((d) => ({ ...d, kom: kom.filter((k) => k.deltavling_id === d.id) })).filter((d) => d.kom.length);
-    return { ...t, ds, n: ds.reduce((a, d) => a + d.kom.length, 0) };
-  }).filter((t) => t.n || t.kronika?.trim());
+    return { ...t, ds, n: ds.reduce((a, d) => a + d.kom.length, 0), foton: foton.filter((f) => f.tht_nr === t.nr) };
+  }).filter((t) => t.n || t.kronika?.trim() || t.foton.length);
   const rita = () => {
     const lista = nyastForst ? ar.slice().reverse() : ar;
     const tot = ar.reduce((a, t) => a + t.n, 0);
     el.innerHTML = `
       <div class="seg" role="group" aria-label="Ordning"><button type="button" data-o="0" class="${nyastForst ? '' : 'on'}">Äldst först</button><button type="button" data-o="1" class="${nyastForst ? 'on' : ''}">Nyast först</button></div>
-      <p class="hint">${((k) => `${k} ${k === 1 ? 'krönika' : 'krönikor'}`)(ar.filter((t) => t.kronika?.trim()).length)} och ${tot} minnesvärda moment. Tryck på ett år för att fälla ut.</p>
-      ${lista.map((t) => `<details class="card mm-ar-alla">
-        <summary><strong>${t.artal}</strong> · ${esc(t.ort)} <span class="muted">(${t.n}${t.kronika?.trim() ? ' + krönika' : ''})</span></summary>
+      <p class="hint">${((k) => `${k} ${k === 1 ? 'krönika' : 'krönikor'}`)(ar.filter((t) => t.kronika?.trim()).length)}${foton.length ? `, ${tot} minnesvärda moment och ${foton.length} ${foton.length === 1 ? 'foto' : 'foton'}` : ` och ${tot} minnesvärda moment`}. Tryck på ett år för att fälla ut.</p>
+      ${lista.map((t) => `<details class="card mm-ar-alla" data-nr="${t.nr}">
+        <summary><strong>${t.artal}</strong> · ${esc(t.ort)} <span class="muted">(${[t.n && `${t.n}`, t.kronika?.trim() && 'krönika', t.foton.length && `${t.foton.length} ${t.foton.length === 1 ? 'foto' : 'foton'}`].filter(Boolean).join(' + ')})</span></summary>
         ${t.kronika?.trim() ? `<h3>Krönika</h3><div class="kronika">${kronika(t.kronika)}</div>` : ''}
+        ${t.foton.length ? `<h3>Foton <span class="muted">(${t.foton.length})</span></h3><div class="mm-foton"></div>` : ''}
         ${t.ds.map((d) => `<h3>R${d.ordning}${d.banversion?.bana?.namn ? ' · ' + esc(d.banversion.bana.namn) : ''} <span class="muted">(${d.kom.length})</span></h3>${minnenLista(d.kom, rundor)}`).join('')}
         <p><a class="lank-pil" href="#/ar/${t.artal}">Årssidan ${t.artal} ›</a></p>
       </details>`).join('') || '<p class="muted">Inga krönikor eller minnesvärda moment ännu.</p>'}`;
     el.querySelectorAll('[data-o]').forEach((b) => b.onclick = () => { nyastForst = b.dataset.o === '1'; rita(); });
+    // Fotona laddas först när året fälls ut
+    el.querySelectorAll('.mm-ar-alla').forEach((det) => det.addEventListener('toggle', () => {
+      const plats = det.querySelector('.mm-foton');
+      if (!det.open || !plats || plats.dataset.ritad) return;
+      plats.dataset.ritad = '1';
+      galleri(plats, ar.find((t) => t.nr === Number(det.dataset.nr)).foton, { info: fotoInfo(deltInfo) });
+    }));
   };
   rita();
 }

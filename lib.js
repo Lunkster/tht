@@ -73,6 +73,21 @@ export async function write(method, path, body, prefer = 'return=representation'
   return txt ? JSON.parse(txt) : null;
 }
 
+// ---------- Storage (foton, migrering 25) ----------
+// Inloggad: som admin/markör. Annars som anon (uppladdning via personlig länk, som databasen har reserverat).
+export const lagringUrl = (namn) => `${SUPABASE_URL}/storage/v1/object/public/foton/${namn}`;
+export async function lagring(method, namn, body) {
+  const s = await session(false);
+  const headers = { apikey: SUPABASE_KEY };
+  if (s) headers.Authorization = `Bearer ${s.access_token}`;
+  let url = `${SUPABASE_URL}/storage/v1/object/foton`;
+  if (method === 'POST') { url += `/${namn}`; headers['Content-Type'] = 'image/jpeg'; headers['cache-control'] = 'max-age=31536000'; headers['x-upsert'] = 'false'; }
+  else { headers['Content-Type'] = 'application/json'; body = JSON.stringify({ prefixes: namn }); }   // DELETE: namn = lista
+  const r = await fetch(url, { method, headers, body });
+  if (!r.ok) { const t = await r.text(); let m = t; try { m = JSON.parse(t).message || t; } catch { /* text */ } throw new Error(m); }
+  return r.json().catch(() => null);
+}
+
 // ---------- inloggning ----------
 function load() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { return null; } }
 function save(s) { try { s ? localStorage.setItem(SESSION_KEY, JSON.stringify(s)) : localStorage.removeItem(SESSION_KEY); } catch { /* privat läge */ } }
