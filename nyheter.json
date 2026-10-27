@@ -1,5 +1,11 @@
 [
  {
+  "datum": "2026-10-28",
+  "punkter": [
+   "**Ändra foton:** har en bild hamnat på fel runda eller fel år? Öppna fotot, tryck **Ändra** och välj THT, runda och bildtext. Via din personliga länk kan du ändra dina egna foton (till år du var med); admin och markör kan ändra alla (v0.35.3)"
+  ]
+ },
+ {
   "datum": "2026-10-27",
   "punkter": [
    "**Karusell med alla år:** en totalblandning av slutresultat, rundor, utdrag ur krönikorna, minnesvärda moment och foton från alla THT. Öppna den via **alla år ›** på leaderboarden eller under All-time → Minnen. Varje bild i karusellerna visar nu tydligt THT, ort och år – och runda, bana och datum när den gäller en runda, även på fotona. Slutresultatet heter t.ex. *Slutresultat Lindesberg 2025*, och \"Dagens runda\"/\"Senaste rundan\" står bara medan en THT pågår (v0.35.2)",

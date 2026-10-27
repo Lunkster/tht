@@ -1,8 +1,8 @@
 // Banbetyg via personlig länk (#/betyg/<kod>) – ingen inloggning, en länk per spelare för alla år.
 // Databasen kontrollerar koden och tar bara emot betyg på banor som spelaren spelade respektive THT.
 // Här skriver spelaren också ETT eget minnesvärt moment per deltävling hen spelat (bara om sig själv, migrering 23).
-import { rpc, esc } from './lib.js?v=0.35.2';
-import { fotoSektion } from './foto.js?v=0.35.2';
+import { rpc, esc } from './lib.js?v=0.35.3';
+import { fotoSektion } from './foto.js?v=0.35.3';
 
 const app = document.getElementById('app');
 
@@ -52,7 +52,7 @@ export async function renderBetygLank(kod) {
   // Foton per år – ritas när året fälls ut (fotona sparas direkt, inte med Spara)
   app.querySelectorAll('.betyg-ar').forEach((det) => {
     const plats = det.querySelector('.foto-lank');
-    const visaFoton = () => { if (!det.open || plats.dataset.ritad) return; plats.dataset.ritad = '1'; fotoSektion(plats, { thtNr: Number(plats.dataset.tht), lank: kod, rubrik: 'Dina foton', niva: 'h3' }).catch((e) => { plats.innerHTML = `<p class="err">Foton: ${esc(e.message)}</p>`; }); };
+    const visaFoton = () => { if (!det.open || plats.dataset.ritad) return; plats.dataset.ritad = '1'; fotoSektion(plats, { thtNr: Number(plats.dataset.tht), lank: kod, rubrik: 'Dina foton', niva: 'h3', lankTht: info.tht.map((t) => t.tht_nr) }).catch((e) => { plats.innerHTML = `<p class="err">Foton: ${esc(e.message)}</p>`; }); };
     det.addEventListener('toggle', visaFoton);
     visaFoton();
   });

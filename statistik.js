@@ -1,8 +1,8 @@
 // Statistik från 2016-rapporten: hålvinster, resultatfördelning, par 3/4/5, rekord och svåraste hålen.
 // Beräknas i databasvyerna v_stat_* (migrering 17) – här bara sammanställning och tabeller.
-import { api, allaRader, esc, fmt } from './lib.js?v=0.35.2';
-import { inbordesMatris } from './inbordes.js?v=0.35.2';
-import { minnenAlltime } from './minnen.js?v=0.35.2';
+import { api, allaRader, esc, fmt } from './lib.js?v=0.35.3';
+import { inbordesMatris } from './inbordes.js?v=0.35.3';
+import { minnenAlltime } from './minnen.js?v=0.35.3';
 
 const namnLank = (id, namn) => `<a class="namn" href="#/spelare/${id}">${esc(namn)}</a>`;
 const summa = (xs, f) => xs.reduce((a, x) => a + (Number(f(x)) || 0), 0);

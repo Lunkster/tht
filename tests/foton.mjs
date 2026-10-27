@@ -67,6 +67,8 @@ function attrapp(p, logg, extra = () => null) {
     if (t === 'rpc/minne_lank_info') return J([]);
     if (t === 'rpc/foto_lank_info') return J([{ id: 7, tht_nr: 29, deltavling_id: 102, fil: '29/a.jpg', text: 'Utslaget på ettan', tagen: null }]);
     if (t === 'rpc/foto_lank_reservera') { logg.push(`reservera ${r.request().postData()}`); return J({ id: 50, fil: '29/ny.jpg' }); }
+    if (t === 'tht' && q.includes('artal.desc')) return J([{ nr: 29, artal: 2026, ort: 'Degerfors' }, { nr: 28, artal: 2025, ort: 'Lindesberg' }, { nr: 27, artal: 2024, ort: 'Portugal' }]);
+    if (t === 'deltavling' && q.includes('tht_nr=gt.0')) return J(DELT.map((d) => ({ ...d, tht_nr: 29 })));
     if (t === 'rpc/foto_lank_ta_bort') { logg.push(`ta_bort ${r.request().postData()}`); return J('29/a.jpg'); }
     if (t.startsWith('rpc/')) { logg.push(`${t} ${r.request().postData()}`); return r.fulfill({ status: 204, body: '' }).then(() => true); }
     return null;
@@ -90,6 +92,11 @@ function attrapp(p, logg, extra = () => null) {
   await p.locator('.foto-lank .foto-ruta').first().click(); await p.waitForTimeout(300);
   console.log('ljus:', (await p.textContent('.fl-topp')).replace(/\s+/g, ' ').trim(), '| text:', (await p.textContent('.fl-text')).replace(/\s+/g, ' ').trim());
   await p.screenshot({ path: 'foton-ljus.png' });
+  await p.click('.fl-andra'); await p.waitForSelector('.fl-form');
+  console.log('länk ändra: THT-val (bara spelade):', (await p.locator('.fl-form select[name=tht] option').allTextContents()).join(' / '));
+  await p.selectOption('.fl-form select[name=did]', '103'); await p.click('.fl-form button[type=submit]'); await p.waitForTimeout(400);
+  console.log('länk efter ändring:', logg.filter((x) => x.includes('andra')).join(''), '| text:', (await p.textContent('.fl-text')).replace(/\s+/g, ' ').trim());
+  logg.length = 0;
   await p.click('.fl-bort'); await p.click('.fl-bort'); await p.waitForTimeout(500);
   console.log('efter ta bort: ljus öppen', await p.locator('.foto-ljus').count(), '| anrop:', logg.join(' || '));
   await p.close();
@@ -102,6 +109,8 @@ function attrapp(p, logg, extra = () => null) {
   await p.addInitScript(() => localStorage.setItem('tht-session', JSON.stringify({ access_token: 'x.eyJhcHBfbWV0YWRhdGEiOnsicm9sbCI6Im1hcmtvciJ9fQ.y', refresh_token: 'rt', expires_at: Date.now() / 1000 + 3600, roll: 'markor' })));
   const logg = [];
   await attrapp(p, logg, (t, q, m, r, J) => {
+    if (t === 'tht' && q.includes('artal.desc')) return J([{ nr: 29, artal: 2026, ort: 'Degerfors' }, { nr: 28, artal: 2025, ort: 'Lindesberg' }]);
+    if (t === 'deltavling' && q.includes('tht_nr=gt.0')) return J([...DELT.map((d) => ({ ...d, tht_nr: 29 })), { id: 90, tht_nr: 28, ordning: 1, datum: '2025-09-01', banversion: { bana: { namn: 'Lindesbergs GK' } } }]);
     if (t === 'tht') return J([{ nr: 29, artal: 2026, ort: 'Degerfors', klar: false, kronika: null }]);
     if (t === 'v_tht_resultat') return J([{ artal: 2026, person_id: 1, fornamn: 'Martin', placering: 1, poang: 70, slag: 170, rundor: 2 }]);
     return null;
@@ -116,6 +125,18 @@ function attrapp(p, logg, extra = () => null) {
   console.log('meddelande:', await p.textContent('#foto-sek .fu-msg'));
   console.log('anrop:\n  ' + logg.map((x) => x.replace(/29\/[0-9a-f-]{36}/g, '29/<uuid>')).join('\n  '));
   await p.screenshot({ path: 'foton-ar.png', fullPage: true });
+  // Flytta första fotot till THT 28 R1
+  logg.length = 0;
+  await p.locator('#foto-sek .foto-ruta').first().click(); await p.waitForTimeout(200);
+  await p.click('.fl-andra'); await p.waitForSelector('.fl-form');
+  console.log('ändra: THT-val', (await p.locator('.fl-form select[name=tht] option').allTextContents()).join(' / '), '| runda förvald:', await p.inputValue('.fl-form select[name=did]'));
+  await p.selectOption('.fl-form select[name=tht]', '28');
+  console.log('rundor för 28:', (await p.locator('.fl-form select[name=did] option').allTextContents()).join(' / '));
+  await p.selectOption('.fl-form select[name=did]', '90');
+  await p.fill('.fl-form input[name=text]', 'Fel år – flyttad');
+  await p.screenshot({ path: 'foton-andra.png' });
+  await p.click('.fl-form button[type=submit]'); await p.waitForTimeout(500);
+  console.log('efter flytt:', logg.join(' || '), '| kvar i ljus:', (await p.textContent('.fl-topp')).replace(/\s+/g, ' ').trim(), '| antal:', await p.textContent('#foto-sek .foto-antal'));
   await p.close();
 }
 

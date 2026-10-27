@@ -888,3 +888,12 @@ body.storskarm #app:has(.ka) { padding: 0; }
 .ka-foto img { max-height: calc(100vh - 20vh - 70px); }
 .ka-citat { margin: 0; font-size: clamp(20px, 2.6vw, 44px); line-height: 1.35; font-style: italic; color: var(--cream); max-width: 60ch; border-left: 4px solid var(--gold); padding-left: .8em; }
 .ka-tabell.ka-tat { font-size: clamp(14px, 1.7vw, 28px); }
+/* Ändra foto i helskärmsvisningen (v0.35.3) */
+.fl-knappar .link { color: var(--gold-2); }
+.fl-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 8px 12px; text-align: left; max-width: 760px; margin: 0 auto; }
+.fl-form label { display: flex; flex-direction: column; gap: 2px; }
+.fl-form select, .fl-form input { width: 100%; min-width: 0; }
+.fl-form .fl-bred { grid-column: 1 / -1; }
+.fl-formknappar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fl-formknappar .hint { margin: 0; }
+.fl-form input { background: var(--stout-2); color: var(--cream); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; }

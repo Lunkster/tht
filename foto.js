@@ -2,7 +2,7 @@
 // Bilderna krymps i webbläsaren innan uppladdning: en stor (högst ca 300 kB, 1600 px) och en liten för
 // gallerier (<fil>-liten.jpg). Alla får ladda upp – admin och markör i appen, spelarna via sin personliga länk.
 // Ingen granskning. Används på årssidan, deltävlingssidan, länksidan, All-time → Minnen och i karusellen.
-import { api, rpc, write, lagring, lagringUrl, esc, arAdmin, arMarkor } from './lib.js?v=0.35.2';
+import { api, rpc, write, lagring, lagringUrl, esc, arAdmin, arMarkor } from './lib.js?v=0.35.3';
 
 export const MAX_BYTE = 300_000;
 export const litenFil = (fil) => fil.replace(/\.jpg$/, '-liten.jpg');
@@ -109,6 +109,18 @@ export async function appTaBort(f) {
   await lagring('DELETE', [f.fil, litenFil(f.fil)]).catch(() => {});
 }
 
+export async function appAndra(f, nytt) {
+  await write('PATCH', `foto?id=eq.${f.id}`, nytt, 'return=minimal');
+}
+// THT:er och deltävlingar att flytta till (bara = tillåtna THT-nummer, t.ex. de spelaren var med på)
+export async function flyttVal(bara = null) {
+  const [thts, delt] = await Promise.all([
+    api('tht?select=nr,artal,ort&nr=gt.0&order=artal.desc'),
+    api('deltavling?select=id,tht_nr,ordning,datum,banversion(bana(namn))&tht_nr=gt.0&order=tht_nr,ordning'),
+  ]);
+  return thts.filter((t) => !bara || bara.includes(t.nr)).map((t) => ({ ...t, delt: delt.filter((d) => d.tht_nr === t.nr).map((d) => ({ id: d.id, ordning: d.ordning, datum: d.datum, bana: d.banversion?.bana?.namn ?? null })) }));
+}
+
 // Spelaren via personlig länk – databasen reserverar filnamnet och kontrollerar att spelaren var med
 export const lankLadda = (kod, thtNr) => async (p, did, text) => {
   const r = await rpc('foto_lank_reservera', { p_kod: kod, p_tht_nr: thtNr, p_deltavling_id: did, p_bredd: p.bredd, p_hojd: p.hojd, p_tagen: tagenTs(p.tagen), p_text: text || null });
@@ -116,21 +128,23 @@ export const lankLadda = (kod, thtNr) => async (p, did, text) => {
   await lagring('POST', litenFil(r.fil), p.liten);
   await rpc('foto_lank_klar', { p_kod: kod, p_id: r.id });
 };
+export const lankAndra = (kod) => (f, nytt) => rpc('foto_lank_andra', { p_kod: kod, p_id: f.id, p_tht_nr: nytt.tht_nr, p_deltavling_id: nytt.deltavling_id, p_text: nytt.text });
 export const lankTaBort = (kod) => async (f) => {
   const fil = await rpc('foto_lank_ta_bort', { p_kod: kod, p_id: f.id });
   await lagring('DELETE', [fil, litenFil(fil)]).catch(() => {});
 };
 
 // ---------- galleri och helskärmsvisning ----------
-// info(f) = bildtext under bilden; taBort(f) = funktion (eller null) för att ta bort
-export function galleri(el, foton, { info = () => '', taBort = null, onAndrat = null } = {}) {
+// info(f) = bildtext under bilden; taBort(f) = funktion (eller null) för att ta bort;
+// andra = { spara(f, nytt), val() → [{ nr, artal, ort, delt }], behall(f) } för att flytta fotot till annan runda/THT
+export function galleri(el, foton, opt = {}) {
   el.innerHTML = foton.length ? `<div class="foto-rutnat">${foton.map((f, i) => `<button type="button" class="foto-ruta" data-i="${i}" aria-label="Visa foto ${i + 1}">
       <img src="${litenUrl(f)}" alt="${esc(f.text ?? '')}" loading="lazy" decoding="async"></button>`).join('')}</div>` : '';
-  el.querySelectorAll('.foto-ruta').forEach((b) => b.onclick = () => visaStor(foton, Number(b.dataset.i), { info, taBort, onAndrat }));
+  el.querySelectorAll('.foto-ruta').forEach((b) => b.onclick = () => visaStor(foton, Number(b.dataset.i), opt));
 }
 
 let ljus = null;
-export function visaStor(foton, start, { info = () => '', taBort = null, onAndrat = null } = {}) {
+export function visaStor(foton, start, { info = () => '', taBort = null, onAndrat = null, andra = null } = {}) {
   ljus?.stang();
   let i = start;
   const ov = document.createElement('div');
@@ -143,13 +157,15 @@ export function visaStor(foton, start, { info = () => '', taBort = null, onAndra
     if (!f) { stang(); return; }
     const txt = info(f);
     ov.innerHTML = `<div class="fl-topp"><span>${i + 1} / ${foton.length}</span>
-        <span class="fl-knappar">${taBort ? '<button type="button" class="link fl-bort">Ta bort</button>' : ''}<button type="button" class="fl-stang" aria-label="Stäng">✕</button></span></div>
+        <span class="fl-knappar">${andra ? '<button type="button" class="link fl-andra">Ändra</button>' : ''}${taBort ? '<button type="button" class="link fl-bort">Ta bort</button>' : ''}<button type="button" class="fl-stang" aria-label="Stäng">✕</button></span></div>
       <div class="fl-bild"><img src="${fotoUrl(f)}" alt="${esc(f.text ?? '')}">
         ${foton.length > 1 ? '<button type="button" class="fl-pil fl-forra" aria-label="Föregående">‹</button><button type="button" class="fl-pil fl-nasta" aria-label="Nästa">›</button>' : ''}</div>
       ${txt ? `<div class="fl-text">${txt}</div>` : ''}`;
     ov.querySelector('.fl-stang').onclick = stang;
     ov.querySelector('.fl-forra')?.addEventListener('click', () => steg(-1));
     ov.querySelector('.fl-nasta')?.addEventListener('click', () => steg(1));
+    const knapp = ov.querySelector('.fl-andra');
+    if (knapp) knapp.onclick = () => andraForm(f);
     const bort = ov.querySelector('.fl-bort');
     if (bort) bort.onclick = async () => {
       if (!bort.classList.contains('bekrafta')) { bort.classList.add('bekrafta'); bort.textContent = 'Säker? Ta bort'; return; }
@@ -158,8 +174,38 @@ export function visaStor(foton, start, { info = () => '', taBort = null, onAndra
       catch (e) { bort.disabled = false; bort.textContent = `Fel: ${e.message}`; }
     };
   };
+  // Flytta fotot: THT, runda och bildtext
+  const andraForm = async (f) => {
+    const plats = ov.querySelector('.fl-text') ?? ov.appendChild(Object.assign(document.createElement('div'), { className: 'fl-text' }));
+    plats.innerHTML = '<p class="muted">Laddar …</p>';
+    let val;
+    try { val = await andra.val(); } catch (e) { plats.innerHTML = `<p class="err">${esc(e.message)}</p>`; return; }
+    const deltOpt = (nr, did) => `<option value="">Hela THT:n</option>${(val.find((t) => t.nr === nr)?.delt ?? []).map((d) => `<option value="${d.id}" ${d.id === did ? 'selected' : ''}>R${d.ordning}${d.bana ? ' · ' + esc(d.bana) : ''}${d.datum ? ' · ' + d.datum : ''}</option>`).join('')}`;
+    plats.innerHTML = `<form class="fl-form">
+      <label><span class="meta">THT</span><select name="tht">${val.map((t) => `<option value="${t.nr}" ${t.nr === f.tht_nr ? 'selected' : ''}>THT ${t.nr} · ${esc(t.ort ?? '')} ${t.artal}</option>`).join('')}</select></label>
+      <label><span class="meta">Runda</span><select name="did">${deltOpt(f.tht_nr, f.deltavling_id)}</select></label>
+      <label class="fl-bred"><span class="meta">Bildtext</span><input name="text" maxlength="300" value="${esc(f.text ?? '')}" placeholder="Bildtext (valfritt)"></label>
+      <span class="fl-formknappar"><button type="submit" class="btn small primary">Spara</button> <button type="button" class="link fl-avbryt">Avbryt</button> <span class="hint fl-msg" role="status"></span></span>
+    </form>`;
+    const form = plats.querySelector('form');
+    form.tht.onchange = () => { form.did.innerHTML = deltOpt(Number(form.tht.value), null); };
+    form.querySelector('.fl-avbryt').onclick = rita;
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const nytt = { tht_nr: Number(form.tht.value), deltavling_id: form.did.value ? Number(form.did.value) : null, text: form.text.value.trim() || null };
+      form.querySelector('.fl-msg').textContent = 'Sparar …';
+      try {
+        await andra.spara(f, nytt);
+        Object.assign(f, nytt);
+        if (andra.behall && !andra.behall(f)) { foton.splice(i, 1); onAndrat?.(foton); if (!foton.length) { stang(); return; } if (i >= foton.length) i = foton.length - 1; }
+        else onAndrat?.(foton);
+        rita();
+      } catch (err) { form.querySelector('.fl-msg').textContent = `Kunde inte spara: ${err.message}`; }
+    };
+  };
   const steg = (d) => { i = (i + d + foton.length) % foton.length; rita(); };
   const tangent = (e) => {
+    if (e.target.closest?.('.fl-form')) return;   // skriver i formuläret
     if (e.key === 'Escape') stang();
     else if (e.key === 'ArrowRight') steg(1);
     else if (e.key === 'ArrowLeft') steg(-1);
@@ -257,7 +303,7 @@ export function fotoInfo(delt) {
   };
 }
 
-export async function fotoSektion(el, { thtNr, did = null, lank = null, rubrik = 'Foton', niva = 'h2', delt = null }) {
+export async function fotoSektion(el, { thtNr, did = null, lank = null, rubrik = 'Foton', niva = 'h2', delt = null, lankTht = null }) {
   delt ??= await hamtaDelt(thtNr);
   const skriv = !!lank || kanSkriva();
   let foton = [];
@@ -269,7 +315,12 @@ export async function fotoSektion(el, { thtNr, did = null, lank = null, rubrik =
   const info = fotoInfo(delt);
   const gOpt = {
     info, taBort: skriv ? (lank ? lankTaBort(lank) : appTaBort) : null,
-    onAndrat: () => { const n = el.querySelector('.foto-antal'); if (n) n.textContent = foton.length ? `(${foton.length})` : ''; },
+    // Flyttat foto försvinner härifrån om det inte längre hör till den här THT:n/rundan
+    andra: skriv ? { spara: lank ? lankAndra(lank) : appAndra, val: () => flyttVal(lank ? lankTht : null), behall: (f) => f.tht_nr === thtNr && (!did || f.deltavling_id === did) } : null,
+    onAndrat: () => {
+      const n = el.querySelector('.foto-antal'); if (n) n.textContent = foton.length ? `(${foton.length})` : '';
+      galleri(el.querySelector('.foto-g'), foton, gOpt);
+    },
   };
   const rita = () => {
     if (!foton.length && !skriv) { el.innerHTML = ''; return; }
@@ -281,7 +332,7 @@ export async function fotoSektion(el, { thtNr, did = null, lank = null, rubrik =
     const upp = el.querySelector('.foto-upp');
     if (upp) uppladdare(upp, {
       delt, forval: did, ladda: lank ? lankLadda(lank, thtNr) : appLadda(thtNr),
-      klart: async () => { await hamta(true); galleri(el.querySelector('.foto-g'), foton, gOpt); gOpt.onAndrat(); el.querySelector('.foto-tom')?.remove(); },
+      klart: async () => { await hamta(true); gOpt.onAndrat(); el.querySelector('.foto-tom')?.remove(); },
     });
   };
   rita();
