@@ -2,7 +2,7 @@
 // Bilderna krymps i webbläsaren innan uppladdning: en stor (högst ca 300 kB, 1600 px) och en liten för
 // gallerier (<fil>-liten.jpg). Alla får ladda upp – admin och markör i appen, spelarna via sin personliga länk.
 // Ingen granskning. Används på årssidan, deltävlingssidan, länksidan, All-time → Minnen och i karusellen.
-import { api, rpc, write, lagring, lagringUrl, esc, arAdmin, arMarkor } from './lib.js?v=0.35.1';
+import { api, rpc, write, lagring, lagringUrl, esc, arAdmin, arMarkor } from './lib.js?v=0.35.2';
 
 export const MAX_BYTE = 300_000;
 export const litenFil = (fil) => fil.replace(/\.jpg$/, '-liten.jpg');

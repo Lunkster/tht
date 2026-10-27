@@ -880,3 +880,11 @@ body.storskarm #app:has(.ka) { padding: 0; }
   .ka-topp5 { grid-template-columns: 1fr; }
   .ka-tabell .ka-r { display: none; }
 }
+/* Karusell: rad med THT, ort, år (och runda) överst på varje bild (v0.35.2) */
+.ka-kicker { display: flex; flex-wrap: wrap; gap: .2em .9em; font-size: clamp(16px, 1.9vw, 32px); color: var(--cream-2); letter-spacing: .01em; }
+.ka-kicker span + span::before { content: '·'; margin-right: .9em; color: var(--cream-3); }
+.ka-kicker-tht { color: var(--cream); font-weight: 700; }
+.ka-foto .ka-kicker { align-self: stretch; justify-content: center; font-size: clamp(18px, 2.2vw, 38px); }
+.ka-foto img { max-height: calc(100vh - 20vh - 70px); }
+.ka-citat { margin: 0; font-size: clamp(20px, 2.6vw, 44px); line-height: 1.35; font-style: italic; color: var(--cream); max-width: 60ch; border-left: 4px solid var(--gold); padding-left: .8em; }
+.ka-tabell.ka-tat { font-size: clamp(14px, 1.7vw, 28px); }

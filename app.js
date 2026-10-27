@@ -1,24 +1,24 @@
-// THT golfapp (v0.35.1) – statistik och inmatning.
+// THT golfapp (v0.35.2) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.35.1';
-import { renderMata } from './mata.js?v=0.35.1';
-import { renderAdmin } from './admin.js?v=0.35.1';
-import { renderSpelare } from './spelare.js?v=0.35.1';
-import { renderKarta, miniKarta } from './karta.js?v=0.35.1';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.35.1';
-import { renderBetygLank } from './betyg.js?v=0.35.1';
-import { renderNyheter } from './nyheter.js?v=0.35.1';
-import { renderRunda } from './runda.js?v=0.35.1';
-import './kollaps.js?v=0.35.1';
-import { renderRapport } from './rapport.js?v=0.35.1';
-import { renderDuell } from './inbordes.js?v=0.35.1';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.35.1';
-import { renderQuizVisa } from './quiz.js?v=0.35.1';
-import { renderDeltavling } from './deltavling.js?v=0.35.1';
-import { fotoSektion } from './foto.js?v=0.35.1';
-import { renderKarusell } from './karusell.js?v=0.35.1';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.35.1';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.35.2';
+import { renderMata } from './mata.js?v=0.35.2';
+import { renderAdmin } from './admin.js?v=0.35.2';
+import { renderSpelare } from './spelare.js?v=0.35.2';
+import { renderKarta, miniKarta } from './karta.js?v=0.35.2';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.35.2';
+import { renderBetygLank } from './betyg.js?v=0.35.2';
+import { renderNyheter } from './nyheter.js?v=0.35.2';
+import { renderRunda } from './runda.js?v=0.35.2';
+import './kollaps.js?v=0.35.2';
+import { renderRapport } from './rapport.js?v=0.35.2';
+import { renderDuell } from './inbordes.js?v=0.35.2';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.35.2';
+import { renderQuizVisa } from './quiz.js?v=0.35.2';
+import { renderDeltavling } from './deltavling.js?v=0.35.2';
+import { fotoSektion } from './foto.js?v=0.35.2';
+import { renderKarusell } from './karusell.js?v=0.35.2';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.35.2';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -50,7 +50,7 @@ function route() {
   if (page === 'nyheter') return renderNyheter().catch(fel);
   if (page === 'runda' && arg) return renderRunda(Number(arg)).catch(fel);
   if (page === 'deltavling' && arg) return renderDeltavling(Number(arg)).catch(fel);
-  if (page === 'karusell') return renderKarusell(id, arg ? Number(arg) : null).catch(fel);
+  if (page === 'karusell') return renderKarusell(id, arg || null).catch(fel);
   if (page === 'quiz' && arg) return renderQuizVisa(Number(arg)).catch(fel);
   if (page === 'duell' && arg) return renderDuell(Number(arg), rest[0] ? Number(rest[0]) : null).catch(fel);
   if (page === 'rapport' && arg) return renderRapport(Number(arg)).catch(fel);
@@ -405,7 +405,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.35.1" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.35.2" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>
@@ -444,7 +444,7 @@ async function renderLeaderboard(navId) {
   if (!aktuell(navId)) return;
   app.innerHTML = `
     <h1>${esc(tht.ort)} ${tht.artal}</h1>
-    <p class="sub">THT ${tht.nr} · ${tht.klar ? 'Avslutad' : 'Pågår'} · <span id="lbtid">–</span> · <a class="lank-pil" href="#/karusell">Karusell på tv ›</a></p>
+    <p class="sub">THT ${tht.nr} · ${tht.klar ? 'Avslutad' : 'Pågår'} · <span id="lbtid">–</span> · <a class="lank-pil" href="#/karusell">Karusell på tv ›</a> · <a class="lank-pil" href="#/karusell/alla" title="Totalblandning av alla år">alla år ›</a></p>
     <div id="lb"></div>`;
 
   let senastJson = null;
