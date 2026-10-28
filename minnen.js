@@ -1,8 +1,8 @@
 // Minnesvärda moment: kommentarer för en deltävling, en boll eller en spelares runda (tabellen kommentar, migrering 21).
 // Admin och markör kan alltid skriva, ändra och ta bort – även i avslutade THT. Alla kan läsa.
 // Används i Mata in (deltävlingens bollar), på årssidan under varje deltävling, på scorekortet och i årsrapporten.
-import { api, allaRader, write, esc, arAdmin, arMarkor } from './lib.js?v=0.35.3';
-import { galleri, fotoInfo } from './foto.js?v=0.35.3';
+import { api, allaRader, write, esc, arAdmin, arMarkor } from './lib.js?v=0.35.4';
+import { galleri, fotoInfo } from './foto.js?v=0.35.4';
 
 export const kanSkriva = () => arAdmin() || arMarkor();
 const RUNDOR = 'id,deltavling_id,person_id,boll_nr,person(fornamn)';
@@ -121,7 +121,7 @@ export async function minnenAlltime(el) {
     el.innerHTML = `
       <div class="seg" role="group" aria-label="Ordning"><button type="button" data-o="0" class="${nyastForst ? '' : 'on'}">Äldst först</button><button type="button" data-o="1" class="${nyastForst ? 'on' : ''}">Nyast först</button></div>
       <p class="hint">${((k) => `${k} ${k === 1 ? 'krönika' : 'krönikor'}`)(ar.filter((t) => t.kronika?.trim()).length)}${foton.length ? `, ${tot} minnesvärda moment och ${foton.length} ${foton.length === 1 ? 'foto' : 'foton'}` : ` och ${tot} minnesvärda moment`}. Tryck på ett år för att fälla ut.</p>
-      <p class="rapport-lank"><a class="lank-pil" href="#/karusell/alla" title="Slutresultat, rundor, krönikor, minnen och foton från alla år – för storbild">Karusell med alla år på tv ›</a></p>
+      <p class="rapport-lank"><a class="lank-pil" href="#/karusell/alla" title="Slutresultat, rundor, krönikor, minnen och foton från alla år – blandat, för storbild">Karusell med alla år på tv ›</a> · <a class="lank-pil" href="#/karusell/kronologisk" title="Alla år i ordning – år för år">år för år ›</a></p>
       ${lista.map((t) => `<details class="card mm-ar-alla" data-nr="${t.nr}">
         <summary><strong>${t.artal}</strong> · ${esc(t.ort)} <span class="muted">(${[t.n && `${t.n}`, t.kronika?.trim() && 'krönika', t.foton.length && `${t.foton.length} ${t.foton.length === 1 ? 'foto' : 'foton'}`].filter(Boolean).join(' + ')})</span></summary>
         ${t.kronika?.trim() ? `<h3>Krönika</h3><div class="kronika">${kronika(t.kronika)}</div>` : ''}

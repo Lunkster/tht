@@ -2,11 +2,13 @@
 //   #/karusell        senaste THT:n med inmatade poäng (förra årets tills årets har börjat)
 //   #/karusell/<år>   ett visst år
 //   #/karusell/alla   totalblandning av alla år: slutresultat, rundor, krönikor, minnen och foton
+//   #/karusell/kronologisk[/<år>]  år för år i ordning (från <år>): året, krönikan, varje runda med dess
+//                     minnen och några slumpade foton, sist slutresultatet – sedan nästa år, och om från början
 // Varje bild säger tydligt THT, ort, år och – där det passar – runda och bana. Fotona blandas in mellan
 // statistikbilderna. Ingen inloggning behövs. Data hämtas på nytt varje minut (alla år: var tionde minut).
-import { api, allaRader, esc, fmt, aktuell } from './lib.js?v=0.35.3';
-import { hamtaFoton, fotoUrl } from './foto.js?v=0.35.3';
-import { vem } from './minnen.js?v=0.35.3';
+import { api, allaRader, esc, fmt, aktuell } from './lib.js?v=0.35.4';
+import { hamtaFoton, fotoUrl } from './foto.js?v=0.35.4';
+import { vem } from './minnen.js?v=0.35.4';
 
 const app = document.getElementById('app');
 const TID_STAT = 15_000, TID_FOTO = 8_000, FOTON_PER_STAT = 2;
@@ -22,9 +24,10 @@ const kicker = (t, dl = null, extra = '') => `<div class="ka-kicker"><span class
 
 let tangent = null, wakeLock = null;
 
-export async function renderKarusell(navId, arg = null) {
+export async function renderKarusell(navId, arg = null, fran = null) {
   app.innerHTML = '<p class="muted center">Laddar karusellen …</p>';
-  const alla = arg === 'alla';
+  const kron = arg === 'kronologisk';
+  const alla = arg === 'alla' || kron;
   const artal = alla ? null : (arg ? Number(arg) : null);
   let tht = null;
   if (!alla) {
@@ -41,7 +44,7 @@ export async function renderKarusell(navId, arg = null) {
 
   let kalla = null, kö = [], visad = null, historik = [], paus = false, timer = null, senastHamtad = 0, fotoIdx = 0;
   const hamta = async () => {
-    kalla = alla ? await allaAr() : await ettAr(tht);
+    kalla = alla ? await allaAr(kron ? { franAr: kalla ? null : (fran ? Number(fran) : null) } : null) : await ettAr(tht);   // nästa varv börjar från första året
     senastHamtad = Date.now();
   };
   // Nästa bild: en statistikbild, sedan några foton, sedan nästa statistikbild …
@@ -56,14 +59,14 @@ export async function renderKarusell(navId, arg = null) {
     return kö.shift();
   };
 
-  const titel = alla ? 'The Helkväll Tour · alla år' : thtText(tht);
+  const titel = kron ? 'The Helkväll Tour · år för år' : alla ? 'The Helkväll Tour · alla år' : thtText(tht);
   const visa = (b) => {
     if (!aktuell(navId)) return stopp();
     visad = b;
-    const tid = b.typ === 'foto' ? TID_FOTO : TID_STAT;
+    const tid = b.typ === 'foto' || b.typ === 'ar' ? TID_FOTO : TID_STAT;
     app.innerHTML = `<div class="ka ${b.typ === 'foto' ? 'ka-fotolage' : ''}">
       <div class="ka-topp">
-        <span class="ka-titel"><img src="logo.svg?v=0.35.3" alt="" class="ka-logo"> ${titel}</span>
+        <span class="ka-titel"><img src="logo.svg?v=0.35.4" alt="" class="ka-logo"> ${titel}</span>
         <span class="ka-hoger"><span class="ka-klocka">${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
           <button type="button" class="ka-knapp" id="ka-paus" title="Paus (mellanslag)">${paus ? '▶' : '❚❚'}</button>
           <button type="button" class="ka-knapp" id="ka-hel" title="Helskärm (F)">⛶</button>
@@ -79,7 +82,7 @@ export async function renderKarusell(navId, arg = null) {
   };
   const fram = async () => {
     if (!aktuell(navId)) return stopp();
-    if (Date.now() - senastHamtad > (alla ? HAMTA_ALLA : HAMTA)) await hamta().catch((e) => console.warn('Karusell:', e));
+    if (kron ? kalla.varvKlart?.() : Date.now() - senastHamtad > (alla ? HAMTA_ALLA : HAMTA)) await hamta().catch((e) => console.warn('Karusell:', e));
     if (visad) { historik.push(visad); if (historik.length > 30) historik.shift(); }
     visa(nasta());
   };
@@ -151,7 +154,7 @@ async function ettAr(tht) {
 }
 
 // ---------- alla år: totalblandning ----------
-async function allaAr() {
+async function allaAr(kronologisk = null) {
   const [thts, res, rundor, delt, pris, kom, foton] = await Promise.all([
     api('tht?select=nr,artal,ort,klar,kronika&nr=gt.0&order=artal', { fresh: true }),
     allaRader('v_tht_resultat?select=tht_nr,person_id,fornamn,placering,poang,slag,rundor&order=tht_nr,placering'),
@@ -194,7 +197,63 @@ async function allaAr() {
     return null;
   };
   const tht = Object.fromEntries(thts.map((t) => [t.nr, t]));
+  if (kronologisk) return kronologiskOrdning(thts, perTht, kom, rundNamn, foton, delt, kronologisk.franAr);
   return { nastaStat, foton: blanda(foton.filter((x) => tht[x.tht_nr])), fotoBild: (x) => fotoBild(x, tht[x.tht_nr], delt) };
+}
+
+// ---------- år för år, i ordning ----------
+// Per år: året (vinnare, antal rundor) → ett stycke ur krönikan → varje runda följd av rundans minnen och
+// högst två slumpade foton → årets övriga foton (högst två) → slutresultatet. Högst sex foton per år.
+const FOTON_PER_RUNDA = 2, FOTON_PER_AR = 6;
+function kronologiskOrdning(thts, perTht, kom, rundNamn, foton, delt, franAr) {
+  const urval = (lista, n) => blanda(lista).slice(0, n);
+  const bygg = () => {
+    const ut = [];
+    for (const t of thts) {
+      const D = perTht[t.nr];
+      const arsFoton = foton.filter((f) => f.tht_nr === t.nr);
+      const arsKom = kom.filter((k) => D.delt.some((d) => d.id === k.deltavling_id));
+      if (!D.res.length && !arsFoton.length && !arsKom.length && !t.kronika?.trim()) continue;
+      const del = [{ typ: 'ar', html: arsBild(D) }];
+      if (t.kronika?.trim()) del.push({ typ: 'kronika', html: kronikaBild(t, 0) });
+      let antalFoton = 0;
+      for (const dl of D.delt) {
+        const r = rundBild(D, dl, null); if (r) del.push({ typ: 'dag', html: r });
+        const k = arsKom.filter((x) => x.deltavling_id === dl.id);
+        for (let i = 0; i < k.length; i += 3) del.push({ typ: 'minnen', html: minnesBild(D, k.slice(i, i + 3), rundNamn, dl) });
+        urval(arsFoton.filter((f) => f.deltavling_id === dl.id), Math.min(FOTON_PER_RUNDA, FOTON_PER_AR - antalFoton))
+          .forEach((f) => { del.push(fotoBild(f, t, delt)); antalFoton++; });
+      }
+      urval(arsFoton.filter((f) => !f.deltavling_id || !D.delt.some((d) => d.id === f.deltavling_id)), Math.max(0, Math.min(2, FOTON_PER_AR - antalFoton)))
+        .forEach((f) => del.push(fotoBild(f, t, delt)));
+      if (D.res.length) del.push({ typ: 'lb', html: resultatBild(D) });
+      ut.push({ artal: t.artal, del });
+    }
+    return ut;
+  };
+  const ar = bygg();
+  // Börja på valt år (eller närmaste efter), annars från början
+  let i = Math.max(0, franAr ? ar.findIndex((x) => x.artal >= franAr) : 0);
+  const lista = ar.flatMap((x) => x.del);
+  const start = ar.slice(0, i).reduce((n, x) => n + x.del.length, 0);
+  let pos = start, klart = false;
+  return {
+    nastaStat: () => { if (!lista.length) return null; const b = lista[pos++]; if (pos >= lista.length) { pos = 0; klart = true; } return b; },
+    varvKlart: () => klart,   // när sista året visats hämtas allt på nytt (nya foton slumpas) och det börjar om
+    foton: [],
+    fotoBild: () => null,
+  };
+}
+
+function arsBild({ tht, res, delt }) {
+  const vinnare = res.filter((r) => r.placering === 1).map((r) => esc(r.fornamn)).join(' & ');
+  const banor = [...new Set(delt.map((d) => banNamn(d)).filter(Boolean))];
+  return `<div class="ka-ar">
+    <div class="ka-ar-nr">THT ${tht.nr}</div>
+    <h1 class="ka-ar-rubrik">${esc(tht.ort ?? '')} ${tht.artal}</h1>
+    <p class="ka-under">${delt.length} ${delt.length === 1 ? 'runda' : 'rundor'}${banor.length ? ' · ' + banor.map(esc).join(' · ') : ''}</p>
+    ${vinnare ? `<p class="ka-ar-vinnare">${tht.klar ? 'Vinnare' : 'Leder'}: <strong>${vinnare}</strong></p>` : ''}
+  </div>`;
 }
 
 // ---------- bilderna ----------
@@ -262,17 +321,17 @@ function hojdpunkter({ tht, rundor }, dl, score) {
   return `${kicker(tht, dl)}<h1 class="ka-rubrik">Höjdpunkter · R${dl.ordning}</h1><div class="ka-kortrad">${delar.join('')}</div>`;
 }
 
-function minnesBild({ tht, delt }, kom, rundNamn) {
+function minnesBild({ tht, delt }, kom, rundNamn, dl = null) {
   if (!kom.length) return null;
   const dlAv = Object.fromEntries(delt.map((x) => [x.id, x]));
   const rundor = rundNamn.map((r) => ({ id: r.id, person: r.person }));
-  return `${kicker(tht)}<h1 class="ka-rubrik">Minnesvärt ${tht.artal}</h1>
+  return `${kicker(tht, dl)}<h1 class="ka-rubrik">Minnesvärt ${dl ? `· R${dl.ordning}` : tht.artal}</h1>
     <ul class="ka-minnen">${kom.map((k) => `<li><q>${esc(k.text)}</q><span>${esc(vem(k, rundor))} · ${rundText(dlAv[k.deltavling_id]) || '?'}</span></li>`).join('')}</ul>`;
 }
 
-function kronikaBild(t) {
+function kronikaBild(t, stycke = null) {
   const st = t.kronika.trim().split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
-  let text = st[Math.floor(Math.random() * st.length)];
+  let text = st[stycke ?? Math.floor(Math.random() * st.length)];
   if (text.length > 420) text = text.slice(0, 400).replace(/\s+\S*$/, '') + ' …';
   return `${kicker(t)}<h1 class="ka-rubrik">Ur krönikan ${t.artal}</h1><blockquote class="ka-citat">${esc(text).replace(/\n/g, '<br>')}</blockquote>`;
 }

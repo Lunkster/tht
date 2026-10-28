@@ -1,11 +1,11 @@
 // Admin: grunddata som läggs upp sällan – spelare, banor, THT, priser och övernattningar.
-import { api, allaRader, write, isLoggedIn, arAdmin, arMarkor, logout, esc, nuNav, aktuell } from './lib.js?v=0.35.3';
-import { visaLogin } from './mata.js?v=0.35.3';
-import { renderBanor } from './admin-banor.js?v=0.35.3';
-import { renderTht } from './admin-tht.js?v=0.35.3';
-import { renderPriser } from './admin-priser.js?v=0.35.3';
-import { renderOvernattning } from './admin-overnattning.js?v=0.35.3';
-import { renderBanbetyg } from './admin-banbetyg.js?v=0.35.3';
+import { api, allaRader, write, isLoggedIn, arAdmin, arMarkor, logout, esc, nuNav, aktuell } from './lib.js?v=0.35.4';
+import { visaLogin } from './mata.js?v=0.35.4';
+import { renderBanor } from './admin-banor.js?v=0.35.4';
+import { renderTht } from './admin-tht.js?v=0.35.4';
+import { renderPriser } from './admin-priser.js?v=0.35.4';
+import { renderOvernattning } from './admin-overnattning.js?v=0.35.4';
+import { renderBanbetyg } from './admin-banbetyg.js?v=0.35.4';
 
 const app = document.getElementById('app');
 
@@ -33,7 +33,7 @@ export async function renderAdmin([sida, ...rest]) {
   if (sida === 'priser') return renderPriser();
   if (sida === 'overnattning') return renderOvernattning();
   if (sida === 'banbetyg') return renderBanbetyg();
-  if (sida === 'quiz') return (await import('./quiz.js?v=0.35.3')).renderQuizAdmin(rest);   // laddas bara när den behövs
+  if (sida === 'quiz') return (await import('./quiz.js?v=0.35.4')).renderQuizAdmin(rest);   // laddas bara när den behövs
   return renderMeny();
 }
 

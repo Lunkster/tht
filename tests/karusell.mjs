@@ -10,8 +10,8 @@ const res = namn.map((n, i) => ({ person_id: i + 1, fornamn: n, placering: i + 1
 const score = rundor.filter((r) => r.deltavling_id === 103).flatMap((r, i) => par.slice(0, r.antal_hal).map((p, h) => { const s = Math.max(1, p + ((h * 3 + i) % 5) - 2); return { runda_id: r.runda_id, person_id: r.person_id, hal_nr: h + 1, par: p, slag: s, slag_tak: Math.min(s, p + 5), poang: Math.max(0, p + 2 - s) }; }));
 const b = await chromium.launch();
 const bild = await (async () => { const p = await b.newPage(); await p.goto('http://localhost:8765/'); const x = await p.evaluate(async () => { const c = document.createElement('canvas'); c.width = 1600; c.height = 1067; const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 1600, 1067); gr.addColorStop(0, '#2b5d34'); gr.addColorStop(1, '#a7c7e7'); g.fillStyle = gr; g.fillRect(0, 0, 1600, 1067); const bl = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.8)); const u = new Uint8Array(await bl.arrayBuffer()); let s = ''; u.forEach((v) => { s += String.fromCharCode(v); }); return btoa(s); }); await p.close(); return Buffer.from(x, 'base64'); })();
-for (const [w, h, v, adress] of [[1920, 1080, 'tv', '#/karusell'], [390, 800, 'mobil', '#/karusell'], [1920, 1080, 'alla', '#/karusell/alla']]) {
-  const alla = v === 'alla';
+for (const [w, h, v, adress] of [[1920, 1080, 'tv', '#/karusell'], [390, 800, 'mobil', '#/karusell'], [1920, 1080, 'alla', '#/karusell/alla'], [1920, 1080, 'kron', '#/karusell/kronologisk'], [1920, 1080, 'kron2026', '#/karusell/kronologisk/2026']]) {
+  const alla = v.startsWith('alla') || v.startsWith('kron');
   const p = await b.newPage({ viewport: { width: w, height: h } });
   const valt = [];
   p.on('pageerror', (e) => console.log('ERR', e.message));
@@ -25,7 +25,7 @@ for (const [w, h, v, adress] of [[1920, 1080, 'tv', '#/karusell'], [390, 800, 'm
     if (alla && t === 'v_tht_resultat') return J([...res.map((r) => ({ ...r, tht_nr: 29 })), ...res.slice(0, 6).map((r, i) => ({ ...r, tht_nr: 28, placering: i + 1, poang: 70 - i }))]);
     if (alla && t === 'v_runda') return J([...rundor.map((r) => ({ ...r, tht_nr: 29 })), ...namn.slice(0, 6).map((n, i) => ({ runda_id: 900 + i, tht_nr: 28, deltavling_id: 90, person_id: i + 1, fornamn: n, ordning: 1, poang: 36 - i, slag: 88 + i, antal_hal: 18, placering: i + 1 }))]);
     if (alla && t === 'deltavling') return J([...delt.map((d) => ({ ...d, tht_nr: 29 })), { id: 90, tht_nr: 28, ordning: 1, namn: 'X', datum: '2025-09-01', narmast_hal: 4, longest_hal: 12, banversion: { bana: { namn: 'Lindesbergs GK' } } }]);
-    if (alla && t === 'foto') return J([{ id: 1, tht_nr: 28, deltavling_id: 90, fil: '28/a.jpg', text: 'Regnrock', person: null }]);
+    if (alla && t === 'foto') return J([{ id: 1, tht_nr: 28, deltavling_id: 90, fil: '28/a.jpg', text: 'Regnrock', person: null }, { id: 2, tht_nr: 28, deltavling_id: 90, fil: '28/b.jpg', text: 'Puttning', person: null }, { id: 3, tht_nr: 28, deltavling_id: 90, fil: '28/c.jpg', text: 'Tredje', person: null }, { id: 4, tht_nr: 28, deltavling_id: null, fil: '28/d.jpg', text: 'Middagen', person: null }, { id: 5, tht_nr: 29, deltavling_id: 103, fil: '29/e.jpg', text: 'Solnedgång', person: null }]);
     if (t === 'foto') return J([{ id: 1, tht_nr: 29, deltavling_id: 103, fil: '29/a.jpg', text: 'Solnedgång på 18:e', person: { fornamn: 'Martin' } }, { id: 2, tht_nr: 29, deltavling_id: 102, fil: '29/b.jpg', text: null, person: null }]);
     if (t === 'deltavling' && /limit=1($|&)/.test(q)) return J([{ tht_nr: 30 }]);
     if (t === 'tht') { valt.push(q); return J(q.includes('nr=eq.29') ? [{ nr: 29, artal: 2026, ort: 'Degerfors', klar: false }] : [{ nr: 30, artal: 2027, ort: 'Nästa', klar: false }]); }
@@ -41,7 +41,7 @@ for (const [w, h, v, adress] of [[1920, 1080, 'tv', '#/karusell'], [390, 800, 'm
   });
   await p.goto('http://localhost:8765/' + adress); await p.waitForTimeout(1200);
   const sett = [];
-  for (let i = 0; i < (alla ? 18 : 12); i++) {
+  for (let i = 0; i < (v === 'kron2026' ? 4 : alla ? 18 : 12); i++) {
     const typ = await p.evaluate(() => [...document.querySelector('.ka-bild').classList].find((c) => c !== 'ka-bild'));
     const rub = [await p.locator('.ka-kicker').first().textContent({ timeout: 300 }).catch(() => ''), await p.locator('.ka-rubrik').first().textContent({ timeout: 300 }).catch(() => '')].map((x) => x.replace(/\s+/g, ' ').trim()).filter(Boolean).join(' | ');
     sett.push(`${typ}: ${rub}`);

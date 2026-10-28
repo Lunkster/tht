@@ -1,24 +1,24 @@
-// THT golfapp (v0.35.3) – statistik och inmatning.
+// THT golfapp (v0.35.4) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.35.3';
-import { renderMata } from './mata.js?v=0.35.3';
-import { renderAdmin } from './admin.js?v=0.35.3';
-import { renderSpelare } from './spelare.js?v=0.35.3';
-import { renderKarta, miniKarta } from './karta.js?v=0.35.3';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.35.3';
-import { renderBetygLank } from './betyg.js?v=0.35.3';
-import { renderNyheter } from './nyheter.js?v=0.35.3';
-import { renderRunda } from './runda.js?v=0.35.3';
-import './kollaps.js?v=0.35.3';
-import { renderRapport } from './rapport.js?v=0.35.3';
-import { renderDuell } from './inbordes.js?v=0.35.3';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.35.3';
-import { renderQuizVisa } from './quiz.js?v=0.35.3';
-import { renderDeltavling } from './deltavling.js?v=0.35.3';
-import { fotoSektion } from './foto.js?v=0.35.3';
-import { renderKarusell } from './karusell.js?v=0.35.3';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.35.3';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.35.4';
+import { renderMata } from './mata.js?v=0.35.4';
+import { renderAdmin } from './admin.js?v=0.35.4';
+import { renderSpelare } from './spelare.js?v=0.35.4';
+import { renderKarta, miniKarta } from './karta.js?v=0.35.4';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.35.4';
+import { renderBetygLank } from './betyg.js?v=0.35.4';
+import { renderNyheter } from './nyheter.js?v=0.35.4';
+import { renderRunda } from './runda.js?v=0.35.4';
+import './kollaps.js?v=0.35.4';
+import { renderRapport } from './rapport.js?v=0.35.4';
+import { renderDuell } from './inbordes.js?v=0.35.4';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.35.4';
+import { renderQuizVisa } from './quiz.js?v=0.35.4';
+import { renderDeltavling } from './deltavling.js?v=0.35.4';
+import { fotoSektion } from './foto.js?v=0.35.4';
+import { renderKarusell } from './karusell.js?v=0.35.4';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.35.4';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -50,7 +50,7 @@ function route() {
   if (page === 'nyheter') return renderNyheter().catch(fel);
   if (page === 'runda' && arg) return renderRunda(Number(arg)).catch(fel);
   if (page === 'deltavling' && arg) return renderDeltavling(Number(arg)).catch(fel);
-  if (page === 'karusell') return renderKarusell(id, arg || null).catch(fel);
+  if (page === 'karusell') return renderKarusell(id, arg || null, rest[0] ?? null).catch(fel);
   if (page === 'quiz' && arg) return renderQuizVisa(Number(arg)).catch(fel);
   if (page === 'duell' && arg) return renderDuell(Number(arg), rest[0] ? Number(rest[0]) : null).catch(fel);
   if (page === 'rapport' && arg) return renderRapport(Number(arg)).catch(fel);
@@ -115,7 +115,7 @@ async function renderYear(artal) {
     </div>
     <h1>${esc(tht.ort)} ${artal}</h1>
     <p class="sub">THT ${tht.nr} · ${delt.length} deltävlingar · ${res.length} spelare</p>
-    <p class="rapport-lank"><a class="lank-pil" href="#/rapport/${artal}">Årsrapport ›</a> · <a class="lank-pil" href="#/karusell/${artal}" title="Leaderboard, dagens runda, minnen och foton på storbild">Karusell på tv ›</a></p>
+    <p class="rapport-lank"><a class="lank-pil" href="#/rapport/${artal}">Årsrapport ›</a> · <a class="lank-pil" href="#/karusell/${artal}" title="Leaderboard, dagens runda, minnen och foton på storbild">Karusell på tv ›</a> · <a class="lank-pil" href="#/karusell/kronologisk/${artal}" title="År för år, med början här">år för år härifrån ›</a></p>
 
     ${tht.kronika ? `<section class="kronika-sek"><h2>Krönika</h2><div class="card kronika">${kronikaHtml(tht.kronika)}</div></section>` : ''}
     ${tht.klar ? '' : pagarRuta(res)}
@@ -405,7 +405,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.35.3" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.35.4" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>
@@ -444,7 +444,7 @@ async function renderLeaderboard(navId) {
   if (!aktuell(navId)) return;
   app.innerHTML = `
     <h1>${esc(tht.ort)} ${tht.artal}</h1>
-    <p class="sub">THT ${tht.nr} · ${tht.klar ? 'Avslutad' : 'Pågår'} · <span id="lbtid">–</span> · <a class="lank-pil" href="#/karusell">Karusell på tv ›</a> · <a class="lank-pil" href="#/karusell/alla" title="Totalblandning av alla år">alla år ›</a></p>
+    <p class="sub">THT ${tht.nr} · ${tht.klar ? 'Avslutad' : 'Pågår'} · <span id="lbtid">–</span> · <a class="lank-pil" href="#/karusell">Karusell på tv ›</a> · <a class="lank-pil" href="#/karusell/alla" title="Totalblandning av alla år">alla år ›</a> · <a class="lank-pil" href="#/karusell/kronologisk" title="Alla år i ordning, år för år">år för år ›</a></p>
     <div id="lb"></div>`;
 
   let senastJson = null;

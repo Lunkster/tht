@@ -897,3 +897,9 @@ body.storskarm #app:has(.ka) { padding: 0; }
 .fl-formknappar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .fl-formknappar .hint { margin: 0; }
 .fl-form input { background: var(--stout-2); color: var(--cream); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; }
+/* Karusell år för år: årets första bild (v0.35.4) */
+.ka-ar { text-align: center; display: flex; flex-direction: column; align-items: center; gap: .4em; }
+.ka-ar-nr { color: var(--gold-2); font-size: clamp(20px, 2.6vw, 44px); letter-spacing: .08em; text-transform: uppercase; }
+.ka-ar-rubrik { font-size: clamp(40px, 7vw, 130px); margin: 0; line-height: 1.05; color: var(--cream); }
+.ka-ar-vinnare { font-size: clamp(20px, 2.8vw, 48px); margin: .3em 0 0; color: var(--cream-2); }
+.ka-ar-vinnare strong { color: var(--gold-2); }
