@@ -1,8 +1,8 @@
 // Minnesvärda moment: kommentarer för en deltävling, en boll eller en spelares runda (tabellen kommentar, migrering 21).
 // Admin och markör kan alltid skriva, ändra och ta bort – även i avslutade THT. Alla kan läsa.
 // Används i Mata in (deltävlingens bollar), på årssidan under varje deltävling, på scorekortet och i årsrapporten.
-import { api, allaRader, write, esc, arAdmin, arMarkor } from './lib.js?v=0.35.4';
-import { galleri, fotoInfo } from './foto.js?v=0.35.4';
+import { api, allaRader, write, esc, arAdmin, arMarkor, kanSe } from './lib.js?v=0.36.0';
+import { galleri, fotoInfo, medUrl, lasRuta } from './foto.js?v=0.36.0';
 
 export const kanSkriva = () => arAdmin() || arMarkor();
 const RUNDOR = 'id,deltavling_id,person_id,boll_nr,person(fornamn)';
@@ -102,6 +102,7 @@ export async function minnenWidget(el, did, data = null, { onAndrat } = {}) {
 const kronika = (t) => t.trim().split(/\n\s*\n/).map((st) => `<p>${esc(st).replace(/\n/g, '<br>')}</p>`).join('');
 let nyastForst = false;
 export async function minnenAlltime(el) {
+  if (!kanSe()) { lasRuta(el, 'Krönikor, minnesvärda moment och foton syns när du loggar in med visningskoden.'); return; }
   const [thts, delt, kom, foton] = await Promise.all([
     api('tht?select=nr,artal,ort,kronika&nr=gt.0&order=artal'),
     api('deltavling?select=id,tht_nr,ordning,banversion(bana(namn))&tht_nr=gt.0&order=tht_nr,ordning'),
@@ -135,7 +136,8 @@ export async function minnenAlltime(el) {
       const plats = det.querySelector('.mm-foton');
       if (!det.open || !plats || plats.dataset.ritad) return;
       plats.dataset.ritad = '1';
-      galleri(plats, ar.find((t) => t.nr === Number(det.dataset.nr)).foton, { info: fotoInfo(deltInfo) });
+      const fs = ar.find((t) => t.nr === Number(det.dataset.nr)).foton;
+      medUrl(fs).then(() => galleri(plats, fs, { info: fotoInfo(deltInfo) })).catch((e) => { plats.innerHTML = `<p class="err">${esc(e.message)}</p>`; });
     }));
   };
   rita();

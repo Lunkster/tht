@@ -2,18 +2,43 @@
 // Bilderna krymps i webbläsaren innan uppladdning: en stor (högst ca 300 kB, 1600 px) och en liten för
 // gallerier (<fil>-liten.jpg). Alla får ladda upp – admin och markör i appen, spelarna via sin personliga länk.
 // Ingen granskning. Används på årssidan, deltävlingssidan, länksidan, All-time → Minnen och i karusellen.
-import { api, rpc, write, lagring, lagringUrl, esc, arAdmin, arMarkor } from './lib.js?v=0.35.4';
+import { api, rpc, write, lagring, lagringUrl, signera, funktion, login, kanSe, esc, arAdmin, arMarkor } from './lib.js?v=0.36.0';
 
 export const MAX_BYTE = 300_000;
 export const litenFil = (fil) => fil.replace(/\.jpg$/, '-liten.jpg');
-export const fotoUrl = (f) => lagringUrl(f.fil);
-export const litenUrl = (f) => lagringUrl(litenFil(f.fil));
+export const fotoUrl = (f) => f._url ?? lagringUrl(f.fil);
+export const litenUrl = (f) => f._liten ?? lagringUrl(litenFil(f.fil));
+// Lägg tillfälliga bildlänkar på fotona (privat bucket). Från foto-lank finns de redan (url, liten_url).
+export async function medUrl(foton) {
+  const utan = foton.filter((f) => !f._url && !f.url);
+  foton.filter((f) => f.url).forEach((f) => { f._url = f.url; f._liten = f.liten_url ?? f.url; });
+  if (utan.length) {
+    const u = await signera(utan.flatMap((f) => [f.fil, litenFil(f.fil)]));
+    utan.forEach((f) => { f._url = u[f.fil]; f._liten = u[litenFil(f.fil)] ?? u[f.fil]; });
+  }
+  return foton;
+}
+
+// Ruta för den som inte är inloggad: foton, krönikor och minnen kräver visningskoden (migrering 27)
+export function lasRuta(el, text = 'Foton, krönikor och minnesvärda moment syns när du loggar in med visningskoden.') {
+  el.innerHTML = `<div class="card las-ruta"><p>🔒 ${esc(text)}</p>
+    <form class="las-form"><input type="password" autocomplete="current-password" placeholder="Visningskod" aria-label="Visningskod" required>
+    <button class="btn primary" type="submit">Logga in</button></form><p class="hint las-msg" role="status"></p></div>`;
+  el.querySelector('form').onsubmit = async (e) => {
+    e.preventDefault();
+    const msg = el.querySelector('.las-msg'); msg.textContent = 'Loggar in …';
+    if (await login(e.target.querySelector('input').value)) window.dispatchEvent(new HashChangeEvent('hashchange'));
+    else msg.textContent = 'Fel kod – försök igen.';
+  };
+}
 const kanSkriva = () => arAdmin() || arMarkor();
 const URVAL = 'id,tht_nr,deltavling_id,person_id,fil,bredd,hojd,tagen,text,skapad,person(fornamn)';
 
 // Klara foton (filter t.ex. "tht_nr=eq.29"), äldst först
-export function hamtaFoton(filter, fresh = false) {
-  return api(`foto?${filter}&klar=is.true&borttagen=is.null&select=${URVAL}&order=tagen.asc.nullslast,id`, { fresh });
+export async function hamtaFoton(filter, fresh = false) {
+  if (!kanSe()) return [];
+  const foton = await api(`foto?${filter}&klar=is.true&borttagen=is.null&select=${URVAL}&order=tagen.asc.nullslast,id`, { fresh });
+  return medUrl(foton);
 }
 
 // ---------- EXIF: när bilden togs (DateTimeOriginal, annars DateTime) ----------
@@ -304,11 +329,12 @@ export function fotoInfo(delt) {
 }
 
 export async function fotoSektion(el, { thtNr, did = null, lank = null, rubrik = 'Foton', niva = 'h2', delt = null, lankTht = null }) {
+  if (!lank && !kanSe()) { el.innerHTML = `<${niva} class="foto-rubrik">${rubrik}</${niva}><div class="foto-g"></div>`; lasRuta(el.querySelector('.foto-g')); return; }
   delt ??= await hamtaDelt(thtNr);
   const skriv = !!lank || kanSkriva();
   let foton = [];
   const hamta = async (fresh) => {
-    foton = lank ? (await rpc('foto_lank_info', { p_kod: lank })).filter((f) => f.tht_nr === thtNr)
+    foton = lank ? await medUrl((await funktion('foto-lank', { kod: lank })).filter((f) => f.tht_nr === thtNr))
       : await hamtaFoton(did ? `deltavling_id=eq.${did}` : `tht_nr=eq.${thtNr}`, fresh);
   };
   await hamta(false);

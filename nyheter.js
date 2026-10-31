@@ -1,6 +1,6 @@
 // Nytt i appen: punktlistan per dag från Obsidian-anteckningen THT-nyheter
 // (görs om till nyheter.json med skript/nyheter.py när anteckningen uppdateras).
-import { esc } from './lib.js?v=0.35.4';
+import { esc } from './lib.js?v=0.36.0';
 
 const app = document.getElementById('app');
 // **fet** → <strong>, versionen i slutet dämpas
@@ -10,7 +10,7 @@ const formatera = (t) => esc(t)
 
 export async function renderNyheter() {
   app.innerHTML = '<p class="muted center">Laddar …</p>';
-  const r = await fetch('nyheter.json?v=0.35.4', { cache: 'no-cache' });
+  const r = await fetch('nyheter.json?v=0.36.0', { cache: 'no-cache' });
   if (!r.ok) throw new Error('Kunde inte läsa nyheterna');
   const dagar = await r.json();
   app.innerHTML = `

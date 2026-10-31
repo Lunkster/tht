@@ -13,10 +13,12 @@ const bild = await (async () => { const p = await b.newPage(); await p.goto('htt
 for (const [w, h, v, adress] of [[1920, 1080, 'tv', '#/karusell'], [390, 800, 'mobil', '#/karusell'], [1920, 1080, 'alla', '#/karusell/alla'], [1920, 1080, 'kron', '#/karusell/kronologisk'], [1920, 1080, 'kron2026', '#/karusell/kronologisk/2026']]) {
   const alla = v.startsWith('alla') || v.startsWith('kron');
   const p = await b.newPage({ viewport: { width: w, height: h } });
+  await p.addInitScript(() => localStorage.setItem('tht-session', JSON.stringify({ access_token: 'x.eyJhcHBfbWV0YWRhdGEiOnsicm9sbCI6Imxhc2FyZSJ9fQ.y', refresh_token: 'rt', expires_at: Date.now() / 1000 + 3600, roll: 'lasare' })));   // läsare (visningskoden)
   const valt = [];
   p.on('pageerror', (e) => console.log('ERR', e.message));
   await p.route('**/*', async (r) => {
     const u = new URL(r.request().url()); if (!u.hostname.includes('supabase')) return r.continue();
+    if (u.pathname === '/storage/v1/object/sign/foton' && r.request().method() === 'POST') return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(JSON.parse(r.request().postData()).paths.map((x) => ({ path: x, signedURL: `/object/sign/foton/${x}?token=t` }))) });
     if (u.pathname.startsWith('/storage/')) return r.fulfill({ status: 200, body: bild, contentType: 'image/jpeg' });
     const t = u.pathname.replace('/rest/v1/', ''), q = decodeURIComponent(u.search);
     const J = (x) => r.fulfill({ status: 200, body: JSON.stringify(x), contentType: 'application/json' });
@@ -57,6 +59,14 @@ for (const [w, h, v, adress] of [[1920, 1080, 'tv', '#/karusell'], [390, 800, 'm
   console.log(v, 'paus-knapp:', await p.textContent('#ka-paus'), '| topbar dold:', await p.evaluate(() => getComputedStyle(document.querySelector('.topbar')).display));
   await p.goto('http://localhost:8765/#/leaderboard'); await p.waitForTimeout(600);
   console.log(v, 'efter avslut: storskärm', await p.evaluate(() => document.body.classList.contains('storskarm')), '| länk i leaderboard:', await p.locator('a[href="#/karusell"]').count());
+  await p.close();
+}
+// Utan inloggning: inloggningsformulär i stället för karusellen
+{
+  const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
+  p.on('pageerror', (e) => console.log('ERR', e.message));
+  await p.goto('http://localhost:8765/#/karusell'); await p.waitForTimeout(500);
+  console.log('utan inloggning:', await p.textContent('h1'), '|', (await p.textContent('.sub')).trim(), '| formulär:', await p.locator('#login').count());
   await p.close();
 }
 await b.close();

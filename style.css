@@ -903,3 +903,7 @@ body.storskarm #app:has(.ka) { padding: 0; }
 .ka-ar-rubrik { font-size: clamp(40px, 7vw, 130px); margin: 0; line-height: 1.05; color: var(--cream); }
 .ka-ar-vinnare { font-size: clamp(20px, 2.8vw, 48px); margin: .3em 0 0; color: var(--cream-2); }
 .ka-ar-vinnare strong { color: var(--gold-2); }
+/* Låst innehåll: foton, krönikor och minnen kräver visningskoden (v0.36.0) */
+.las-ruta p { margin: 0 0 8px; }
+.las-form { display: flex; gap: 8px; flex-wrap: wrap; }
+.las-form input { flex: 1 1 180px; min-width: 0; background: var(--stout); color: var(--cream); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; }

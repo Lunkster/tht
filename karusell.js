@@ -6,9 +6,10 @@
 //                     minnen och några slumpade foton, sist slutresultatet – sedan nästa år, och om från början
 // Varje bild säger tydligt THT, ort, år och – där det passar – runda och bana. Fotona blandas in mellan
 // statistikbilderna. Ingen inloggning behövs. Data hämtas på nytt varje minut (alla år: var tionde minut).
-import { api, allaRader, esc, fmt, aktuell } from './lib.js?v=0.35.4';
-import { hamtaFoton, fotoUrl } from './foto.js?v=0.35.4';
-import { vem } from './minnen.js?v=0.35.4';
+import { api, allaRader, esc, fmt, aktuell, kanSe } from './lib.js?v=0.36.0';
+import { hamtaFoton, fotoUrl, medUrl } from './foto.js?v=0.36.0';
+import { vem } from './minnen.js?v=0.36.0';
+import { visaLogin } from './mata.js?v=0.36.0';
 
 const app = document.getElementById('app');
 const TID_STAT = 15_000, TID_FOTO = 8_000, FOTON_PER_STAT = 2;
@@ -25,6 +26,8 @@ const kicker = (t, dl = null, extra = '') => `<div class="ka-kicker"><span class
 let tangent = null, wakeLock = null;
 
 export async function renderKarusell(navId, arg = null, fran = null) {
+  // Karusellerna visar foton och minnen – kräver inloggning (visningskoden, markör- eller THT-koden), migrering 27
+  if (!kanSe()) return visaLogin('Karusell på tv', () => window.dispatchEvent(new HashChangeEvent('hashchange')), 'Karusellen visar foton och minnen. Skriv visningskoden – datorn kommer ihåg den.');
   app.innerHTML = '<p class="muted center">Laddar karusellen …</p>';
   const kron = arg === 'kronologisk';
   const alla = arg === 'alla' || kron;
@@ -66,7 +69,7 @@ export async function renderKarusell(navId, arg = null, fran = null) {
     const tid = b.typ === 'foto' || b.typ === 'ar' ? TID_FOTO : TID_STAT;
     app.innerHTML = `<div class="ka ${b.typ === 'foto' ? 'ka-fotolage' : ''}">
       <div class="ka-topp">
-        <span class="ka-titel"><img src="logo.svg?v=0.35.4" alt="" class="ka-logo"> ${titel}</span>
+        <span class="ka-titel"><img src="logo.svg?v=0.36.0" alt="" class="ka-logo"> ${titel}</span>
         <span class="ka-hoger"><span class="ka-klocka">${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
           <button type="button" class="ka-knapp" id="ka-paus" title="Paus (mellanslag)">${paus ? '▶' : '❚❚'}</button>
           <button type="button" class="ka-knapp" id="ka-hel" title="Helskärm (F)">⛶</button>
@@ -164,6 +167,7 @@ async function allaAr(kronologisk = null) {
     allaRader('kommentar?select=id,deltavling_id,runda_id,boll_nr,text,skapad,fran_lank&order=id').catch(() => []),
     allaRader('foto?select=id,tht_nr,deltavling_id,fil,tagen,text,person(fornamn)&klar=is.true&borttagen=is.null&order=id').catch(() => []),
   ]);
+  await medUrl(foton);   // tillfälliga bildlänkar (privat bucket)
   const rid = [...new Set(kom.map((k) => k.runda_id).filter(Boolean))];
   const rundNamn = rid.length ? await api(`runda?id=in.(${rid.join(',')})&select=id,person(fornamn)`).catch(() => []) : [];
   const perTht = Object.fromEntries(thts.map((t) => [t.nr, { tht: t, res: [], rundor: [], delt: [], pris: [] }]));

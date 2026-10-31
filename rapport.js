@@ -1,7 +1,7 @@
 // Årsrapport (#/rapport/<år>): allt om en THT på en sida i stil med 2016-rapporten – går att skriva ut eller spara som PDF.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.35.4';
-import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.35.4';
-import { hamtaMinnen, vem } from './minnen.js?v=0.35.4';
+import { api, esc, fmt, nuNav, aktuell, kanSe } from './lib.js?v=0.36.0';
+import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.36.0';
+import { hamtaMinnen, vem } from './minnen.js?v=0.36.0';
 
 const app = document.getElementById('app');
 const FARGER = ['#3987e5', '#d95926', '#199e70', '#e3c278', '#a35cc8', '#d4417c', '#5bb7c9', '#8fa83a', '#c98a3e', '#7a86d6', '#b5b0a6', '#e07a5f'];
@@ -34,7 +34,7 @@ function graf(kurva, res, antalHal) {
 export async function renderRapport(artal) {
   const myNav = nuNav();
   app.innerHTML = '<p class="muted center">Sammanställer årsrapporten …</p>';
-  const [tht] = await api(`tht?artal=eq.${artal}&select=nr,artal,ort,kronika,klar`);
+  const [tht] = await api(`tht?artal=eq.${artal}&select=nr,artal,ort,klar${kanSe() ? ',kronika' : ''}`);
   if (!tht) { app.innerHTML = '<p class="err">Det finns ingen THT det året.</p>'; return; }
   const nr = tht.nr;
   const [res, rundor, kurva, delt, over, hv, ford, par, extra] = await Promise.all([
@@ -50,7 +50,7 @@ export async function renderRapport(artal) {
   ]);
   const [pris, minnen] = await Promise.all([
     delt.length ? api(`pris?deltavling_id=in.(${delt.map((d) => d.id).join(',')})&select=deltavling_id,typ,person(fornamn)`) : [],
-    hamtaMinnen(delt.map((d) => d.id)),
+    kanSe() ? hamtaMinnen(delt.map((d) => d.id)) : { kom: [], rundor: [] },
   ]);
   if (!aktuell(myNav)) return;
 
@@ -76,7 +76,7 @@ export async function renderRapport(artal) {
     <div class="rapport-knappar no-print"><a class="back" href="#/ar/${artal}">‹ ${artal}</a><button class="btn" type="button" id="skrivut">Skriv ut eller spara som PDF</button></div>
     <article class="rapport">
       <header class="rapport-huvud">
-        <img src="logo.svg?v=0.35.4" alt="The Helkväll Tour" class="rapport-logo">
+        <img src="logo.svg?v=0.36.0" alt="The Helkväll Tour" class="rapport-logo">
         <h1>THT ${nr} – ${esc(tht.ort)} ${artal}</h1>
         <p class="sub">${period}${delt.length ? ` · ${delt.length} deltävlingar` : ''}${res.length ? ` · ${res.length} spelare` : ''}</p>
         ${vinnare && tht.klar ? `<p class="rapport-vinnare">Vinnare: <strong>${esc(vinnare.fornamn)}</strong> med ${fmt(vinnare.poang)} poäng</p>` : tht.klar ? '' : '<p class="rapport-vinnare">THT:n pågår – ingen vinnare ännu</p>'}

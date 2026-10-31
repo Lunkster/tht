@@ -3,6 +3,7 @@ import { chromium } from 'playwright';
 const b = await chromium.launch();
 for (const [w, v] of [[390, 'mobil'], [1100, 'dator']]) {
   const p = await b.newPage({ viewport: { width: w, height: 900 } });
+  await p.addInitScript(() => localStorage.setItem('tht-session', JSON.stringify({ access_token: 'x.eyJhcHBfbWV0YWRhdGEiOnsicm9sbCI6Imxhc2FyZSJ9fQ.y', refresh_token: 'rt', expires_at: Date.now() / 1000 + 3600, roll: 'lasare' })));   // läsare (visningskoden)
   p.on('pageerror', (e) => console.log('ERR', e.message));
   await p.route('**/*', async (r) => {
     const u = new URL(r.request().url()); if (!u.hostname.includes('supabase')) return r.continue();

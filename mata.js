@@ -1,14 +1,14 @@
 // Inmatning: välj deltävling → välj/skapa boll → mata in hål för hål (autospar).
-import { api, write, login, logout, isLoggedIn, arMarkor, arAdmin, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.35.4';
+import { api, write, login, logout, isLoggedIn, arMarkor, arAdmin, esc, fmt, datum, poang, nuNav, aktuell } from './lib.js?v=0.36.0';
 
-import { renderScorekort } from './scorekort.js?v=0.35.4';
-import { minnenWidget } from './minnen.js?v=0.35.4';
+import { renderScorekort } from './scorekort.js?v=0.36.0';
+import { minnenWidget } from './minnen.js?v=0.36.0';
 
 const app = document.getElementById('app');
 const pending = new Map(); // `${runda}-${hal}` -> {runda_id, hal_nr, slag, puttar} som inte sparats än
 
 export async function renderMata(args) {
-  if (!isLoggedIn()) return renderLogin(args);
+  if (!arAdmin() && !arMarkor()) return renderLogin(args);   // läsaren (visningskoden) får inte mata in
   if (args[1] === 'kort') return renderScorekort(Number(args[0]));
   const [did, boll, hal, pid] = args.map((a) => (a === undefined || a === '' ? null : Number(a)));
   if (!did) return renderValjDeltavling();
@@ -22,10 +22,10 @@ function renderLogin(args) {
 }
 
 // Inloggningsformulär, används även av admin-sidorna.
-export function visaLogin(titel, klar) {
+export function visaLogin(titel, klar, under = 'Skriv THT-koden (admin) eller markörkoden. Telefonen kommer ihåg den.') {
   app.innerHTML = `
     <h1>${esc(titel)}</h1>
-    <p class="sub">Skriv THT-koden (admin) eller markörkoden. Telefonen kommer ihåg den.</p>
+    <p class="sub">${esc(under)}</p>
     <form id="login" class="card form">
       <label for="kod">Kod</label>
       <input id="kod" type="password" autocomplete="current-password" required>

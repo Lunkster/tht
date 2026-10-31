@@ -1,5 +1,5 @@
 // Scorekort för en runda (#/runda/<id>): hål för hål med slag, poäng och puttar, plus de andra i bollen.
-import { api, esc, fmt, nuNav, aktuell } from './lib.js?v=0.35.4';
+import { api, esc, fmt, nuNav, aktuell, kanSe } from './lib.js?v=0.36.0';
 
 const app = document.getElementById('app');
 const RES = (h) => {
@@ -23,7 +23,7 @@ export async function renderRunda(rid) {
     api(`deltavling?id=eq.${r.deltavling_id}&select=datum,banversion_id,tee_id,tee(namn),banversion(bana(id,namn))`),
     r.boll_nr != null ? api(`v_runda?deltavling_id=eq.${r.deltavling_id}&boll_nr=eq.${r.boll_nr}&select=runda_id,person_id,fornamn,poang,slag`) : [],
     api(`v_runda?deltavling_id=eq.${r.deltavling_id}&select=runda_id`),
-    api(`kommentar?runda_id=eq.${rid}&select=text&order=skapad,id`),
+    kanSe() ? api(`kommentar?runda_id=eq.${rid}&select=text&order=skapad,id`) : [],   // minnen bara för inloggade
   ]);
   const langd = d?.banversion_id ? await api(`hal?banversion_id=eq.${d.banversion_id}&select=nr,hal_langd(langd,tee_id)`) : [];
   if (!aktuell(myNav)) return;

@@ -42,7 +42,8 @@ function attrapp(p, logg, extra = () => null) {
     const u = new URL(r.request().url()); if (!u.hostname.includes('supabase')) return r.continue();
     const m = r.request().method(), t = u.pathname.replace('/rest/v1/', ''), q = decodeURIComponent(u.search);
     const J = (x, status = 200) => r.fulfill({ status, body: JSON.stringify(x), contentType: 'application/json' }).then(() => true);
-    if (u.pathname.startsWith('/storage/v1/object/public/')) return r.fulfill({ status: 200, body: visaJpg, contentType: 'image/jpeg' });
+    if (u.pathname === '/storage/v1/object/sign/foton') { logg.push(`signera ${JSON.parse(r.request().postData()).paths.length} st`); return J(JSON.parse(r.request().postData()).paths.map((x) => ({ path: x, signedURL: `/object/sign/foton/${x}?token=t` }))); }
+    if (u.pathname.startsWith('/storage/v1/object/public/') || u.pathname.startsWith('/storage/v1/object/sign/')) return r.fulfill({ status: 200, body: visaJpg, contentType: 'image/jpeg' });
     if (u.pathname.startsWith('/storage/v1/object/foton')) {
       const body = r.request().postDataBuffer();
       logg.push(`storage ${m} ${u.pathname.replace('/storage/v1/object/foton', '')} ${m === 'POST' ? body.length + ' byte' : body?.toString()} auth=${r.request().headers().authorization ? 'ja' : 'nej'}`);
@@ -65,7 +66,7 @@ function attrapp(p, logg, extra = () => null) {
   await attrapp(p, logg, (t, q, m, r, J) => {
     if (t === 'rpc/betyg_lank_info') return J({ fornamn: 'Henrik', tht: [{ tht_nr: 29, artal: 2026, ort: 'Degerfors', banor: [] }] });
     if (t === 'rpc/minne_lank_info') return J([]);
-    if (t === 'rpc/foto_lank_info') return J([{ id: 7, tht_nr: 29, deltavling_id: 102, fil: '29/a.jpg', text: 'Utslaget på ettan', tagen: null }]);
+    if (t === '/functions/v1/foto-lank') { logg.push(`foto-lank ${r.request().postData()}`); return J([{ id: 7, tht_nr: 29, deltavling_id: 102, fil: '29/a.jpg', text: 'Utslaget på ettan', tagen: null, url: 'https://nlvgisjssbjethumvgdz.supabase.co/storage/v1/object/sign/foton/29/a.jpg?token=x', liten_url: 'https://nlvgisjssbjethumvgdz.supabase.co/storage/v1/object/sign/foton/29/a-liten.jpg?token=x' }]); }
     if (t === 'rpc/foto_lank_reservera') { logg.push(`reservera ${r.request().postData()}`); return J({ id: 50, fil: '29/ny.jpg' }); }
     if (t === 'tht' && q.includes('artal.desc')) return J([{ nr: 29, artal: 2026, ort: 'Degerfors' }, { nr: 28, artal: 2025, ort: 'Lindesberg' }, { nr: 27, artal: 2024, ort: 'Portugal' }]);
     if (t === 'deltavling' && q.includes('tht_nr=gt.0')) return J(DELT.map((d) => ({ ...d, tht_nr: 29 })));
@@ -140,9 +141,10 @@ function attrapp(p, logg, extra = () => null) {
   await p.close();
 }
 
-// ---------- 3. deltävlingssidan + 4. All-time → Minnen (utan inloggning) ----------
-{
+// ---------- 3. deltävlingssidan + 4. All-time → Minnen: utan inloggning (låst) och som läsare ----------
+for (const vem of ['anon', 'läsare']) {
   const p = await b.newPage({ viewport: { width: 390, height: 900 } });
+  if (vem === 'läsare') await p.addInitScript(() => localStorage.setItem('tht-session', JSON.stringify({ access_token: 'x.eyJhcHBfbWV0YWRhdGEiOnsicm9sbCI6Imxhc2FyZSJ9fQ.y', refresh_token: 'rt', expires_at: Date.now() / 1000 + 3600, roll: 'lasare' })));
   p.on('pageerror', (e) => console.log('ERR', e.message));
   await attrapp(p, [], (t, q, m, r, J) => {
     if (t === 'deltavling' && q.includes('id=eq.102')) return J([{ id: 102, tht_nr: 29, ordning: 1, namn: 'Öppning', datum: '2026-09-04', banversion_id: null, tee: null, banversion: { bana: { id: 1, namn: 'Degerfors GK' } }, tht: { nr: 29, artal: 2026, ort: 'Degerfors', klar: false } }]);
@@ -151,11 +153,14 @@ function attrapp(p, logg, extra = () => null) {
     return null;
   });
   await p.goto('http://localhost:8765/#/deltavling/102'); await p.waitForTimeout(900);
-  console.log('deltävling: rubrik', (await p.textContent('#dt-foton .foto-rubrik')).trim(), '| ladda upp synlig (ej inloggad):', await p.locator('#dt-foton .foto-ny').count());
+  console.log(vem, 'deltävling: foton', await p.locator('#dt-foton .foto-ruta').count(), '| låst:', await p.locator('#dt-foton .las-ruta').count(), '| minnesrubrik:', await p.locator('h2:has-text("Minnesvärda")').count(), '| ladda upp:', await p.locator('#dt-foton .foto-ny').count());
   await p.goto('http://localhost:8765/#/alltime/minnen'); await p.waitForTimeout(900);
-  console.log('minnen:', (await p.textContent('#statflik .hint')).trim(), '|', (await p.textContent('.mm-ar-alla summary')).replace(/\s+/g, ' ').trim());
-  await p.click('.mm-ar-alla summary'); await p.waitForTimeout(300);
-  console.log('minnen bilder:', await p.locator('.mm-foton .foto-ruta').count(), '| sidbredd:', await p.evaluate(() => document.documentElement.scrollWidth));
+  if (vem === 'anon') { console.log(vem, 'minnen låst:', await p.locator('.las-ruta').count(), (await p.textContent('.las-ruta p')).trim()); }
+  else {
+    console.log(vem, 'minnen:', (await p.textContent('#statflik .hint')).trim(), '|', (await p.textContent('.mm-ar-alla summary')).replace(/\s+/g, ' ').trim());
+    await p.click('.mm-ar-alla summary'); await p.waitForTimeout(400);
+    console.log(vem, 'minnen bilder:', await p.locator('.mm-foton .foto-ruta').count(), '| signerad src:', (await p.locator('.mm-foton img').first().getAttribute('src')).includes('/object/sign/'), '| sidbredd:', await p.evaluate(() => document.documentElement.scrollWidth));
+  }
   await p.close();
 }
 await b.close();

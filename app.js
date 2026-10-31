@@ -1,24 +1,24 @@
-// THT golfapp (v0.35.4) – statistik och inmatning.
+// THT golfapp (v0.36.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll } from './lib.js?v=0.35.4';
-import { renderMata } from './mata.js?v=0.35.4';
-import { renderAdmin } from './admin.js?v=0.35.4';
-import { renderSpelare } from './spelare.js?v=0.35.4';
-import { renderKarta, miniKarta } from './karta.js?v=0.35.4';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.35.4';
-import { renderBetygLank } from './betyg.js?v=0.35.4';
-import { renderNyheter } from './nyheter.js?v=0.35.4';
-import { renderRunda } from './runda.js?v=0.35.4';
-import './kollaps.js?v=0.35.4';
-import { renderRapport } from './rapport.js?v=0.35.4';
-import { renderDuell } from './inbordes.js?v=0.35.4';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.35.4';
-import { renderQuizVisa } from './quiz.js?v=0.35.4';
-import { renderDeltavling } from './deltavling.js?v=0.35.4';
-import { fotoSektion } from './foto.js?v=0.35.4';
-import { renderKarusell } from './karusell.js?v=0.35.4';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.35.4';
+import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.36.0';
+import { renderMata } from './mata.js?v=0.36.0';
+import { renderAdmin } from './admin.js?v=0.36.0';
+import { renderSpelare } from './spelare.js?v=0.36.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.36.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.36.0';
+import { renderBetygLank } from './betyg.js?v=0.36.0';
+import { renderNyheter } from './nyheter.js?v=0.36.0';
+import { renderRunda } from './runda.js?v=0.36.0';
+import './kollaps.js?v=0.36.0';
+import { renderRapport } from './rapport.js?v=0.36.0';
+import { renderDuell } from './inbordes.js?v=0.36.0';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.36.0';
+import { renderQuizVisa } from './quiz.js?v=0.36.0';
+import { renderDeltavling } from './deltavling.js?v=0.36.0';
+import { fotoSektion } from './foto.js?v=0.36.0';
+import { renderKarusell } from './karusell.js?v=0.36.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.36.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -80,7 +80,7 @@ export const kronikaHtml = (t) => t.trim().split(/\n\s*\n/).map((st) => `<p>${es
 // ---------- år ----------
 async function renderYear(artal) {
   const myNav = nuNav();
-  const thts = await api('tht?select=nr,artal,ort,klar,kronika&order=artal');
+  const thts = await api(`tht?select=nr,artal,ort,klar${kanSe() ? ',kronika' : ''}&order=artal`);   // krönikan bara för inloggade
   const medData = await api('v_tht_resultat?select=artal');
   const arMedData = new Set(medData.map((r) => r.artal));
   const lista = thts.filter((t) => arMedData.has(t.artal));
@@ -169,7 +169,7 @@ async function renderYear(artal) {
   fotoSektion(document.getElementById('foto-sek'), { thtNr: tht.nr }).catch((e) => console.warn('Foton:', e));
   if (!utanKort) drawKurva(res, kurva, ordningar.length);
   if (!utanKort) arsStatistik(document.getElementById('arsstat'), tht.nr).catch(() => {});
-  if (!utanKort) arsMinnen(delt.map((d) => d.id)).catch(() => {});
+  if (!utanKort && kanSe()) arsMinnen(delt.map((d) => d.id)).catch(() => {});
 }
 
 // Minnesvärda moment under varje deltävling (hopfällt, antal i rubriken). Admin/markör kan skriva även i avslutade THT.
@@ -405,7 +405,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.35.4" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.36.0" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>

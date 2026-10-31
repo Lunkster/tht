@@ -1,7 +1,7 @@
 # THT – datamodell
 
 Databasen ligger i Supabase (Postgres). Schemat byggs upp av filerna i `supabase/` i nummerordning. All statistik **beräknas i vyer** från slagen – inget lagras dubbelt.
-*Uppdaterad 2026-10-27 (v0.35.0): foton. Tidigare 2026-10-18 (v0.33.0): quiz, minnesvärda moment, övningsrunda (THT 0), inbördes möten.*
+*Uppdaterad 2026-10-31 (v0.36.0): foton, minnen och krönikor bakom visningskoden. 2026-10-27 (v0.35.0): foton. Tidigare 2026-10-18 (v0.33.0): quiz, minnesvärda moment, övningsrunda (THT 0), inbördes möten.*
 
 ```mermaid
 erDiagram
@@ -74,7 +74,7 @@ erDiagram
 
 - **Minnesvärda moment** (`kommentar`, migrering 21): gäller hela deltävlingen, en boll (`boll_nr`) eller en runda (`runda_id`; deltävlingen sätts då från rundan). Admin och markör får skriva, ändra och ta bort även i avslutade THT. Ersätter `runda.kommentar` (borttagen 2026-10-18).
 
-- **Läsa:** alla (utom `person_kontakt` och länkkoderna, som bara admin/markör ser).
+- **Läsa:** alla (utom `person_kontakt` och länkkoderna, som bara admin/markör ser). **Foton, minnesvärda moment (`kommentar`) och krönikor (`tht.kronika`) kräver inloggning** som admin, markör eller **läsare** (`ar_inloggad()`, migrering 27). Läsaren är ett tredje delat konto (`h.lundqvist+thtlasare@gmail.com`, rollen `lasare`) med en gemensam visningskod; det får bara läsa. Bucketen `foton` är privat: appen hämtar tillfälliga bildlänkar (signed URLs, 12 timmar). På den personliga länken visas spelarens egna foton via edge-funktionen `foto-lank` (`supabase/functions/foto-lank/`), som kontrollerar koden och skapar bildlänkarna.
 - **Skriva:** admin allt; markör bara rundor, slag, bollar och priser i THT som inte är avslutade, samt banbetyg (alla år). Se `supabase/10_behorighet.sql`, `11_…`, `13_…`.
 - **Övningsrunda:** THT 0 "Övning" med en deltävling. Alltid öppen för markören, filtreras bort i `v_score`/`v_runda` och därmed i all statistik. Inga priser eller banbetyg (trigger `inte_ovning`). Admin tömmer den med knappen i Mata in (migrering 22).
 - **Minnesvärt moment via länk:** `minne_lank_info(kod)` och `lamna_minne(kod, deltävling, text)` – ett eget moment per deltävling och spelare, bara om den egna rundan (`fran_lank = true`, migrering 23).

@@ -4,7 +4,7 @@ export const SUPABASE_URL = 'https://nlvgisjssbjethumvgdz.supabase.co';
 export const SUPABASE_KEY = 'sb_publishable_3wzcVvDgcoupfWSqAis4eg_bz2e6jiG'; // publik nyckel, skyddet är RLS
 // Två delade konton – koden är lösenordet. Rollen (admin/markor) står i kontots app_metadata
 // och följer med i inloggningens JWT; databasens regler (RLS) avgör vad rollen får skriva.
-const KONTON = ['h.lundqvist+tht@gmail.com', 'h.lundqvist+thtmarkor@gmail.com']; // admin, markör
+const KONTON = ['h.lundqvist+tht@gmail.com', 'h.lundqvist+thtmarkor@gmail.com', 'h.lundqvist+thtlasare@gmail.com']; // admin, markör, läsare (visningskoden)
 const SESSION_KEY = 'tht-session';
 
 const cache = new Map();
@@ -76,6 +76,31 @@ export async function write(method, path, body, prefer = 'return=representation'
 // ---------- Storage (foton, migrering 25) ----------
 // Inloggad: som admin/markör. Annars som anon (uppladdning via personlig länk, som databasen har reserverat).
 export const lagringUrl = (namn) => `${SUPABASE_URL}/storage/v1/object/public/foton/${namn}`;
+// Bucketen är privat (migrering 27): tillfälliga bildlänkar, 12 timmar, sparas i minnet en stund
+const signCache = new Map();
+export async function signera(namn) {
+  const nu = Date.now(), ut = {}, saknas = [];
+  namn.forEach((n) => { const c = signCache.get(n); if (c && c.tills > nu + 3_600_000) ut[n] = c.url; else saknas.push(n); });
+  const s = await session(false);
+  if (saknas.length && s) {
+    for (let i = 0; i < saknas.length; i += 200) {
+      const r = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/foton`, {
+        method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${s.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expiresIn: 12 * 3600, paths: saknas.slice(i, i + 200) }),
+      });
+      if (!r.ok) throw new Error(`Bildlänkar: ${r.status} ${await r.text()}`);
+      (await r.json()).forEach((x) => { if (x.signedURL) { const url = `${SUPABASE_URL}/storage/v1${x.signedURL}`; ut[x.path] = url; signCache.set(x.path, { url, tills: nu + 12 * 3_600_000 }); } });
+    }
+  }
+  return ut;
+}
+// Edge-funktioner (t.ex. foto-lank) anropas utan inloggning
+export async function funktion(namn, body) {
+  const r = await fetch(`${SUPABASE_URL}/functions/v1/${namn}`, { method: 'POST', headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { /* text */ }
+  if (!r.ok) throw new Error(j?.message || t);
+  return j;
+}
 export async function lagring(method, namn, body) {
   const s = await session(false);
   const headers = { apikey: SUPABASE_KEY };
@@ -121,6 +146,8 @@ export const isLoggedIn = () => !!current;
 export const roll = () => current?.roll ?? null;          // 'admin', 'markor' eller null
 export const arAdmin = () => roll() === 'admin';
 export const arMarkor = () => roll() === 'markor';
+// Får se foton, karuseller, minnesvärda moment och krönikor (migrering 27): admin, markör eller läsare
+export const kanSe = () => ['admin', 'markor', 'lasare'].includes(roll());
 // Sessioner sparade före rollerna saknar roll – hämta en ny token (den får rollen) vid start.
 export async function uppdateraRoll() {
   if (!current || current.roll) return;

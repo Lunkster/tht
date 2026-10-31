@@ -1,7 +1,7 @@
 // Deltävlingssida (#/deltavling/<id>): topplista för rundan, priser, bollar, hål för hål, hålvinster och minnesvärda moment.
-import { api, esc, fmt, datum, nuNav, aktuell } from './lib.js?v=0.35.4';
-import { minnenWidget } from './minnen.js?v=0.35.4';
-import { fotoSektion } from './foto.js?v=0.35.4';
+import { api, esc, fmt, datum, nuNav, aktuell, kanSe } from './lib.js?v=0.36.0';
+import { minnenWidget } from './minnen.js?v=0.36.0';
+import { fotoSektion } from './foto.js?v=0.36.0';
 
 const app = document.getElementById('app');
 const namnLank = (id, n) => `<a class="namn" href="#/spelare/${id}">${esc(n)}</a>`;
@@ -101,8 +101,7 @@ export async function renderDeltavling(did) {
 
     <section id="dt-foton" class="foto-sek"></section>
 
-    <h2>Minnesvärda moment</h2>
-    <div id="dt-minnen"><p class="muted">Laddar …</p></div>`;
+    ${kanSe() ? '<h2>Minnesvärda moment</h2>\n    <div id="dt-minnen"><p class="muted">Laddar …</p></div>' : ''}`;
   fotoSektion(document.getElementById('dt-foton'), { thtNr: d.tht_nr, did: d.id }).catch((e) => console.warn('Foton:', e));
-  minnenWidget(document.getElementById('dt-minnen'), d.id).catch(() => { document.getElementById('dt-minnen').innerHTML = ''; });
+  if (kanSe()) minnenWidget(document.getElementById('dt-minnen'), d.id).catch(() => { document.getElementById('dt-minnen').innerHTML = ''; });
 }
