@@ -6,10 +6,10 @@
 //                     minnen och några slumpade foton, sist slutresultatet – sedan nästa år, och om från början
 // Varje bild säger tydligt THT, ort, år och – där det passar – runda och bana. Fotona blandas in mellan
 // statistikbilderna. Ingen inloggning behövs. Data hämtas på nytt varje minut (alla år: var tionde minut).
-import { api, allaRader, esc, fmt, aktuell, kanSe } from './lib.js?v=0.36.0';
-import { hamtaFoton, fotoUrl, medUrl } from './foto.js?v=0.36.0';
-import { vem } from './minnen.js?v=0.36.0';
-import { visaLogin } from './mata.js?v=0.36.0';
+import { api, allaRader, esc, fmt, aktuell, kanSe } from './lib.js?v=0.36.1';
+import { hamtaFoton, fotoUrl, medUrl } from './foto.js?v=0.36.1';
+import { vem } from './minnen.js?v=0.36.1';
+import { visaLogin } from './mata.js?v=0.36.1';
 
 const app = document.getElementById('app');
 const TID_STAT = 15_000, TID_FOTO = 8_000, FOTON_PER_STAT = 2;
@@ -69,7 +69,7 @@ export async function renderKarusell(navId, arg = null, fran = null) {
     const tid = b.typ === 'foto' || b.typ === 'ar' ? TID_FOTO : TID_STAT;
     app.innerHTML = `<div class="ka ${b.typ === 'foto' ? 'ka-fotolage' : ''}">
       <div class="ka-topp">
-        <span class="ka-titel"><img src="logo.svg?v=0.36.0" alt="" class="ka-logo"> ${titel}</span>
+        <span class="ka-titel"><img src="logo.svg?v=0.36.1" alt="" class="ka-logo"> ${titel}</span>
         <span class="ka-hoger"><span class="ka-klocka">${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
           <button type="button" class="ka-knapp" id="ka-paus" title="Paus (mellanslag)">${paus ? '▶' : '❚❚'}</button>
           <button type="button" class="ka-knapp" id="ka-hel" title="Helskärm (F)">⛶</button>

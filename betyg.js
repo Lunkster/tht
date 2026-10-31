@@ -1,8 +1,8 @@
 // Banbetyg via personlig länk (#/betyg/<kod>) – ingen inloggning, en länk per spelare för alla år.
 // Databasen kontrollerar koden och tar bara emot betyg på banor som spelaren spelade respektive THT.
 // Här skriver spelaren också ETT eget minnesvärt moment per deltävling hen spelat (bara om sig själv, migrering 23).
-import { rpc, esc } from './lib.js?v=0.36.0';
-import { fotoSektion } from './foto.js?v=0.36.0';
+import { rpc, esc } from './lib.js?v=0.36.1';
+import { fotoSektion } from './foto.js?v=0.36.1';
 
 const app = document.getElementById('app');
 

@@ -1,8 +1,8 @@
 // Minnesvärda moment: kommentarer för en deltävling, en boll eller en spelares runda (tabellen kommentar, migrering 21).
 // Admin och markör kan alltid skriva, ändra och ta bort – även i avslutade THT. Alla kan läsa.
 // Används i Mata in (deltävlingens bollar), på årssidan under varje deltävling, på scorekortet och i årsrapporten.
-import { api, allaRader, write, esc, arAdmin, arMarkor, kanSe } from './lib.js?v=0.36.0';
-import { galleri, fotoInfo, medUrl, lasRuta } from './foto.js?v=0.36.0';
+import { api, allaRader, write, esc, arAdmin, arMarkor, kanSe } from './lib.js?v=0.36.1';
+import { galleri, fotoInfo, medUrl, lasRuta } from './foto.js?v=0.36.1';
 
 export const kanSkriva = () => arAdmin() || arMarkor();
 const RUNDOR = 'id,deltavling_id,person_id,boll_nr,person(fornamn)';

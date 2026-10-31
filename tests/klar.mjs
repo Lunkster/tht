@@ -17,6 +17,7 @@ async function sida(kurva, w = 390) {
     if (m !== 'GET') { log.push(`${m} ${path}${q} ${r.request().postData()}`); return r.fulfill({ status: 204, body: '' }); }
     if (path === 'tht') return J(q.includes('nr=eq.') ? tht.filter((t) => t.nr === Number(q.match(/nr=eq\.(\d+)/)[1])) : tht);
     if (path === 'v_tht_resultat') return J(q.includes('tht_nr') ? d.res : d.resall);
+    if (path === 'v_runda' && /limit=1($|&)/.test(q)) return J([{ tht_nr: 28 }]);   // senaste THT med poäng (leaderboarden)
     if (path === 'v_runda') return J(q.includes('select=ordning,fornamn,antal_hal') ? [{ ordning: 1, fornamn: 'Pär', antal_hal: 18 }, { ordning: 2, fornamn: 'Robert', antal_hal: 12 }] : d.rundor.map((x) => ({ ...x, fornamn: 'X' + x.person_id, artal: 2025, placering: x.poang > 38 ? 1 : 5 })));
     if (path === 'v_tht_kurva') return J(kurva);
     if (path === 'deltavling') return J(q.includes('select=tht_nr') ? [{ tht_nr: 28 }] : d.delt.map((x) => ({ ...x, banversion_id: 1, tee_id: 1, runda: [{ count: 5 }] })));

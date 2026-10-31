@@ -2,6 +2,7 @@
  {
   "datum": "2026-10-31",
   "punkter": [
+   "**Leaderboarden** visar förra årets THT tills första poängen för nästa THT är inmatad – inte en tom tavla för en THT som inte har börjat (v0.36.1)",
    "**Foton, karuseller, minnen och krönikor kräver nu inloggning** med en gemensam **visningskod** (fråga Henrik). Logga in direkt där det står 🔒 – telefonen kommer ihåg koden. Resultat och statistik är öppna som förut, och via din personliga länk ser du och laddar upp dina egna foton utan kod (v0.36.0)"
   ]
  },

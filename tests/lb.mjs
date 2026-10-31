@@ -12,6 +12,8 @@ await p.route('**/*', async (r) => {
     let body = [];
     if (path === 'tht') body = d.tht;
     else if (path === 'v_tht_resultat') body = q.includes('tht_nr') ? d.res : (q.includes('placering') ? d.resall : d.resall.map(x=>({artal:x.artal})));
+    else if (path === 'v_runda' && /limit=1($|&)/.test(q)) body = [{ tht_nr: 28 }];   // senaste THT med poäng
+    else if (path === 'deltavling' && /limit=1($|&)/.test(q)) body = [{ tht_nr: 999 }];   // nästa års THT, inget spelat
     else if (path === 'v_runda') body = d.rundor.map(x=>({...x, fornamn: 'X'+x.person_id}));
     else if (path === 'v_tht_kurva') body = d.kurva;
     else if (path === 'deltavling') body = d.delt;
@@ -20,10 +22,11 @@ await p.route('**/*', async (r) => {
   }
   return r.continue();
 });
-let calls=0; p.on('request', r=>{ if(r.url().includes('v_tht_resultat')) calls++; });
+let calls=0; const thtFragor=[]; p.on('request', r=>{ if(r.url().includes('v_tht_resultat')) calls++; if(r.url().includes('/rest/v1/tht?')) thtFragor.push(decodeURIComponent(new URL(r.url()).search)); });
 await p.goto('http://localhost:8765/#/leaderboard');
 await p.waitForTimeout(1200);
 console.log(name, 'active tab:', await p.locator('.tabs a.active').textContent(), '| h1:', await p.locator('h1').textContent(), '| sub:', await p.locator('.sub').textContent());
+console.log(name, 'vald THT (ska vara den med poäng, inte 999):', thtFragor.find((x)=>x.includes('nr=eq.')));
 console.log('podium?', await p.locator('.podium').count(), 'rounds?', await p.locator('.rounds').count(), 'rows', await p.locator('#lb tbody tr').count());
 await p.locator('.seg button[data-mode=poang]').click();
 await p.evaluate(()=>window.dispatchEvent(new Event('resize')));
