@@ -1,9 +1,9 @@
-// Export av en quiz till Kahoots importmall (v0.38.1): Kahoot → Skapa → Lägg till fråga → Importera kalkylblad.
-// Mallens upplägg: rubrikrad på rad 8, frågorna från rad 9 – kolumn A löpnummer, B fråga (max 120 tecken),
-// C–F svar 1–4 (max 75 tecken), G tidsgräns i sekunder, H rätt svar (svarets nummer).
+// Export av en quiz till Kahoots importmall (v0.38.2): Kahoot → Skapa → Lägg till fråga → Importera kalkylblad.
+// Mallens upplägg: rubrikrad på rad 8, frågorna från rad 9 – kolumn A löpnummer, B fråga (max 95 tecken),
+// C–F svar 1–4 (max 60 tecken), G tidsgräns i sekunder, H rätt svar (svarets nummer).
 // Filen byggs här i webbläsaren som en okomprimerad zip (xlsx) – inget bibliotek behövs.
 
-export const MAX_FRAGA = 120, MAX_SVAR = 75, TID = 20;
+export const MAX_FRAGA = 95, MAX_SVAR = 60, TID = 20;   // Kahoots gränser 2026 (förut 120/75)
 
 const korta = (t, max) => { const s = String(t ?? '').replace(/\s+/g, ' ').trim(); return s.length > max ? s.slice(0, max - 1).trimEnd() + '…' : s; };
 const blanda = (xs) => { const a = xs.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -32,7 +32,7 @@ export function kahootXlsxFiler(namn, rader) {
   const cell = (r, c, v) => (typeof v === 'number' ? `<c r="${kol(c)}${r}"><v>${v}</v></c>` : `<c r="${kol(c)}${r}" t="s"><v>${s(v)}</v></c>`);
   const rows = [];
   rows.push(`<row r="2">${cell(2, 1, namn)}</row>`);
-  rows.push(`<row r="8">${['Question - max 120 characters', 'Answer 1 - max 75 characters', 'Answer 2 - max 75 characters', 'Answer 3 - max 75 characters', 'Answer 4 - max 75 characters', 'Time limit (sec) – 5, 10, 20, 30, 60, 90, 120, or 240 secs', 'Correct answer(s) - choose at least one'].map((h, i) => cell(8, i + 1, h)).join('')}</row>`);
+  rows.push(`<row r="8">${['Question - max 95 characters', 'Answer 1 - max 60 characters', 'Answer 2 - max 60 characters', 'Answer 3 - max 60 characters', 'Answer 4 - max 60 characters', 'Time limit (sec) – 5, 10, 20, 30, 60 or 120 secs', 'Correct answer(s) - choose at least one'].map((h, i) => cell(8, i + 1, h)).join('')}</row>`);
   rader.forEach((q, i) => {
     const r = 9 + i;
     const celler = [cell(r, 0, i + 1), cell(r, 1, q.fraga)];

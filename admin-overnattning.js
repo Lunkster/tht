@@ -1,6 +1,6 @@
 // Admin: övernattningar per THT – plats, antal nätter, organisatör, koordinater.
-import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.38.1';
-import { kopplaKoordinater } from './admin-banor.js?v=0.38.1';
+import { api, write, esc, nuNav, aktuell } from './lib.js?v=0.38.2';
+import { kopplaKoordinater } from './admin-banor.js?v=0.38.2';
 
 const app = document.getElementById('app');
 const tal = (v) => { const t = String(v ?? '').trim().replace(',', '.'); if (t === '') return null; const n = Number(t); return Number.isFinite(n) ? n : NaN; };

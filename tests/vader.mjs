@@ -33,7 +33,7 @@ for (const [w, v] of [[390, 'mobil'], [1100, 'dator']]) {
 const p = await b.newPage({ viewport: { width: 900, height: 260 }, deviceScaleFactor: 2 });
 await p.goto('http://localhost:8765/'); await p.waitForTimeout(500);
 await p.evaluate(async () => {
-  const { vaderIkon, vaderTyp } = await import('/vader.js?v=0.38.1');
+  const { vaderIkon, vaderTyp } = await import('/vader.js?v=0.38.2');
   document.body.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:18px;padding:20px;background:#121110">${[0, 2, 3, 45, 53, 61, 80, 73, 95].map((k) => `<div style="text-align:center;color:#eee;font:14px sans-serif">${vaderIkon(k, 'vi-stor')}<br>${vaderTyp(k)[1]}</div>`).join('')}</div>`;
 });
 await p.screenshot({ path: 'vader-ikoner.png' });

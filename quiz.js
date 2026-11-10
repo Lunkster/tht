@@ -1,9 +1,9 @@
 // Quiz och flashcards (admin, migrering 24): frågor skapas automatiskt ur databasen och kan kompletteras med egna.
 // #/admin/quiz – lista och ny quiz · #/admin/quiz/<id> – redigera · #/quiz/<id> – visa på storskärm (quiz eller flashcards).
-import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.38.1';
-import { visaLogin } from './mata.js?v=0.38.1';
-import { banTopplista } from './bana.js?v=0.38.1';
-import { laddaNedKahoot } from './kahoot.js?v=0.38.1';
+import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.38.2';
+import { visaLogin } from './mata.js?v=0.38.2';
+import { banTopplista } from './bana.js?v=0.38.2';
+import { laddaNedKahoot } from './kahoot.js?v=0.38.2';
 
 const app = document.getElementById('app');
 export const AMNEN = [
@@ -205,10 +205,10 @@ async function renderQuizRedigera(id) {
     document.getElementById('kahoot').onclick = () => {
       const r = laddaNedKahoot(q.namn, fragor);
       const delar = [];
-      if (r.antal) delar.push(`${r.antal} frågor nedladdade. Öppna Kahoot → Skapa → Lägg till fråga → Importera kalkylblad och välj filen.`);
+      if (r.antal) delar.push(`${r.antal} frågor nedladdade. Öppna Kahoot i webbläsaren på datorn → Skapa → Lägg till fråga → Importera → Importera kalkylblad (längst ned) och välj filen.`);
       else delar.push('Inga frågor att exportera – Kahoot behöver minst ett fel svar per fråga.');
       if (r.hoppade.length) delar.push(`Fråga ${r.hoppade.join(', ')} saknar fel svar (flashcard) och kom inte med.`);
-      if (r.kortade.length) delar.push(`Fråga ${r.kortade.join(', ')} var för lång och har kortats (Kahoot tillåter 120 tecken i frågan och 75 i svaren).`);
+      if (r.kortade.length) delar.push(`Fråga ${r.kortade.join(', ')} var för lång och har kortats (Kahoot tillåter 95 tecken i frågan och 60 i svaren).`);
       document.getElementById('kahootmsg').textContent = delar.join(' ');
     };
     document.getElementById('qnamn').onchange = (e) => { const n = e.target.value.trim(); if (n) { q.namn = n; spara({ namn: n }); } };
@@ -256,7 +256,7 @@ export async function renderQuizVisa(id) {
   const topp = () => `<div class="qs-topp"><a href="#/admin/quiz/${id}" class="qs-ut">✕ Avsluta</a><span>${esc(q.namn)}</span><button type="button" class="qs-hel" title="Helskärm (F)">⛶</button></div>`;
   const rita = () => {
     if (!lage) {
-      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.38.1" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
+      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.38.2" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
         <div class="qs-val"><button type="button" class="btn primary" data-lage="quiz">Quiz</button><button type="button" class="btn" data-lage="kort">Flashcards</button></div>
         <p class="hint">Mellanslag eller → = nästa steg · ← = tillbaka · F = helskärm</p></div>`;
     } else if (i >= fr.length) {
