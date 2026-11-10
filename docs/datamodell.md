@@ -59,7 +59,7 @@ erDiagram
 | `v_score_alla`, `v_runda_alla` | Som `v_score`/`v_runda` men med övningen (THT 0) – bara för ställningen vid inmatning |
 | `v_score` | Varje hål: par, index, extraslag, slag, slag med tak (par + 5), poäng (Stableford), resultat (birdie, par …) |
 | `v_runda` | Varje runda: antal hål, slag, poäng, puttar, placering i deltävlingen (lika poäng → lägst spel-HCP) |
-| `v_tht_resultat` | Varje spelare och THT: rundor, poäng, slag, puttar, placering. Tar med `tht_resultat_utan_kort` för år utan scorekort |
+| `v_tht_resultat` | Varje spelare och THT: rundor, poäng, slag, puttar, placering (lika poäng → lägst spel-HCP i spelarens sista runda). Tar med `tht_resultat_utan_kort` för år utan scorekort |
 | `v_tht_kurva` | THT-grafen: ackumulerade poäng hål för hål |
 | `v_stat_fordelning` | Eagle … quint+ per spelare och THT |
 | `v_stat_par` | Poäng och slag per hålpar (3/4/5) |
