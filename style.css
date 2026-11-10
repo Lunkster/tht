@@ -979,3 +979,9 @@ body.storskarm #app:has(.ka) { padding: 0; }
 .sp-quizlista { list-style: none; padding: 0; margin: 10px 0; }
 .sp-quizlista li { display: flex; flex-wrap: wrap; gap: .5em; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .sp-quizlista li > span:first-child { flex: 1; }
+/* QR-kod på tv:n (v0.39.1) */
+.qp-gamed { display: flex; align-items: center; justify-content: center; gap: clamp(16px, 4vw, 64px); flex-wrap: wrap; }
+.qp-qr { width: clamp(180px, 28vh, 340px); background: #fff; border-radius: 12px; line-height: 0; }
+.qp-qr svg { width: 100%; height: auto; display: block; }
+.qp-gamed .qp-ga { margin: 0; max-width: 22em; text-align: left; }
+.qp-gamed .qp-kod { text-align: left; font-size: clamp(56px, 9vw, 160px); }

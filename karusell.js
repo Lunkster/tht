@@ -6,11 +6,11 @@
 //                     minnen och några slumpade foton, sist slutresultatet – sedan nästa år, och om från början
 // Varje bild säger tydligt THT, ort, år och – där det passar – runda och bana. Fotona blandas in mellan
 // statistikbilderna. Ingen inloggning behövs. Data hämtas på nytt varje minut (alla år: var tionde minut).
-import { api, allaRader, esc, fmt, aktuell, kanSe, snittPoang } from './lib.js?v=0.39.0';
-import { hamtaFoton, fotoUrl, medUrl } from './foto.js?v=0.39.0';
-import { vem } from './minnen.js?v=0.39.0';
-import { visaLogin } from './mata.js?v=0.39.0';
-import { hamtaVader, vaderMini } from './vader.js?v=0.39.0';
+import { api, allaRader, esc, fmt, aktuell, kanSe, snittPoang } from './lib.js?v=0.39.1';
+import { hamtaFoton, fotoUrl, medUrl } from './foto.js?v=0.39.1';
+import { vem } from './minnen.js?v=0.39.1';
+import { visaLogin } from './mata.js?v=0.39.1';
+import { hamtaVader, vaderMini } from './vader.js?v=0.39.1';
 
 const app = document.getElementById('app');
 const TID_STAT = 15_000, TID_FOTO = 8_000, FOTON_PER_STAT = 2;
@@ -70,7 +70,7 @@ export async function renderKarusell(navId, arg = null, fran = null) {
     const tid = b.typ === 'foto' || b.typ === 'ar' ? TID_FOTO : TID_STAT;
     app.innerHTML = `<div class="ka ${b.typ === 'foto' ? 'ka-fotolage' : ''}">
       <div class="ka-topp">
-        <span class="ka-titel"><img src="logo.svg?v=0.39.0" alt="" class="ka-logo"> ${titel}</span>
+        <span class="ka-titel"><img src="logo.svg?v=0.39.1" alt="" class="ka-logo"> ${titel}</span>
         <span class="ka-hoger"><span class="ka-klocka">${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
           <button type="button" class="ka-knapp" id="ka-paus" title="Paus (mellanslag)">${paus ? '▶' : '❚❚'}</button>
           <button type="button" class="ka-knapp" id="ka-hel" title="Helskärm (F)">⛶</button>
@@ -349,7 +349,7 @@ function fotoBild(f, tht, delt) {
   const dl = delt.find((x) => x.id === f.deltavling_id);
   const under = [f.text ? esc(f.text) : '', f.person?.fornamn ? `foto ${esc(f.person.fornamn)}` : ''].filter(Boolean);
   const img = `<img src="${fotoUrl(f)}" alt="${esc(f.text ?? '')}">`;
-  // Stående foto: texten till vänster så att bilden får hela skärmhöjden (v0.39.0)
+  // Stående foto: texten till vänster så att bilden får hela skärmhöjden (v0.39.1)
   if (f.bredd && f.hojd && f.hojd > f.bredd * 1.05) {
     return { typ: 'foto', html: `<div class="ka-staende"><div class="ka-sidotext">${tht ? kicker(tht, dl) : ''}${under.length ? `<div class="ka-bildtext">${under.join('<br>')}</div>` : ''}</div>${img}</div>` };
   }

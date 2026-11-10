@@ -1,26 +1,26 @@
-// THT golfapp (v0.39.0) – statistik och inmatning.
+// THT golfapp (v0.39.1) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, snittPoang, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.39.0';
-import { renderMata } from './mata.js?v=0.39.0';
-import { renderAdmin } from './admin.js?v=0.39.0';
-import { renderSpelare } from './spelare.js?v=0.39.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.39.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.39.0';
-import { renderBetygLank } from './betyg.js?v=0.39.0';
-import { renderNyheter } from './nyheter.js?v=0.39.0';
-import { renderRunda } from './runda.js?v=0.39.0';
-import './kollaps.js?v=0.39.0';
-import { renderRapport } from './rapport.js?v=0.39.0';
-import { renderDuell } from './inbordes.js?v=0.39.0';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.39.0';
-import { renderQuizVisa } from './quiz.js?v=0.39.0';
-import { renderDeltavling } from './deltavling.js?v=0.39.0';
-import { fotoSektion } from './foto.js?v=0.39.0';
-import { hamtaVader, vaderMini } from './vader.js?v=0.39.0';
-import { renderQuizSpelTv, renderSpela, hamtaQuizResultat, quizPerSpelare, quizOmgangar } from './quizspel.js?v=0.39.0';
-import { renderKarusell } from './karusell.js?v=0.39.0';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.39.0';
+import { api, allaRader, esc, fmt, datum, snittPoang, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.39.1';
+import { renderMata } from './mata.js?v=0.39.1';
+import { renderAdmin } from './admin.js?v=0.39.1';
+import { renderSpelare } from './spelare.js?v=0.39.1';
+import { renderKarta, miniKarta } from './karta.js?v=0.39.1';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.39.1';
+import { renderBetygLank } from './betyg.js?v=0.39.1';
+import { renderNyheter } from './nyheter.js?v=0.39.1';
+import { renderRunda } from './runda.js?v=0.39.1';
+import './kollaps.js?v=0.39.1';
+import { renderRapport } from './rapport.js?v=0.39.1';
+import { renderDuell } from './inbordes.js?v=0.39.1';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.39.1';
+import { renderQuizVisa } from './quiz.js?v=0.39.1';
+import { renderDeltavling } from './deltavling.js?v=0.39.1';
+import { fotoSektion } from './foto.js?v=0.39.1';
+import { hamtaVader, vaderMini } from './vader.js?v=0.39.1';
+import { renderQuizSpelTv, renderSpela, hamtaQuizResultat, quizPerSpelare, quizOmgangar } from './quizspel.js?v=0.39.1';
+import { renderKarusell } from './karusell.js?v=0.39.1';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.39.1';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -411,7 +411,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.39.0" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.39.1" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>
@@ -506,7 +506,7 @@ const KOLUMNER = [
 let sortKey = 'segrar', sortAsc = false;
 const PRISKOL = [{ k: 'fornamn', t: 'Spelare', l: true }, { k: 'narmast', t: 'Närmast hål' }, { k: 'longest', t: 'Longest drive' }, { k: 'tot', t: 'Totalt' }];
 const prisSort = { k: 'tot', asc: false };
-// All-time → Vinnare: båda tabellerna sorterbara på alla kolumner (önskemål Henrik 2026-11-10, v0.39.0).
+// All-time → Vinnare: båda tabellerna sorterbara på alla kolumner (önskemål Henrik 2026-11-10, v0.39.1).
 // asc = första tryckets riktning (stigande där lägre är bättre, t.ex. slag och puttar).
 const VINNKOL = [
   { k: 'artal', t: 'År', l: true, v: (x) => `<a href="#/ar/${x.artal}">${x.artal}</a>` },
@@ -694,7 +694,7 @@ ${alltimeHuvud(flik)}
 // Sparad inloggning från före rollerna: hämta rollen först (tyst om nätet saknas).
 uppdateraRoll().catch(() => {}).then(route);
 
-// ---------- All-time → Quiz (v0.39.0): resultat från quiz spelade i telefonen ----------
+// ---------- All-time → Quiz (v0.39.1): resultat från quiz spelade i telefonen ----------
 const quizSort = { k: 'vinster', asc: false };
 const QUIZKOL = [
   { k: 'fornamn', t: 'Spelare', l: true, asc: true, v: (x) => `<a class="namn" href="#/spelare/${x.id}">${esc(x.fornamn)}</a>` },

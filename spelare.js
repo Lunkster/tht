@@ -1,7 +1,7 @@
 // Personsida: en spelares nyckeltal, resultat per år, snittpoäng över tid och resultatfördelning.
-import { api, allaRader, esc, fmt, nuNav, aktuell, snittPoang } from './lib.js?v=0.39.0';
-import { inbordesSpelare } from './inbordes.js?v=0.39.0';
-import { hamtaQuizResultat, quizPerSpelare } from './quizspel.js?v=0.39.0';
+import { api, allaRader, esc, fmt, nuNav, aktuell, snittPoang } from './lib.js?v=0.39.1';
+import { inbordesSpelare } from './inbordes.js?v=0.39.1';
+import { hamtaQuizResultat, quizPerSpelare } from './quizspel.js?v=0.39.1';
 
 const app = document.getElementById('app');
 const BLA = '#3987e5';                       // seriefärg 1 (validerad mot mörk yta)
@@ -149,7 +149,7 @@ export async function renderSpelare(pid) {
   ritaLage();
   ritaStaplar(fordelning, spelade.length);
   inbordesSpelare(document.getElementById('sp-inbordes'), p.id).catch(() => {});
-  // Quiz i telefonen (v0.39.0): visas bara om spelaren har spelat
+  // Quiz i telefonen (v0.39.1): visas bara om spelaren har spelat
   hamtaQuizResultat().then((rader) => {
     const mina = rader.filter((r) => r.person_id === p.id), x = quizPerSpelare(mina)[0], el = document.getElementById('sp-quiz');
     if (!x || !el) return;

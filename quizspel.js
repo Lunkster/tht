@@ -1,11 +1,12 @@
-// Spela quiz i telefonen (v0.39.0, migrering 30, punkt 41). Admin startar en omgång av en sparad quiz på tv:n
+// Spela quiz i telefonen (v0.39.1, migrering 30, punkt 41). Admin startar en omgång av en sparad quiz på tv:n
 // (#/quizspel/<id>); alla går med i sin telefon (#/spela) och svarar där. Beslut Henrik 2026-11-10: spelare väljer
 // sitt namn och admin godkänner första gången, sedan kommer telefonen ihåg dem; den personliga länken går med direkt;
 // gäster skriver sitt namn och deras resultat sparas; bara admin startar.
 // Telefonerna anropar bara databasfunktionerna quiz_* (som kontrollerar spelkod och telefonens hemliga nyckel);
 // rätt svar och poäng räknas i databasen. Båda sidorna frågar efter läget varje sekund.
-import { api, rpc, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.39.0';
-import { visaLogin } from './mata.js?v=0.39.0';
+import { api, rpc, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.39.1';
+import { visaLogin } from './mata.js?v=0.39.1';
+import qrcode from './qrcode.js?v=0.39.1';
 
 const app = document.getElementById('app');
 const BOKST = 'ABCD';
@@ -14,6 +15,12 @@ const las = (k) => { try { return localStorage.getItem(k); } catch { return null
 const spara = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { /* privat läge */ } };
 const blanda = (xs) => { const a = xs.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 export const APP_URL = 'lunkster.github.io/tht';
+// QR-kod som öppnar quizen med koden ifylld (vit bakgrund och marginal för säker läsning)
+export function qrSvg(text) {
+  const q = qrcode(0, 'M'); q.addData(text); q.make();
+  return q.createSvgTag({ cellSize: 8, margin: 4, scalable: true });
+}
+const spelUrl = (kod) => `${location.origin}${location.pathname}#/spela/${kod}`;
 
 // Den personliga länken sparas i telefonen när den öppnas – då går man med i quizen direkt (reserv D)
 export const sparaLank = (kod) => spara(LS.lank, kod);
@@ -79,8 +86,9 @@ export async function renderQuizSpelTv(id) {
     let html = '';
     if (s.status === 'lobby') {
       html = `<div class="qs-start qp-lobby"><h1>${esc(s.namn)}</h1>
-        <p class="qp-ga">Gå in på <strong>${APP_URL}</strong> → <strong>Spela quiz</strong> och skriv koden</p>
-        <div class="qp-kod">${s.kod.slice(0, 3)} ${s.kod.slice(3)}</div>
+        <div class="qp-gamed"><div class="qp-qr" role="img" aria-label="QR-kod till quizen">${qrSvg(spelUrl(s.kod))}</div>
+          <div><p class="qp-ga">Skanna med kameran – eller gå in på <strong>${APP_URL}</strong> → <strong>Spela quiz</strong> och skriv koden</p>
+          <div class="qp-kod">${s.kod.slice(0, 3)} ${s.kod.slice(3)}</div></div></div>
         ${vantRuta}
         <p class="qp-med">${godk.length ? `Med: ${godk.map((d) => `<span class="chip">${esc(namnPa(d))}</span>`).join(' ')}` : 'Ingen har gått med än.'}</p>
         <div class="qs-val"><button type="button" class="btn primary" id="qp-fram" ${godk.length ? '' : 'disabled'}>Starta quizen ›</button></div>

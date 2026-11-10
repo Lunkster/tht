@@ -1,9 +1,9 @@
 // Banbetyg via personlig länk (#/betyg/<kod>) – ingen inloggning, en länk per spelare för alla år.
 // Databasen kontrollerar koden och tar bara emot betyg på banor som spelaren spelade respektive THT.
 // Här skriver spelaren också ETT eget minnesvärt moment per deltävling hen spelat (bara om sig själv, migrering 23).
-import { rpc, esc } from './lib.js?v=0.39.0';
-import { fotoSektion } from './foto.js?v=0.39.0';
-import { sparaLank } from './quizspel.js?v=0.39.0';
+import { rpc, esc } from './lib.js?v=0.39.1';
+import { fotoSektion } from './foto.js?v=0.39.1';
+import { sparaLank } from './quizspel.js?v=0.39.1';
 
 const app = document.getElementById('app');
 
@@ -14,7 +14,7 @@ export async function renderBetygLank(kod) {
     app.innerHTML = '<h1>Banbetyg</h1><div class="card"><p>Länken finns inte eller har tagits bort.</p><p class="hint">Be den som skickade länken om en ny.</p></div>';
     return;
   }
-  sparaLank(kod);   // telefonen kommer ihåg länken – då går man med i quiz direkt (v0.39.0)
+  sparaLank(kod);   // telefonen kommer ihåg länken – då går man med i quiz direkt (v0.39.1)
   // En nyckel per THT och bana – samma bana kan ha spelats flera år
   const nyckel = (t, b) => `${t.tht_nr}-${b.bana_id}`;
   const valda = {};
