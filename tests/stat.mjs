@@ -40,6 +40,15 @@ await vid('#/alltime');
 const m = await p.evaluate(() => { const n = document.querySelector('.underflikar').getBoundingClientRect(); const t = document.querySelector('table.radbryt'); return { flikrad: Math.round(n.height), tabell: t.scrollWidth, wrap: t.parentElement.clientWidth, sida: document.documentElement.scrollWidth }; });
 console.log('SPELARE', JSON.stringify(m), '| th:', (await p.locator('table.radbryt th').allTextContents()).map((x) => x.replace(/​/g, '')).join('/'));
 await p.screenshot({ path: 'stat-spelare.png' });
+// Vinnare: båda tabellerna sorterbara på alla kolumner (v0.38.1)
+await vid('#/alltime/vinnare');
+const kol = async (tab, i) => (await p.locator('table').nth(tab).locator(`tbody tr td:nth-child(${i})`).allTextContents()).map((x) => x.trim());
+console.log('VINNARE rubriker:', await p.locator('table').nth(0).locator('th.sortable').count(), '+', await p.locator('table').nth(1).locator('th.sortable').count(), '| år:', (await kol(0, 1)).join(','));
+await p.locator('th[data-vk="poang"]').click(); await p.waitForTimeout(150); console.log('VINNARE poäng ▼:', (await kol(0, 3)).join(','));
+await p.locator('th[data-vk="poang"]').click(); await p.waitForTimeout(150); console.log('VINNARE poäng ▲:', (await kol(0, 3)).join(','));
+await p.locator('th[data-vk="fornamn"]').click(); await p.waitForTimeout(150); console.log('VINNARE namn ▲:', (await kol(0, 2)).join(','));
+await p.locator('th[data-sk="fornamn"]').click(); await p.waitForTimeout(150); console.log('SEGRAR namn ▲:', (await kol(1, 1)).join(','), '| rubrik:', await p.locator('th[data-sk="fornamn"]').textContent());
+await p.locator('th[data-sk="n"]').click(); await p.waitForTimeout(150); console.log('SEGRAR segrar ▼:', (await kol(1, 2)).join(','));
 for (const f of ['vinnare', 'banor', 'halvinster', 'fordelning', 'par', 'rekord', 'hal']) {
   await vid('#/alltime/' + f);
   const info = await p.evaluate(() => ({ h: [...document.querySelectorAll('#app h2, #app h3')].map((x) => x.textContent).slice(0, 9).join(','), rader: document.querySelectorAll('#app tbody tr, #app li').length, sida: document.documentElement.scrollWidth, tabeller: [...document.querySelectorAll('.tablewrap')].map((w) => w.scrollWidth - w.clientWidth).join(',') }));

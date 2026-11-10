@@ -1,7 +1,7 @@
-// Väder på deltävlingen (v0.38.0, migrering 29): timmarna 09–15 från Open-Meteo, sparat i tabellen vader av
+// Väder på deltävlingen (v0.38.1, migrering 29): timmarna 09–15 från Open-Meteo, sparat i tabellen vader av
 // edge-funktionen vader. Saknas vädret för en spelad deltävling hämtas det första gången någon tittar.
 // Egna ikoner i appens färger (guld sol, krämvita moln, ljusblå nederbörd).
-import { api, allaRader, funktion, fmt } from './lib.js?v=0.38.0';
+import { api, allaRader, funktion, fmt } from './lib.js?v=0.38.1';
 
 // ---------- ikoner ----------
 const SOL = (x, y, r) => `<g class="vi-sol"><circle cx="${x}" cy="${y}" r="${r}"/>${[0, 45, 90, 135, 180, 225, 270, 315].map((g) => { const a = g * Math.PI / 180, r1 = r + 4, r2 = r + 9; return `<line x1="${(x + r1 * Math.cos(a)).toFixed(1)}" y1="${(y + r1 * Math.sin(a)).toFixed(1)}" x2="${(x + r2 * Math.cos(a)).toFixed(1)}" y2="${(y + r2 * Math.sin(a)).toFixed(1)}"/>`; }).join('')}</g>`;

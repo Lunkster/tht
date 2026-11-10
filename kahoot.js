@@ -1,4 +1,4 @@
-// Export av en quiz till Kahoots importmall (v0.38.0): Kahoot → Skapa → Lägg till fråga → Importera kalkylblad.
+// Export av en quiz till Kahoots importmall (v0.38.1): Kahoot → Skapa → Lägg till fråga → Importera kalkylblad.
 // Mallens upplägg: rubrikrad på rad 8, frågorna från rad 9 – kolumn A löpnummer, B fråga (max 120 tecken),
 // C–F svar 1–4 (max 75 tecken), G tidsgräns i sekunder, H rätt svar (svarets nummer).
 // Filen byggs här i webbläsaren som en okomprimerad zip (xlsx) – inget bibliotek behövs.

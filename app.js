@@ -1,25 +1,25 @@
-// THT golfapp (v0.38.0) – statistik och inmatning.
+// THT golfapp (v0.38.1) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, snittPoang, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.38.0';
-import { renderMata } from './mata.js?v=0.38.0';
-import { renderAdmin } from './admin.js?v=0.38.0';
-import { renderSpelare } from './spelare.js?v=0.38.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.38.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.38.0';
-import { renderBetygLank } from './betyg.js?v=0.38.0';
-import { renderNyheter } from './nyheter.js?v=0.38.0';
-import { renderRunda } from './runda.js?v=0.38.0';
-import './kollaps.js?v=0.38.0';
-import { renderRapport } from './rapport.js?v=0.38.0';
-import { renderDuell } from './inbordes.js?v=0.38.0';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.38.0';
-import { renderQuizVisa } from './quiz.js?v=0.38.0';
-import { renderDeltavling } from './deltavling.js?v=0.38.0';
-import { fotoSektion } from './foto.js?v=0.38.0';
-import { hamtaVader, vaderMini } from './vader.js?v=0.38.0';
-import { renderKarusell } from './karusell.js?v=0.38.0';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.38.0';
+import { api, allaRader, esc, fmt, datum, snittPoang, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.38.1';
+import { renderMata } from './mata.js?v=0.38.1';
+import { renderAdmin } from './admin.js?v=0.38.1';
+import { renderSpelare } from './spelare.js?v=0.38.1';
+import { renderKarta, miniKarta } from './karta.js?v=0.38.1';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.38.1';
+import { renderBetygLank } from './betyg.js?v=0.38.1';
+import { renderNyheter } from './nyheter.js?v=0.38.1';
+import { renderRunda } from './runda.js?v=0.38.1';
+import './kollaps.js?v=0.38.1';
+import { renderRapport } from './rapport.js?v=0.38.1';
+import { renderDuell } from './inbordes.js?v=0.38.1';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.38.1';
+import { renderQuizVisa } from './quiz.js?v=0.38.1';
+import { renderDeltavling } from './deltavling.js?v=0.38.1';
+import { fotoSektion } from './foto.js?v=0.38.1';
+import { hamtaVader, vaderMini } from './vader.js?v=0.38.1';
+import { renderKarusell } from './karusell.js?v=0.38.1';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.38.1';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -408,7 +408,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.38.0" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.38.1" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>
@@ -502,6 +502,38 @@ const KOLUMNER = [
 let sortKey = 'segrar', sortAsc = false;
 const PRISKOL = [{ k: 'fornamn', t: 'Spelare', l: true }, { k: 'narmast', t: 'Närmast hål' }, { k: 'longest', t: 'Longest drive' }, { k: 'tot', t: 'Totalt' }];
 const prisSort = { k: 'tot', asc: false };
+// All-time → Vinnare: båda tabellerna sorterbara på alla kolumner (önskemål Henrik 2026-11-10, v0.38.1).
+// asc = första tryckets riktning (stigande där lägre är bättre, t.ex. slag och puttar).
+const VINNKOL = [
+  { k: 'artal', t: 'År', l: true, v: (x) => `<a href="#/ar/${x.artal}">${x.artal}</a>` },
+  { k: 'fornamn', t: 'Vinnare', l: true, asc: true, td: 'win', v: (x) => `<a class="namn" href="#/spelare/${x.person_id}">${esc(x.fornamn)}</a>` },
+  { k: 'poang', t: 'Poäng', v: (x) => fmt(x.poang) },
+  { k: 'prRunda', t: 'Poäng/​runda', v: (x) => fmt(x.prRunda, 1) },
+  { k: 'slRunda', t: 'Slag/​runda', asc: true, v: (x) => fmt(x.slRunda, 1) },
+  { k: 'puttar_per_hal', t: 'Puttar/​hål', asc: true, sm: true, v: (x) => fmt(x.puttar_per_hal, 2) },
+  { k: 'marginal', t: 'Mar&shy;ginal', title: 'Poäng före tvåan', v: (x) => (x.marginal == null ? '–' : '+' + fmt(x.marginal)) },
+];
+const SEGERKOL = [
+  { k: 'fornamn', t: 'Spelare', l: true, asc: true, v: (x) => `<a class="namn" href="#/spelare/${x.id}">${esc(x.fornamn)}</a>` },
+  { k: 'n', t: 'Segrar', v: (x) => `<strong>${x.n}</strong>` },
+  { k: 'bastaP', t: 'Bästa poäng/​runda', v: (x) => fmt(x.bastaP, 1) },
+  { k: 'bastaS', t: 'Bästa slag/​runda', asc: true, v: (x) => fmt(x.bastaS, 1) },
+  { k: 'bastaPutt', t: 'Bästa puttar/​hål', asc: true, sm: true, v: (x) => fmt(x.bastaPutt, 2) },
+];
+const vinnSort = { k: 'artal', asc: false }, segerSort = { k: 'n', asc: false };
+// Sorterar på kolumnens värde; tomma värden hamnar alltid sist. Lika → andra nyckeln (t.ex. år eller segrar).
+function sorteraPa(rader, st, reserv) {
+  const tal = (v) => (v == null || v === '' ? null : typeof v === 'string' && Number.isNaN(Number(v)) ? v : Number(v));
+  return rader.slice().sort((a, b) => {
+    const va = tal(a[st.k]), vb = tal(b[st.k]);
+    if (va === null && vb === null) return reserv(a, b);
+    if (va === null) return 1; if (vb === null) return -1;
+    const c = typeof va === 'string' ? va.localeCompare(vb, 'sv') : va - vb;
+    return (st.asc ? c : -c) || reserv(a, b);
+  });
+}
+const sortHuvud = (kol, st, attr) => kol.map((c) => `<th class="sortable ${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''} ${st.k === c.k ? 'sorted' : ''}" data-${attr}="${c.k}" ${c.title ? `title="${c.title}"` : ''} aria-sort="${st.k === c.k ? (st.asc ? 'ascending' : 'descending') : 'none'}">${c.t}${st.k === c.k ? (st.asc ? ' ▲' : ' ▼') : ''}</th>`).join('');
+const sortRad = (kol, x) => `<tr>${kol.map((c) => `<td class="${c.l ? 'l' : ''} ${c.sm ? 'hide-sm' : ''} ${c.td ?? ''}">${c.v(x)}</td>`).join('')}</tr>`;
 let visaAllaBanor = false;   // All-time: topp 10 eller alla banor
 const sorteraPris = (rows) => rows.slice().sort((a, b) => {
   const c = prisSort.k === 'fornamn' ? a.fornamn.localeCompare(b.fornamn, 'sv') : (a[prisSort.k] - b[prisSort.k]) || (a.tot - b.tot);
@@ -604,17 +636,17 @@ ${alltimeHuvud(flik)}
 ` : '')
       + (flik === 'vinnare' ? `      <h2>Vinnare</h2>
       <div class="tablewrap"><table class="radbryt">
-        <thead><tr><th class="l">År</th><th class="l">Vinnare</th><th>Poäng</th><th>Poäng/​runda</th><th>Slag/​runda</th><th class="hide-sm">Puttar/​hål</th><th title="Poäng före tvåan">Mar&shy;ginal</th></tr></thead>
-        <tbody>${vinnare.map((v) => `<tr><td class="l"><a href="#/ar/${v.artal}">${v.artal}</a></td><td class="l win"><a class="namn" href="#/spelare/${v.person_id}">${esc(v.fornamn)}</a></td><td>${fmt(v.poang)}</td><td>${fmt(v.prRunda, 1)}</td><td>${fmt(v.slRunda, 1)}</td><td class="hide-sm">${fmt(v.puttar_per_hal, 2)}</td><td>${v.marginal == null ? '–' : '+' + fmt(v.marginal)}</td></tr>`).join('')}</tbody>
+        <thead><tr>${sortHuvud(VINNKOL, vinnSort, 'vk')}</tr></thead>
+        <tbody>${sorteraPa(vinnare, vinnSort, (a, b) => b.artal - a.artal).map((v) => sortRad(VINNKOL, v)).join('')}</tbody>
       </table></div>
-      <p class="hint">Poäng och slag per runda under det vinnande året (slag med tak par + 5). Marginal = poäng före tvåan.</p>
+      <p class="hint">Poäng och slag per runda under det vinnande året (slag med tak par + 5). Marginal = poäng före tvåan. Tryck på en rubrik för att sortera.</p>
 
       <h2>Segrar per spelare</h2>
       <div class="tablewrap"><table class="radbryt">
-        <thead><tr><th class="l">Spelare</th><th>Segrar</th><th>Bästa poäng/​runda</th><th>Bästa slag/​runda</th><th class="hide-sm">Bästa puttar/​hål</th></tr></thead>
-        <tbody>${segerSpelare.map((x) => `<tr><td class="l"><a class="namn" href="#/spelare/${x.id}">${esc(x.fornamn)}</a></td><td><strong>${x.n}</strong></td><td>${fmt(x.bastaP, 1)}</td><td>${fmt(x.bastaS, 1)}</td><td class="hide-sm">${fmt(x.bastaPutt, 2)}</td></tr>`).join('')}</tbody>
+        <thead><tr>${sortHuvud(SEGERKOL, segerSort, 'sk')}</tr></thead>
+        <tbody>${sorteraPa(segerSpelare, segerSort, (a, b) => b.n - a.n || (b.bastaP ?? 0) - (a.bastaP ?? 0)).map((x) => sortRad(SEGERKOL, x)).join('')}</tbody>
       </table></div>
-      <p class="hint">Bästa värdet under något av de vunna åren. År utan scorekort (1999) räknas bara i antalet segrar.</p>
+      <p class="hint">Bästa värdet under något av de vunna åren. År utan scorekort (1999) räknas bara i antalet segrar. Tryck på en rubrik för att sortera.</p>
 
 ` : '')
       + (flik === 'priser' ? `      <h2>Närmast hål och longest drive</h2>
@@ -634,6 +666,11 @@ ${alltimeHuvud(flik)}
       <p class="hint">Deltagarnas betyg 1–5, snitt över alla år. Placering bara för banor med minst 3 betyg${visaAllaBanor ? ' – övriga visas dämpade, utan placering' : ''}. Tryck på en bana för mer.</p>` : ''}` : '');
     const knappAlla = document.getElementById('allabanor');
     if (knappAlla) knappAlla.onclick = () => { visaAllaBanor = !visaAllaBanor; draw(); };
+    [['vk', VINNKOL, vinnSort], ['sk', SEGERKOL, segerSort]].forEach(([attr, kol, st]) => app.querySelectorAll(`th[data-${attr}]`).forEach((th) => th.onclick = () => {
+      const c = kol.find((x) => x.k === th.dataset[attr]);
+      if (st.k === c.k) st.asc = !st.asc; else { st.k = c.k; st.asc = !!c.asc; }
+      draw();
+    }));
     app.querySelectorAll('th[data-pk]').forEach((th) => th.onclick = () => {
       const k = th.dataset.pk;
       if (prisSort.k === k) prisSort.asc = !prisSort.asc; else { prisSort.k = k; prisSort.asc = k === 'fornamn'; }
