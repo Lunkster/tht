@@ -6,10 +6,11 @@
 //                     minnen och några slumpade foton, sist slutresultatet – sedan nästa år, och om från början
 // Varje bild säger tydligt THT, ort, år och – där det passar – runda och bana. Fotona blandas in mellan
 // statistikbilderna. Ingen inloggning behövs. Data hämtas på nytt varje minut (alla år: var tionde minut).
-import { api, allaRader, esc, fmt, aktuell, kanSe, snittPoang } from './lib.js?v=0.37.0';
-import { hamtaFoton, fotoUrl, medUrl } from './foto.js?v=0.37.0';
-import { vem } from './minnen.js?v=0.37.0';
-import { visaLogin } from './mata.js?v=0.37.0';
+import { api, allaRader, esc, fmt, aktuell, kanSe, snittPoang } from './lib.js?v=0.38.0';
+import { hamtaFoton, fotoUrl, medUrl } from './foto.js?v=0.38.0';
+import { vem } from './minnen.js?v=0.38.0';
+import { visaLogin } from './mata.js?v=0.38.0';
+import { hamtaVader, vaderMini } from './vader.js?v=0.38.0';
 
 const app = document.getElementById('app');
 const TID_STAT = 15_000, TID_FOTO = 8_000, FOTON_PER_STAT = 2;
@@ -21,7 +22,7 @@ const banNamn = (dl) => dl?.banversion?.bana?.namn ?? null;
 const thtText = (t) => `THT ${t.nr} · ${esc(t.ort ?? '')} ${t.artal}`;
 const rundText = (dl) => (dl ? `R${dl.ordning}${banNamn(dl) ? ' · ' + esc(banNamn(dl)) : ''}` : '');
 // Rad överst på varje bild: THT, ort och år – och runda, bana och datum när bilden gäller en runda
-const kicker = (t, dl = null, extra = '') => `<div class="ka-kicker"><span class="ka-kicker-tht">${thtText(t)}</span>${dl ? `<span>${rundText(dl)}${dl.datum ? ' · ' + dl.datum : ''}</span>` : ''}${extra ? `<span>${extra}</span>` : ''}</div>`;
+const kicker = (t, dl = null, extra = '') => `<div class="ka-kicker"><span class="ka-kicker-tht">${thtText(t)}</span>${dl ? `<span>${rundText(dl)}${dl.datum ? ' · ' + dl.datum : ''}${vaderMini(dl.vader)}</span>` : ''}${extra ? `<span>${extra}</span>` : ''}</div>`;
 
 let tangent = null, wakeLock = null;
 
@@ -69,7 +70,7 @@ export async function renderKarusell(navId, arg = null, fran = null) {
     const tid = b.typ === 'foto' || b.typ === 'ar' ? TID_FOTO : TID_STAT;
     app.innerHTML = `<div class="ka ${b.typ === 'foto' ? 'ka-fotolage' : ''}">
       <div class="ka-topp">
-        <span class="ka-titel"><img src="logo.svg?v=0.37.0" alt="" class="ka-logo"> ${titel}</span>
+        <span class="ka-titel"><img src="logo.svg?v=0.38.0" alt="" class="ka-logo"> ${titel}</span>
         <span class="ka-hoger"><span class="ka-klocka">${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
           <button type="button" class="ka-knapp" id="ka-paus" title="Paus (mellanslag)">${paus ? '▶' : '❚❚'}</button>
           <button type="button" class="ka-knapp" id="ka-hel" title="Helskärm (F)">⛶</button>
@@ -123,6 +124,8 @@ async function ettAr(tht) {
     api(`deltavling?tht_nr=eq.${nr}&order=ordning&select=id,tht_nr,ordning,namn,datum,narmast_hal,longest_hal,banversion(bana(namn))`, f),
     hamtaFoton(`tht_nr=eq.${nr}`, true).catch(() => []),
   ]);
+  const vd = await hamtaVader(delt).catch(() => ({}));
+  delt.forEach((d) => { d.vader = vd[d.id]; });
   const ids = delt.map((d) => d.id).join(',');
   const [pris, kom, rundNamn] = ids ? await Promise.all([
     api(`pris?deltavling_id=in.(${ids})&select=deltavling_id,typ,person(fornamn)`, f),
@@ -168,6 +171,8 @@ async function allaAr(kronologisk = null) {
     allaRader('foto?select=id,tht_nr,deltavling_id,fil,bredd,hojd,tagen,text,person(fornamn)&klar=is.true&borttagen=is.null&order=id').catch(() => []),
   ]);
   await medUrl(foton);   // tillfälliga bildlänkar (privat bucket)
+  const vd = await hamtaVader(delt, false).catch(() => ({}));   // bara sparat väder – fylls på från deltävlingarna
+  delt.forEach((d) => { d.vader = vd[d.id]; });
   const rid = [...new Set(kom.map((k) => k.runda_id).filter(Boolean))];
   const rundNamn = rid.length ? await api(`runda?id=in.(${rid.join(',')})&select=id,person(fornamn)`).catch(() => []) : [];
   const perTht = Object.fromEntries(thts.map((t) => [t.nr, { tht: t, res: [], rundor: [], delt: [], pris: [] }]));
@@ -288,7 +293,7 @@ function rundBild({ tht, rundor, pris }, dl, rubrik) {
   const lagst = rs.filter((r) => r.antal_hal === 18).sort((a, b) => a.slag - b.slag)[0];
   const p = (typ) => pris.find((x) => x.deltavling_id === dl.id && x.typ === typ)?.person?.fornamn;
   const ruta = (v, t, u) => `<div class="ka-ruta"><div class="ka-v">${v}</div><div class="ka-t">${t}</div><div class="ka-u">${u}</div></div>`;
-  return `${kicker(tht, null, dl.datum ?? '')}
+  return `${kicker(tht, null, (dl.datum ?? '') + vaderMini(dl.vader))}
     <h1 class="ka-rubrik">${rubrik ? `${rubrik} · ` : ''}${rundText(dl)}</h1>
     <div class="ka-rutor">
       ${ruta(esc(forst.fornamn), tht.klar ? 'Vann rundan' : 'Leder rundan', `${fmt(forst.poang)} poäng${forst.antal_hal < 18 ? ` efter ${forst.antal_hal} hål` : ''}`)}
@@ -344,7 +349,7 @@ function fotoBild(f, tht, delt) {
   const dl = delt.find((x) => x.id === f.deltavling_id);
   const under = [f.text ? esc(f.text) : '', f.person?.fornamn ? `foto ${esc(f.person.fornamn)}` : ''].filter(Boolean);
   const img = `<img src="${fotoUrl(f)}" alt="${esc(f.text ?? '')}">`;
-  // Stående foto: texten till vänster så att bilden får hela skärmhöjden (v0.37.0)
+  // Stående foto: texten till vänster så att bilden får hela skärmhöjden (v0.38.0)
   if (f.bredd && f.hojd && f.hojd > f.bredd * 1.05) {
     return { typ: 'foto', html: `<div class="ka-staende"><div class="ka-sidotext">${tht ? kicker(tht, dl) : ''}${under.length ? `<div class="ka-bildtext">${under.join('<br>')}</div>` : ''}</div>${img}</div>` };
   }

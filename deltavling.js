@@ -1,7 +1,8 @@
 // Deltävlingssida (#/deltavling/<id>): topplista för rundan, priser, bollar, hål för hål, hålvinster och minnesvärda moment.
-import { api, esc, fmt, datum, nuNav, aktuell, kanSe } from './lib.js?v=0.37.0';
-import { minnenWidget } from './minnen.js?v=0.37.0';
-import { fotoSektion } from './foto.js?v=0.37.0';
+import { api, esc, fmt, datum, nuNav, aktuell, kanSe } from './lib.js?v=0.38.0';
+import { minnenWidget } from './minnen.js?v=0.38.0';
+import { fotoSektion } from './foto.js?v=0.38.0';
+import { hamtaVader, vaderKort } from './vader.js?v=0.38.0';
 
 const app = document.getElementById('app');
 const namnLank = (id, n) => `<a class="namn" href="#/spelare/${id}">${esc(n)}</a>`;
@@ -59,6 +60,7 @@ export async function renderDeltavling(did) {
     <h1>R${d.ordning} · ${esc(d.namn ?? '')}</h1>
     <p class="sub">${bana ? `<a class="namn" href="#/bana/${bana.id}">${esc(bana.namn)}</a> · ` : ''}${datum(d.datum)}${d.tee?.namn ? ` · tee ${esc(d.tee.namn)}` : ''} · THT ${t?.nr}</p>
     ${klar ? '' : '<div class="pagar"><strong>Pågår</strong> – THT:n är inte avslutad, så ingen vinnare är utsedd än.</div>'}
+    <section id="dt-vader"></section>
 
     <div class="sp-nyckel">
       ${tile(vinnare ? namnLank(vinnare.person_id, vinnare.fornamn) : vinnareUtan[0] ? namnLank(vinnareUtan[0].id, vinnareUtan[0].fornamn) : '–', klar ? 'Vinnare' : 'Leder', vinnare ? `${fmt(vinnare.poang)} poäng · ${tecken(motHcp(vinnare))} mot hcp` : vinnareUtan[0] ? 'scorekort saknas' : '')}
@@ -102,6 +104,7 @@ export async function renderDeltavling(did) {
     <section id="dt-foton" class="foto-sek"></section>
 
     ${kanSe() ? '<h2>Minnesvärda moment</h2>\n    <div id="dt-minnen"><p class="muted">Laddar …</p></div>' : ''}`;
+  hamtaVader([d]).then((vd) => { const el = document.getElementById('dt-vader'); if (el && aktuell(myNav) && vd[d.id]) el.innerHTML = `<h2>Vädret</h2>${vaderKort(vd[d.id])}`; }).catch((e) => console.warn('Väder:', e));
   fotoSektion(document.getElementById('dt-foton'), { thtNr: d.tht_nr, did: d.id }).catch((e) => console.warn('Foton:', e));
   if (kanSe()) minnenWidget(document.getElementById('dt-minnen'), d.id).catch(() => { document.getElementById('dt-minnen').innerHTML = ''; });
 }

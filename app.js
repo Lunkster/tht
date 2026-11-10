@@ -1,24 +1,25 @@
-// THT golfapp (v0.37.0) – statistik och inmatning.
+// THT golfapp (v0.38.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, snittPoang, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.37.0';
-import { renderMata } from './mata.js?v=0.37.0';
-import { renderAdmin } from './admin.js?v=0.37.0';
-import { renderSpelare } from './spelare.js?v=0.37.0';
-import { renderKarta, miniKarta } from './karta.js?v=0.37.0';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.37.0';
-import { renderBetygLank } from './betyg.js?v=0.37.0';
-import { renderNyheter } from './nyheter.js?v=0.37.0';
-import { renderRunda } from './runda.js?v=0.37.0';
-import './kollaps.js?v=0.37.0';
-import { renderRapport } from './rapport.js?v=0.37.0';
-import { renderDuell } from './inbordes.js?v=0.37.0';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.37.0';
-import { renderQuizVisa } from './quiz.js?v=0.37.0';
-import { renderDeltavling } from './deltavling.js?v=0.37.0';
-import { fotoSektion } from './foto.js?v=0.37.0';
-import { renderKarusell } from './karusell.js?v=0.37.0';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.37.0';
+import { api, allaRader, esc, fmt, datum, snittPoang, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.38.0';
+import { renderMata } from './mata.js?v=0.38.0';
+import { renderAdmin } from './admin.js?v=0.38.0';
+import { renderSpelare } from './spelare.js?v=0.38.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.38.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.38.0';
+import { renderBetygLank } from './betyg.js?v=0.38.0';
+import { renderNyheter } from './nyheter.js?v=0.38.0';
+import { renderRunda } from './runda.js?v=0.38.0';
+import './kollaps.js?v=0.38.0';
+import { renderRapport } from './rapport.js?v=0.38.0';
+import { renderDuell } from './inbordes.js?v=0.38.0';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.38.0';
+import { renderQuizVisa } from './quiz.js?v=0.38.0';
+import { renderDeltavling } from './deltavling.js?v=0.38.0';
+import { fotoSektion } from './foto.js?v=0.38.0';
+import { hamtaVader, vaderMini } from './vader.js?v=0.38.0';
+import { renderKarusell } from './karusell.js?v=0.38.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.38.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -144,7 +145,7 @@ async function renderYear(artal) {
                        ld && `Longest drive${d.longest_hal ? ' (' + d.longest_hal + ')' : ''}: ${esc(ld.person.fornamn)}`].filter(Boolean).join(' · ');
         return `<div class="round">
           <div><div class="rn"><a class="namn" href="#/deltavling/${d.id}">R${d.ordning} · ${esc(d.namn)}</a></div>
-          <div class="meta">${d.banversion?.bana ? `<a class="namn" href="#/bana/${d.banversion.bana.id}">${esc(d.banversion.bana.namn)}</a>` : ''} · ${datum(d.datum)}</div></div>
+          <div class="meta">${d.banversion?.bana ? `<a class="namn" href="#/bana/${d.banversion.bana.id}">${esc(d.banversion.bana.namn)}</a>` : ''} · ${datum(d.datum)}<span class="vd-plats" data-vd="${d.id}"></span></div></div>
           <div class="win">${vNamn ? `<div class="rn"><a class="namn" href="#/spelare/${vinnare.person_id}">${esc(vNamn)}</a></div><div class="meta">${fmt(vinnare.poang)} p${tht.klar ? '' : ' · leder'}</div>` : kand ? `<div class="rn"><a class="namn" href="#/spelare/${kand.person_id}">${esc(kand.fornamn)}</a></div><div class="meta">vann · poäng saknas</div>` : '<div class="meta">Inga resultat</div>'}</div>
           ${extra ? `<div class="extra">${extra}</div>` : ''}
           <div class="mm-plats" data-did="${d.id}"></div>
@@ -166,6 +167,7 @@ async function renderYear(artal) {
   document.getElementById('prev').onclick = () => { location.hash = `#/ar/${lista[idx - 1].artal}`; };
   document.getElementById('next').onclick = () => { location.hash = `#/ar/${lista[idx + 1].artal}`; };
 
+  hamtaVader(delt).then((vd) => { if (!aktuell(myNav)) return; document.querySelectorAll('[data-vd]').forEach((el) => { el.innerHTML = vaderMini(vd[el.dataset.vd]); }); }).catch((e) => console.warn('Väder:', e));
   fotoSektion(document.getElementById('foto-sek'), { thtNr: tht.nr }).catch((e) => console.warn('Foton:', e));
   if (!utanKort) drawKurva(res, kurva, ordningar.length);
   if (!utanKort) arsStatistik(document.getElementById('arsstat'), tht.nr).catch(() => {});
@@ -406,7 +408,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.37.0" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.38.0" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>

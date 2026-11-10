@@ -915,3 +915,31 @@ body.storskarm #app:has(.ka) { padding: 0; }
 .ka-sidotext .ka-kicker span + span::before { content: none; }
 .ka-sidotext .ka-bildtext { text-align: left; }
 @media (max-width: 700px) { .ka-foto .ka-staende { flex-direction: column-reverse; } .ka-foto .ka-staende img { max-width: 100%; max-height: calc(100vh - 25vh - 70px); } .ka-sidotext { flex: none; } }
+/* Väder på deltävlingen (v0.38.0) */
+.vi { width: 1.6em; height: 1.6em; vertical-align: middle; flex: none; overflow: visible; }
+.vi-sol circle { fill: var(--gold); }
+.vi-sol line { stroke: var(--gold); stroke-width: 3.2; stroke-linecap: round; }
+.vi-moln { fill: var(--cream); stroke: var(--stout, #121110); stroke-width: 1.5; }
+.vi-moln.vi-mork { fill: var(--cream-3); }
+.vi-regn line { stroke: #9ec3e6; stroke-width: 3; stroke-linecap: round; }
+.vi-dugg circle { fill: #9ec3e6; }
+.vi-sno path { stroke: var(--cream); stroke-width: 1.8; stroke-linecap: round; fill: none; }
+.vi-blixt { fill: var(--gold); }
+.vi-dimma line { stroke: var(--cream-2); stroke-width: 3; stroke-linecap: round; opacity: .85; }
+.vd-mini { display: inline-flex; align-items: center; gap: .2em; margin-left: .5em; color: var(--cream-2); white-space: nowrap; }
+.vd-mini .vi { width: 1.4em; height: 1.4em; }
+.vd-kort { display: flex; flex-direction: column; gap: 12px; }
+.vd-huvud { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.vi-stor { width: 64px; height: 64px; }
+.vd-temp { font-size: 1.9em; font-weight: 700; color: var(--cream); line-height: 1.1; }
+.vd-text { color: var(--cream-2); }
+.vd-fakta { list-style: none; margin: 0 0 0 auto; padding: 0; display: grid; grid-template-columns: auto auto; gap: 2px 16px; font-size: .92em; }
+.vd-fakta li { display: contents; }
+.vd-fakta span { color: var(--cream-3); }
+.vd-timmar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; border-top: 1px solid var(--line); padding-top: 10px; }
+.vd-timme { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: .9em; }
+.vd-timme .vi { width: 30px; height: 30px; }
+.vd-h { color: var(--cream-3); font-size: .85em; }
+.vd-mm { color: #9ec3e6; font-size: .8em; }
+@media (max-width: 520px) { .vd-fakta { margin-left: 0; width: 100%; } }
+.ka-ruta .vi { width: 1.2em; height: 1.2em; }
