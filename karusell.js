@@ -6,10 +6,10 @@
 //                     minnen och några slumpade foton, sist slutresultatet – sedan nästa år, och om från början
 // Varje bild säger tydligt THT, ort, år och – där det passar – runda och bana. Fotona blandas in mellan
 // statistikbilderna. Ingen inloggning behövs. Data hämtas på nytt varje minut (alla år: var tionde minut).
-import { api, allaRader, esc, fmt, aktuell, kanSe } from './lib.js?v=0.36.1';
-import { hamtaFoton, fotoUrl, medUrl } from './foto.js?v=0.36.1';
-import { vem } from './minnen.js?v=0.36.1';
-import { visaLogin } from './mata.js?v=0.36.1';
+import { api, allaRader, esc, fmt, aktuell, kanSe, snittPoang } from './lib.js?v=0.37.0';
+import { hamtaFoton, fotoUrl, medUrl } from './foto.js?v=0.37.0';
+import { vem } from './minnen.js?v=0.37.0';
+import { visaLogin } from './mata.js?v=0.37.0';
 
 const app = document.getElementById('app');
 const TID_STAT = 15_000, TID_FOTO = 8_000, FOTON_PER_STAT = 2;
@@ -69,7 +69,7 @@ export async function renderKarusell(navId, arg = null, fran = null) {
     const tid = b.typ === 'foto' || b.typ === 'ar' ? TID_FOTO : TID_STAT;
     app.innerHTML = `<div class="ka ${b.typ === 'foto' ? 'ka-fotolage' : ''}">
       <div class="ka-topp">
-        <span class="ka-titel"><img src="logo.svg?v=0.36.1" alt="" class="ka-logo"> ${titel}</span>
+        <span class="ka-titel"><img src="logo.svg?v=0.37.0" alt="" class="ka-logo"> ${titel}</span>
         <span class="ka-hoger"><span class="ka-klocka">${new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
           <button type="button" class="ka-knapp" id="ka-paus" title="Paus (mellanslag)">${paus ? '▶' : '❚❚'}</button>
           <button type="button" class="ka-knapp" id="ka-hel" title="Helskärm (F)">⛶</button>
@@ -165,7 +165,7 @@ async function allaAr(kronologisk = null) {
     allaRader('deltavling?select=id,tht_nr,ordning,namn,datum,narmast_hal,longest_hal,vinnare_utan_kort,banversion(bana(namn))&tht_nr=gt.0&order=tht_nr,ordning'),
     allaRader('pris?select=deltavling_id,typ,person(fornamn)&order=deltavling_id'),
     allaRader('kommentar?select=id,deltavling_id,runda_id,boll_nr,text,skapad,fran_lank&order=id').catch(() => []),
-    allaRader('foto?select=id,tht_nr,deltavling_id,fil,tagen,text,person(fornamn)&klar=is.true&borttagen=is.null&order=id').catch(() => []),
+    allaRader('foto?select=id,tht_nr,deltavling_id,fil,bredd,hojd,tagen,text,person(fornamn)&klar=is.true&borttagen=is.null&order=id').catch(() => []),
   ]);
   await medUrl(foton);   // tillfälliga bildlänkar (privat bucket)
   const rid = [...new Set(kom.map((k) => k.runda_id).filter(Boolean))];
@@ -272,10 +272,10 @@ function resultatBild({ tht, res, rundor, delt }) {
     <h1 class="ka-rubrik">${tht.klar ? 'Slutresultat' : 'Leaderboard'} ${esc(tht.ort ?? '')} ${tht.artal}</h1>
     <p class="ka-under">${tht.klar ? `Vinnare: <strong>${ledare}</strong>` : `Leder just nu: <strong>${ledare}</strong>`}${utanKort ? ' · scorekorten saknas' : ''}</p>
     <table class="ka-tabell ${lista.length > 10 ? 'ka-tat' : ''}">
-      <thead><tr><th>#</th><th class="l">Spelare</th><th>Poäng</th>${utanKort ? '' : `<th>Mot HCP</th>${ordningar.map((o) => `<th class="ka-r">R${o}</th>`).join('')}`}</tr></thead>
+      <thead><tr><th>#</th><th class="l">Spelare</th><th>Poäng</th>${utanKort ? '' : `<th>Snitt</th><th>Mot HCP</th>${ordningar.map((o) => `<th class="ka-r">R${o}</th>`).join('')}`}</tr></thead>
       <tbody>${lista.map((r) => { const h = hal(r.person_id), mh = h ? r.poang - 2 * h : null; return `<tr class="${r.placering === 1 ? 'ka-forst' : ''}">
         <td>${r.placering}</td><td class="l">${esc(r.fornamn)}</td><td><strong>${fmt(r.poang)}</strong></td>
-        ${utanKort ? '' : `<td class="${mh > 0 ? 'plus' : ''}">${tecken(mh)}</td>
+        ${utanKort ? '' : `<td>${fmt(snittPoang(r.poang, Object.values(per[r.person_id] ?? {}), tht.klar, ordningar.length), 1)}</td><td class="${mh > 0 ? 'plus' : ''}">${tecken(mh)}</td>
         ${ordningar.map((o) => { const x = per[r.person_id]?.[o]; return `<td class="ka-r ${x ? '' : 'dim'}">${x && x.antal_hal ? fmt(x.poang) + (x.antal_hal < 18 ? `<small>/${x.antal_hal}</small>` : '') : '–'}</td>`; }).join('')}`}</tr>`; }).join('')}</tbody>
     </table>`;
 }
@@ -343,5 +343,10 @@ function kronikaBild(t, stycke = null) {
 function fotoBild(f, tht, delt) {
   const dl = delt.find((x) => x.id === f.deltavling_id);
   const under = [f.text ? esc(f.text) : '', f.person?.fornamn ? `foto ${esc(f.person.fornamn)}` : ''].filter(Boolean);
-  return { typ: 'foto', html: `${tht ? kicker(tht, dl) : ''}<img src="${fotoUrl(f)}" alt="${esc(f.text ?? '')}">${under.length ? `<div class="ka-bildtext">${under.join(' · ')}</div>` : ''}` };
+  const img = `<img src="${fotoUrl(f)}" alt="${esc(f.text ?? '')}">`;
+  // Stående foto: texten till vänster så att bilden får hela skärmhöjden (v0.37.0)
+  if (f.bredd && f.hojd && f.hojd > f.bredd * 1.05) {
+    return { typ: 'foto', html: `<div class="ka-staende"><div class="ka-sidotext">${tht ? kicker(tht, dl) : ''}${under.length ? `<div class="ka-bildtext">${under.join('<br>')}</div>` : ''}</div>${img}</div>` };
+  }
+  return { typ: 'foto', html: `${tht ? kicker(tht, dl) : ''}${img}${under.length ? `<div class="ka-bildtext">${under.join(' · ')}</div>` : ''}` };
 }

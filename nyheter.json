@@ -1,5 +1,13 @@
 [
  {
+  "datum": "2026-11-10",
+  "punkter": [
+   "**Snittpoäng:** ny kolumn **Snitt** – poäng per runda – i resultattabellen på årssidan och leaderboarden, i spelarsidans tabell år för år, i årsrapporten och i karusellens slutresultat. Det är snittet som ristas in på pokalen och som går att jämföra mellan år med olika antal rundor. Placeringen avgörs som förut av totalpoängen. Under en pågående THT räknas snittet per 18 spelade hål, så att en halvspelad runda inte drar ned det (v0.37.0)",
+   "**Spel-HCP-grafen** på spelarsidan är vänd: lägre handicap ligger nu längre ned (v0.37.0)",
+   "**Stående foton i karusellen** får hela skärmhöjden – texten står till vänster om bilden i stället för under (v0.37.0)"
+  ]
+ },
+ {
   "datum": "2026-10-31",
   "punkter": [
    "**Leaderboarden** visar förra årets THT tills första poängen för nästa THT är inmatad – inte en tom tavla för en THT som inte har börjat (v0.36.1)",

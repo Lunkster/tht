@@ -1,24 +1,24 @@
-// THT golfapp (v0.36.1) – statistik och inmatning.
+// THT golfapp (v0.37.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.36.1';
-import { renderMata } from './mata.js?v=0.36.1';
-import { renderAdmin } from './admin.js?v=0.36.1';
-import { renderSpelare } from './spelare.js?v=0.36.1';
-import { renderKarta, miniKarta } from './karta.js?v=0.36.1';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.36.1';
-import { renderBetygLank } from './betyg.js?v=0.36.1';
-import { renderNyheter } from './nyheter.js?v=0.36.1';
-import { renderRunda } from './runda.js?v=0.36.1';
-import './kollaps.js?v=0.36.1';
-import { renderRapport } from './rapport.js?v=0.36.1';
-import { renderDuell } from './inbordes.js?v=0.36.1';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.36.1';
-import { renderQuizVisa } from './quiz.js?v=0.36.1';
-import { renderDeltavling } from './deltavling.js?v=0.36.1';
-import { fotoSektion } from './foto.js?v=0.36.1';
-import { renderKarusell } from './karusell.js?v=0.36.1';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.36.1';
+import { api, allaRader, esc, fmt, datum, snittPoang, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.37.0';
+import { renderMata } from './mata.js?v=0.37.0';
+import { renderAdmin } from './admin.js?v=0.37.0';
+import { renderSpelare } from './spelare.js?v=0.37.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.37.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.37.0';
+import { renderBetygLank } from './betyg.js?v=0.37.0';
+import { renderNyheter } from './nyheter.js?v=0.37.0';
+import { renderRunda } from './runda.js?v=0.37.0';
+import './kollaps.js?v=0.37.0';
+import { renderRapport } from './rapport.js?v=0.37.0';
+import { renderDuell } from './inbordes.js?v=0.37.0';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.37.0';
+import { renderQuizVisa } from './quiz.js?v=0.37.0';
+import { renderDeltavling } from './deltavling.js?v=0.37.0';
+import { fotoSektion } from './foto.js?v=0.37.0';
+import { renderKarusell } from './karusell.js?v=0.37.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.37.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -209,7 +209,7 @@ function resultatOchGraf(res, ordningar, perRunda, klar = true, utanGraf = false
     <h2>Resultat</h2>
     <div class="tablewrap"><table>
       <thead><tr>
-        <th>#</th><th class="l">Spelare</th><th>Poäng</th><th title="Poäng mot handicap: poäng minus 2 per spelat hål">Mot HCP</th>
+        <th>#</th><th class="l">Spelare</th><th>Poäng</th><th title="Poäng per runda – jämförelsevärdet mellan åren. Placeringen avgörs av totalen.">Snitt</th><th title="Poäng mot handicap: poäng minus 2 per spelat hål">Mot HCP</th>
         ${ordningar.map((o) => `<th class="hide-sm">${deltId[o] ? `<a class="namn" href="#/deltavling/${deltId[o]}" title="Deltävlingen">R${o}</a>` : `R${o}`}</th>`).join('')}
         <th>Slag</th><th class="hide-sm">Puttar/hål</th><th class="hide-sm">Spel-HCP</th>
       </tr></thead>
@@ -218,6 +218,7 @@ function resultatOchGraf(res, ordningar, perRunda, klar = true, utanGraf = false
           <td>${r.placering}</td>
           <td class="l ${klar && r.placering === 1 ? 'win' : ''}"><a class="namn" href="#/spelare/${r.person_id}">${esc(r.fornamn)}</a></td>
           <td><strong>${fmt(r.poang)}</strong></td>
+          <td>${fmt(snittPoang(r.poang, rundorFor(r), klar, ordningar.length), 1)}</td>
           <td class="${motHcp(r) > 0 ? 'plus' : ''}">${motHcpText(r)}</td>
           ${ordningar.map((o) => { const x = perRunda[r.person_id]?.[o]; return `<td class="hide-sm ${x ? '' : 'dim'}">${x ? `<a class="namn" href="#/runda/${x.runda_id}" title="Scorekort">${fmt(x.poang)}</a>` : '–'}</td>`; }).join('')}
           <td>${fmt(r.slag)}</td>
@@ -405,7 +406,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.36.1" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.37.0" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>

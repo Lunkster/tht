@@ -1,6 +1,6 @@
 // Personsida: en spelares nyckeltal, resultat per år, snittpoäng över tid och resultatfördelning.
-import { api, allaRader, esc, fmt, nuNav, aktuell } from './lib.js?v=0.36.1';
-import { inbordesSpelare } from './inbordes.js?v=0.36.1';
+import { api, allaRader, esc, fmt, nuNav, aktuell, snittPoang } from './lib.js?v=0.37.0';
+import { inbordesSpelare } from './inbordes.js?v=0.37.0';
 
 const app = document.getElementById('app');
 const BLA = '#3987e5';                       // seriefärg 1 (validerad mot mörk yta)
@@ -60,8 +60,8 @@ export async function renderSpelare(pid) {
   const arLista = perAr.slice().reverse().filter((r) => r.rs.length);
   const plac = (r) => r.klar ? r.placering : `(${r.placering})`;
   const lagen = {
-    poang: { rubrik: 'Poäng per runda', hint: 'Snitt per runda och år. Ring = vann THT:n. 36 p per runda = spelat på handicap.', opt: { ref: 36 },
-      punkter: arLista.map((r) => { const v = sum(r.rs, (x) => x.poang) / r.rs.length; return { etikett: r.artal, v: Math.round(v * 10) / 10, ring: r.klar && r.placering === 1,
+    poang: { rubrik: 'Poäng per runda', hint: 'Snittpoäng per runda och år – jämförelsevärdet mellan åren. Ring = vann THT:n. 36 p per runda = spelat på handicap.', opt: { ref: 36 },
+      punkter: arLista.map((r) => { const v = snittPoang(r.poang, r.rs, r.klar); return { etikett: r.artal, v: Math.round(v * 10) / 10, ring: r.klar && r.placering === 1,
         tip: `<div class="tt-title">${r.artal} · ${esc(r.ort)}</div><div class="tt-row on">Poäng/runda<b>${fmt(v, 1)}</b></div><div class="tt-row">Placering<b>${plac(r)}</b></div>` }; }) },
     ar: { rubrik: 'Placering per år', hint: 'Placering i THT:n varje år – 1 överst. Ring = seger. Pågående år räknas inte som seger.', opt: { inv: true, lo: 1 },
       punkter: perAr.slice().reverse().map((r) => ({ etikett: r.artal, v: r.placering, ring: r.klar && r.placering === 1,
@@ -71,7 +71,7 @@ export async function renderSpelare(pid) {
         tip: `<div class="tt-title">${r.artal} R${r.ordning}${r.deltavling ? ' · ' + esc(r.deltavling) : ''}</div><div class="tt-row on">Placering<b>${r.placering}</b></div><div class="tt-row">Poäng<b>${fmt(r.poang)}</b></div>` })) },
   };
   // Spel-HCP: årsmedel av spel-HCP över årets rundor
-  lagen.hcp = { rubrik: 'Spel-HCP per år', hint: 'Snitt av spel-HCP över årets rundor. Lägre = bättre, överst. Ring = vann THT:n.', opt: { inv: true },
+  lagen.hcp = { rubrik: 'Spel-HCP per år', hint: 'Snitt av spel-HCP över årets rundor. Ring = vann THT:n.', opt: {},
     punkter: arLista.filter((r) => r.rs.some((x) => x.spel_hcp != null)).map((r) => {
       const hs = r.rs.filter((x) => x.spel_hcp != null).map((x) => Number(x.spel_hcp));
       const v = hs.reduce((a, h) => a + h, 0) / hs.length;
@@ -103,12 +103,13 @@ export async function renderSpelare(pid) {
 
     <h2>År för år</h2>
     <div class="tablewrap"><table>
-      <thead><tr><th class="l">År</th><th class="l hide-sm">Ort</th><th>Plac.</th><th>Poäng</th><th>Mot HCP</th><th class="hide-sm">Rundor</th><th class="hide-sm">Slag</th><th class="hide-sm">Puttar/hål</th><th class="hide-sm">Spel-HCP</th></tr></thead>
+      <thead><tr><th class="l">År</th><th class="l hide-sm">Ort</th><th>Plac.</th><th>Poäng</th><th title="Poäng per runda – jämförelsevärdet mellan åren">Snitt</th><th>Mot HCP</th><th class="hide-sm">Rundor</th><th class="hide-sm">Slag</th><th class="hide-sm">Puttar/hål</th><th class="hide-sm">Spel-HCP</th></tr></thead>
       <tbody>${perAr.map((r) => `<tr>
         <td class="l"><a href="#/ar/${r.artal}">${r.artal}</a></td>
         <td class="l hide-sm">${esc(r.ort)}</td>
         <td class="${r.klar && r.placering === 1 ? 'win' : ''}">${r.klar ? r.placering : `<span class="dim" title="Pågår">(${r.placering})</span>`}</td>
         <td><strong>${fmt(r.poang)}</strong></td>
+        <td>${fmt(snittPoang(r.poang, r.rs, r.klar, r.rundor), 1)}</td>
         <td class="${r.mot > 0 ? 'plus' : ''}">${mot(r.mot)}</td>
         <td class="hide-sm">${r.rs.map((x) => `<a class="namn" href="#/runda/${x.runda_id}" title="Scorekort R${x.ordning}">${fmt(x.poang)}</a>`).join(' · ')}</td>
         <td class="hide-sm">${fmt(r.slag)}</td>

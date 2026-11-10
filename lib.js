@@ -168,6 +168,17 @@ async function session(required) {
 // ---------- hjälp ----------
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const fmt = (v, d = 0) => (v === null || v === undefined || Number.isNaN(v)) ? '–' : Number(v).toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d });
+// Snittpoäng per runda – jämförelsevärdet mellan åren (det som ristas på pokalen). Placeringen avgörs alltid av totalen.
+// Avslutad THT: poäng / antal spelade rundor. Pågående: poäng per 18 spelade hål, så att en halv runda inte drar ned snittet.
+// Saknas scorekorten (t.ex. 1999) används antalRundor – antalet deltävlingar – i stället.
+export function snittPoang(poang, rundor, klar = true, antalRundor = null) {
+  const rs = (rundor ?? []).filter((x) => (x.antal_hal ?? 0) > 0);
+  if (poang == null) return null;
+  if (!rs.length) return antalRundor ? poang / antalRundor : null;
+  if (klar) return poang / rs.length;
+  const hal = rs.reduce((a, x) => a + x.antal_hal, 0);
+  return (poang / hal) * 18;
+}
 export const datum = (d) => d ?? '';   // datum visas alltid som ÅÅÅÅ-MM-DD (så lagras de också)
 
 // Datum skrivs som ÅÅÅÅ-MM-DD. Tillåter även 20260904 och 2026-9-4. Tomt → null, ogiltigt → NaN.

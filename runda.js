@@ -1,5 +1,5 @@
 // Scorekort för en runda (#/runda/<id>): hål för hål med slag, poäng och puttar, plus de andra i bollen.
-import { api, esc, fmt, nuNav, aktuell, kanSe } from './lib.js?v=0.36.1';
+import { api, esc, fmt, nuNav, aktuell, kanSe } from './lib.js?v=0.37.0';
 
 const app = document.getElementById('app');
 const RES = (h) => {

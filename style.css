@@ -907,3 +907,11 @@ body.storskarm #app:has(.ka) { padding: 0; }
 .las-ruta p { margin: 0 0 8px; }
 .las-form { display: flex; gap: 8px; flex-wrap: wrap; }
 .las-form input { flex: 1 1 180px; min-width: 0; background: var(--stout); color: var(--cream); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: inherit; }
+/* Karusell: stående foton med texten till vänster (v0.37.0) */
+.ka-foto .ka-staende { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: clamp(16px, 3vw, 56px); }
+.ka-foto .ka-staende img { max-width: 62vw; max-height: calc(100vh - 6vh - 70px); }
+.ka-sidotext { flex: 0 1 32%; display: flex; flex-direction: column; gap: clamp(10px, 2vh, 24px); }
+.ka-sidotext .ka-kicker { flex-direction: column; align-self: auto; justify-content: flex-start; }
+.ka-sidotext .ka-kicker span + span::before { content: none; }
+.ka-sidotext .ka-bildtext { text-align: left; }
+@media (max-width: 700px) { .ka-foto .ka-staende { flex-direction: column-reverse; } .ka-foto .ka-staende img { max-width: 100%; max-height: calc(100vh - 25vh - 70px); } .ka-sidotext { flex: none; } }

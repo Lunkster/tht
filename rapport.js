@@ -1,7 +1,7 @@
 // Årsrapport (#/rapport/<år>): allt om en THT på en sida i stil med 2016-rapporten – går att skriva ut eller spara som PDF.
-import { api, esc, fmt, nuNav, aktuell, kanSe } from './lib.js?v=0.36.1';
-import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.36.1';
-import { hamtaMinnen, vem } from './minnen.js?v=0.36.1';
+import { api, esc, fmt, nuNav, aktuell, kanSe, snittPoang } from './lib.js?v=0.37.0';
+import { halvinstTabell, fordelningTabell, parTabell } from './statistik.js?v=0.37.0';
+import { hamtaMinnen, vem } from './minnen.js?v=0.37.0';
 
 const app = document.getElementById('app');
 const FARGER = ['#3987e5', '#d95926', '#199e70', '#e3c278', '#a35cc8', '#d4417c', '#5bb7c9', '#8fa83a', '#c98a3e', '#7a86d6', '#b5b0a6', '#e07a5f'];
@@ -76,17 +76,17 @@ export async function renderRapport(artal) {
     <div class="rapport-knappar no-print"><a class="back" href="#/ar/${artal}">‹ ${artal}</a><button class="btn" type="button" id="skrivut">Skriv ut eller spara som PDF</button></div>
     <article class="rapport">
       <header class="rapport-huvud">
-        <img src="logo.svg?v=0.36.1" alt="The Helkväll Tour" class="rapport-logo">
+        <img src="logo.svg?v=0.37.0" alt="The Helkväll Tour" class="rapport-logo">
         <h1>THT ${nr} – ${esc(tht.ort)} ${artal}</h1>
         <p class="sub">${period}${delt.length ? ` · ${delt.length} deltävlingar` : ''}${res.length ? ` · ${res.length} spelare` : ''}</p>
-        ${vinnare && tht.klar ? `<p class="rapport-vinnare">Vinnare: <strong>${esc(vinnare.fornamn)}</strong> med ${fmt(vinnare.poang)} poäng</p>` : tht.klar ? '' : '<p class="rapport-vinnare">THT:n pågår – ingen vinnare ännu</p>'}
+        ${vinnare && tht.klar ? `<p class="rapport-vinnare">Vinnare: <strong>${esc(vinnare.fornamn)}</strong> med ${fmt(vinnare.poang)} poäng${delt.length ? ` (${fmt(snittPoang(vinnare.poang, rundor.filter((x) => x.person_id === vinnare.person_id), true, delt.length), 1)} per runda)` : ''}</p>` : tht.klar ? '' : '<p class="rapport-vinnare">THT:n pågår – ingen vinnare ännu</p>'}
       </header>
 
       ${tht.kronika ? `<section><h2>Krönika</h2><div class="kronika">${kronikaHtml(tht.kronika)}</div></section>` : ''}
 
       <section><h2>Tabellen</h2>
-      <div class="tablewrap"><table class="stat-tabell"><thead><tr><th>#</th><th class="l">Namn</th><th>Poäng</th><th>Slag</th><th>Puttmedel</th></tr></thead>
-        <tbody>${res.map((r) => `<tr><td>${r.placering}</td><td class="l">${namnLank(r.person_id, r.fornamn)}</td><td><strong>${fmt(r.poang)}</strong></td><td>${fmt(r.slag)}</td><td>${puttRad(r)}</td></tr>`).join('')}</tbody></table></div>
+      <div class="tablewrap"><table class="stat-tabell"><thead><tr><th>#</th><th class="l">Namn</th><th>Poäng</th><th>Snitt</th><th>Slag</th><th>Puttmedel</th></tr></thead>
+        <tbody>${res.map((r) => `<tr><td>${r.placering}</td><td class="l">${namnLank(r.person_id, r.fornamn)}</td><td><strong>${fmt(r.poang)}</strong></td><td>${fmt(snittPoang(r.poang, rundor.filter((x) => x.person_id === r.person_id), tht.klar, delt.length), 1)}</td><td>${fmt(r.slag)}</td><td>${puttRad(r)}</td></tr>`).join('')}</tbody></table></div>
       ${!harKort ? `<p class="hint">Scorekorten från ${artal} saknas – bara totalresultatet finns.</p>` : ''}</section>
 
       ${perSlag.length ? `<section><h2>Tabellen på slag</h2>

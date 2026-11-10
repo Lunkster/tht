@@ -1,8 +1,9 @@
 // Quiz och flashcards (admin, migrering 24): frågor skapas automatiskt ur databasen och kan kompletteras med egna.
 // #/admin/quiz – lista och ny quiz · #/admin/quiz/<id> – redigera · #/quiz/<id> – visa på storskärm (quiz eller flashcards).
-import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.36.1';
-import { visaLogin } from './mata.js?v=0.36.1';
-import { banTopplista } from './bana.js?v=0.36.1';
+import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.37.0';
+import { visaLogin } from './mata.js?v=0.37.0';
+import { banTopplista } from './bana.js?v=0.37.0';
+import { laddaNedKahoot } from './kahoot.js?v=0.37.0';
 
 const app = document.getElementById('app');
 export const AMNEN = [
@@ -176,7 +177,8 @@ async function renderQuizRedigera(id) {
   const rita = () => {
     app.innerHTML = `
       <a class="back" href="#/admin/quiz">‹ Alla quiz</a>
-      <div class="row-between"><h1>Redigera quiz</h1><a class="btn primary" href="#/quiz/${id}">Visa på storskärm ›</a></div>
+      <div class="row-between"><h1>Redigera quiz</h1><span class="quiz-knappar"><button type="button" class="btn" id="kahoot" title="Ladda ned som Excel-fil för Kahoot">Till Kahoot ⤓</button><a class="btn primary" href="#/quiz/${id}">Visa på storskärm ›</a></span></div>
+      <p class="hint" id="kahootmsg" role="status"></p>
       <div class="card form quiz-form"><label>Namn<input type="text" id="qnamn" maxlength="100" value="${esc(q.namn)}"></label><p class="hint" id="qstatus" role="status"></p></div>
       <h2>${fragor.length} frågor</h2>
       <ol class="quiz-lista">${fragor.map((f, i) => `<li class="card">
@@ -200,6 +202,15 @@ async function renderQuizRedigera(id) {
       </form>
       <h2>Ta bort</h2>
       <p><button type="button" class="btn fara" id="taBort">Ta bort quizen</button></p>`;
+    document.getElementById('kahoot').onclick = () => {
+      const r = laddaNedKahoot(q.namn, fragor);
+      const delar = [];
+      if (r.antal) delar.push(`${r.antal} frågor nedladdade. Öppna Kahoot → Skapa → Lägg till fråga → Importera kalkylblad och välj filen.`);
+      else delar.push('Inga frågor att exportera – Kahoot behöver minst ett fel svar per fråga.');
+      if (r.hoppade.length) delar.push(`Fråga ${r.hoppade.join(', ')} saknar fel svar (flashcard) och kom inte med.`);
+      if (r.kortade.length) delar.push(`Fråga ${r.kortade.join(', ')} var för lång och har kortats (Kahoot tillåter 120 tecken i frågan och 75 i svaren).`);
+      document.getElementById('kahootmsg').textContent = delar.join(' ');
+    };
     document.getElementById('qnamn').onchange = (e) => { const n = e.target.value.trim(); if (n) { q.namn = n; spara({ namn: n }); } };
     app.querySelectorAll('[data-upp],[data-ner]').forEach((b) => b.onclick = () => {
       const i = Number(b.dataset.upp ?? b.dataset.ner), j = b.dataset.upp != null ? i - 1 : i + 1;
@@ -245,7 +256,7 @@ export async function renderQuizVisa(id) {
   const topp = () => `<div class="qs-topp"><a href="#/admin/quiz/${id}" class="qs-ut">✕ Avsluta</a><span>${esc(q.namn)}</span><button type="button" class="qs-hel" title="Helskärm (F)">⛶</button></div>`;
   const rita = () => {
     if (!lage) {
-      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.36.1" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
+      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.37.0" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
         <div class="qs-val"><button type="button" class="btn primary" data-lage="quiz">Quiz</button><button type="button" class="btn" data-lage="kort">Flashcards</button></div>
         <p class="hint">Mellanslag eller → = nästa steg · ← = tillbaka · F = helskärm</p></div>`;
     } else if (i >= fr.length) {
