@@ -1,7 +1,7 @@
 # THT – datamodell
 
 Databasen ligger i Supabase (Postgres). Schemat byggs upp av filerna i `supabase/` i nummerordning. All statistik **beräknas i vyer** från slagen – inget lagras dubbelt.
-*Uppdaterad 2026-11-10 (v0.38.0): väder på deltävlingen. 2026-10-31 (v0.36.0): foton, minnen och krönikor bakom visningskoden. 2026-10-27 (v0.35.0): foton. Tidigare 2026-10-18 (v0.33.0): quiz, minnesvärda moment, övningsrunda (THT 0), inbördes möten.*
+*Uppdaterad 2026-11-10 (v0.39.0): quiz i telefonen; (v0.38.0) väder på deltävlingen. 2026-10-31 (v0.36.0): foton, minnen och krönikor bakom visningskoden. 2026-10-27 (v0.35.0): foton. Tidigare 2026-10-18 (v0.33.0): quiz, minnesvärda moment, övningsrunda (THT 0), inbördes möten.*
 
 ```mermaid
 erDiagram
@@ -31,6 +31,12 @@ erDiagram
   deltavling |o--o{ foto : ""
   person |o--o{ foto : "uppladdat via länk"
   deltavling ||--o| vader : "väder 09–15"
+  quiz |o--o{ quiz_spel : "omgångar i telefonen"
+  quiz_spel ||--o{ quiz_deltagare : "deltagare"
+  person |o--o{ quiz_deltagare : "spelare (annars gäst)"
+  quiz_enhet ||--o{ quiz_deltagare : "telefon"
+  person |o--o{ quiz_enhet : ""
+  quiz_deltagare ||--o{ quiz_svar : "svar per fråga"
 
   tht { int nr PK "löpnummer, 0 = övning" int artal text ort text kronika date start bool klar }
   person { int id PK text fornamn text efternamn bool aktiv }
@@ -52,6 +58,10 @@ erDiagram
   quiz { int id PK text namn jsonb fragor timestamptz skapad timestamptz andrad }
   foto { int id PK int tht_nr FK int deltavling_id FK int person_id FK text fil int bredd int hojd timestamptz tagen text text bool klar timestamptz skapad timestamptz borttagen }
   vader { int deltavling_id PK date datum float lat float lon text kalla timestamptz hamtad numeric temp numeric temp_min numeric temp_max smallint moln numeric vind numeric byar smallint vindriktning numeric nederbord smallint kod jsonb timmar }
+  quiz_spel { int id PK int quiz_id FK text namn text kod text status int fraga_nr timestamptz fraga_start smallint tid_s jsonb fragor timestamptz skapad timestamptz avslutad }
+  quiz_enhet { text nyckel PK int person_id FK text gast_namn bool betrodd timestamptz skapad timestamptz senast }
+  quiz_deltagare { int id PK int spel_id FK int person_id FK text gast_namn text enhet FK bool godkand timestamptz skapad }
+  quiz_svar { int deltagare_id PK int fraga_nr PK smallint svar bool ratt int ms int poang }
 ```
 
 ## Vyer (beräknad statistik)
@@ -83,4 +93,5 @@ erDiagram
 - **Quiz** (migrering 24): fristående tabell, bara admin läser och skriver. `fragor` är en ögonblicksbild (jsonb): fråga, svar, fel (0–3), info, ämne, egen.
 - **Foton** (migrering 25): filerna ligger i Storage-bucketen `foton` (publik läsning, bara JPEG, högst 600 kB): `fil` och en liten bild `<fil>-liten.jpg`. Raden skapas med `klar = false`, filerna laddas upp, sedan sätts `klar`. Bara klara rader som inte är `borttagen` syns. Admin och markör laddar upp och tar bort alltid (även avslutade THT). Via länken: `foto_lank_info`, `foto_lank_reservera` (spelaren måste ha spelat THT:n, högst 200 per THT), `foto_lank_klar`, `foto_lank_andra` (flytta till annan THT/runda som spelaren spelat, ändra bildtext – migrering 26) och `foto_lank_ta_bort` (sätter `borttagen`, appen tar sedan bort filerna). Storage-reglerna släpper bara in anon-uppladdning till ett reserverat filnamn (en timme) och anon-borttagning av filer som saknar synlig rad.
 - **Väder** (migrering 29): en rad per spelad deltävling med vädret kl. 09–15 vid banan från Open-Meteo (historik ERA5, de senaste dagarna prognos-API:t, `kalla = prognos` hämtas om). Extern data, inte härledd – därför lagrad. Bara edge-funktionen `vader` (`supabase/functions/vader/`, service role) skriver; den anropas utan inloggning med deltävlingarnas id och hämtar bara det som saknas. Alla får läsa. `kod` är en WMO-väderkod som sammanfattar dagen (nederbörd bara om minst 1 mm och två timmar), `timmar` vädret timme för timme.
+- **Quiz i telefonen** (migrering 30): admin startar en omgång (`quiz_spel`) av en sparad quiz; frågorna sparas som ögonblicksbild med blandade alternativ och index för rätt svar. Telefoner (`quiz_enhet`, hemlig nyckel som telefonen sparar) går med via `quiz_ga_med(kod, enhet, person, gäst, länk)`: med den personliga länken eller en **betrodd** telefon direkt, annars som väntande `quiz_deltagare` tills admin godkänner (`quiz_godkann`, gör telefonen betrodd). En godkänd plats per person och omgång – en ny godkänd telefon tar över platsen. `quiz_lage` ger telefonen läget utan rätt svar medan frågan pågår; `quiz_svara` räknar svarstid från `fraga_start` (databasens klocka, en sekunds marginal) och poäng 500–1 000 för rätt svar. `quiz_styr` (bara admin) byter läge. Tabellerna läses och skrivs bara av admin; telefonerna når bara funktionerna. `quiz_resultat()` ger slutresultaten för avslutade omgångar till alla (statistik). Gäster sparas med `gast_namn` och kan kopplas till en person i efterhand.
 - **Banbetyg via länk:** funktionerna `betyg_lank_info(kod)` och `lamna_banbetyg(kod, betyg)` – anropas utan inloggning och kontrollerar koden.

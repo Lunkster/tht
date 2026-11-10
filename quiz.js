@@ -1,9 +1,10 @@
 // Quiz och flashcards (admin, migrering 24): frågor skapas automatiskt ur databasen och kan kompletteras med egna.
 // #/admin/quiz – lista och ny quiz · #/admin/quiz/<id> – redigera · #/quiz/<id> – visa på storskärm (quiz eller flashcards).
-import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.38.2';
-import { visaLogin } from './mata.js?v=0.38.2';
-import { banTopplista } from './bana.js?v=0.38.2';
-import { laddaNedKahoot } from './kahoot.js?v=0.38.2';
+import { api, allaRader, write, esc, fmt, isLoggedIn, arAdmin } from './lib.js?v=0.39.0';
+import { visaLogin } from './mata.js?v=0.39.0';
+import { banTopplista } from './bana.js?v=0.39.0';
+import { laddaNedKahoot } from './kahoot.js?v=0.39.0';
+import { startaSpel } from './quizspel.js?v=0.39.0';
 
 const app = document.getElementById('app');
 export const AMNEN = [
@@ -124,7 +125,12 @@ export async function skapaFragor(amnen, antal, utom = []) {
 export async function renderQuizAdmin([id] = []) {
   if (id) return renderQuizRedigera(Number(id));
   app.innerHTML = '<p class="muted center">Laddar …</p>';
-  const lista = await api('quiz?select=id,namn,fragor,andrad&order=andrad.desc', { fresh: true });
+  const [lista, omg, gaster, personer] = await Promise.all([
+    api('quiz?select=id,namn,fragor,andrad&order=andrad.desc', { fresh: true }),
+    api('quiz_spel?select=id,namn,kod,status,skapad,avslutad&order=id.desc&limit=30', { fresh: true }).catch(() => []),
+    api('quiz_deltagare?person_id=is.null&godkand=is.true&select=id,gast_namn,quiz_spel(namn,avslutad)&order=id.desc', { fresh: true }).catch(() => []),
+    api('person?select=id,fornamn,efternamn&order=fornamn', { fresh: true }).catch(() => []),
+  ]);
   app.innerHTML = `
     <a class="back" href="#/admin">‹ Admin</a>
     <h1>Quiz och flashcards</h1>
@@ -132,6 +138,11 @@ export async function renderQuizAdmin([id] = []) {
     <div class="rounds">${lista.map((q) => `
       <div class="round quiz-rad"><div><div class="rn">${esc(q.namn)}</div><div class="meta">${q.fragor.length} frågor · ändrad ${String(q.andrad).slice(0, 10)}</div></div>
         <div class="quiz-knappar"><a class="btn small" href="#/admin/quiz/${q.id}">Redigera</a><a class="btn small primary" href="#/quiz/${q.id}">Visa</a></div></div>`).join('') || '<p class="muted">Inga sparade quiz ännu.</p>'}</div>
+    ${omg.length ? `<h2>Omgångar i telefonen</h2><div class="rounds">${omg.map((o) => `<div class="round"><div><div class="rn">${esc(o.namn)}</div><div class="meta">${String(o.avslutad ?? o.skapad).slice(0, 10)} · ${o.status === 'slut' ? 'avslutad' : `pågår · kod ${o.kod}`}</div></div>
+      <div class="quiz-knappar"><a class="btn small ${o.status === 'slut' ? '' : 'primary'}" href="#/quizspel/${o.id}">${o.status === 'slut' ? 'Resultat' : 'Öppna på tv:n ›'}</a></div></div>`).join('')}</div>` : ''}
+    ${gaster.length ? `<h2>Gäster i quiz</h2><p class="hint">Har en gäst blivit spelare i databasen? Koppla gästen till personen så räknas resultaten på spelarsidan.</p>
+      <div class="rounds">${gaster.map((g) => `<div class="round"><div><div class="rn">${esc(g.gast_namn)}</div><div class="meta">${esc(g.quiz_spel?.namn ?? '')} ${String(g.quiz_spel?.avslutad ?? '').slice(0, 10)}</div></div>
+        <select data-gast="${g.id}" aria-label="Koppla ${esc(g.gast_namn)} till"><option value="">Koppla till …</option>${personer.map((p) => `<option value="${p.id}">${esc(p.fornamn)} ${esc(p.efternamn ?? '')}</option>`).join('')}</select></div>`).join('')}</div>` : ''}
     <h2>Ny quiz</h2>
     <form class="card form quiz-form" id="nyquiz">
       <label>Namn<input type="text" name="namn" required maxlength="100" placeholder="t.ex. Middagsquiz 2027"></label>
@@ -143,6 +154,12 @@ export async function renderQuizAdmin([id] = []) {
       <button class="btn primary" type="submit">Skapa quiz</button>
       <p class="hint" id="nymsg">Frågorna slumpas fram och kan sedan bytas, tas bort eller kompletteras med egna.</p>
     </form>`;
+  app.querySelectorAll('[data-gast]').forEach((sel) => sel.onchange = async () => {
+    if (!sel.value) return;
+    sel.disabled = true;
+    try { await write('PATCH', `quiz_deltagare?id=eq.${sel.dataset.gast}`, { person_id: Number(sel.value) }, 'return=minimal'); sel.closest('.round').remove(); }
+    catch (e) { sel.disabled = false; sel.insertAdjacentHTML('afterend', `<span class="err small">${esc(e.message)}</span>`); }
+  });
   const form = document.getElementById('nyquiz');
   // Blandat = alla ämnen ikryssade; ändras ett ämne följer Blandat med
   const blandat = document.getElementById('blandat'), amnesRutor = [...form.querySelectorAll('input[name=amne]')];
@@ -177,7 +194,10 @@ async function renderQuizRedigera(id) {
   const rita = () => {
     app.innerHTML = `
       <a class="back" href="#/admin/quiz">‹ Alla quiz</a>
-      <div class="row-between"><h1>Redigera quiz</h1><span class="quiz-knappar"><button type="button" class="btn" id="kahoot" title="Ladda ned som Excel-fil för Kahoot">Till Kahoot ⤓</button><a class="btn primary" href="#/quiz/${id}">Visa på storskärm ›</a></span></div>
+      <div class="row-between"><h1>Redigera quiz</h1><span class="quiz-knappar"><button type="button" class="btn" id="kahoot" title="Ladda ned som Excel-fil för Kahoot">Till Kahoot ⤓</button><a class="btn" href="#/quiz/${id}">Visa på storskärm ›</a></span></div>
+      <div class="card form quiz-form qp-starta"><strong>Spela med telefoner</strong> <span class="dim small">alla svarar i sin telefon, poäng för rätt och snabbt svar, resultatet sparas per person</span>
+        <div class="quiz-knappar"><label>Tid per fråga <select id="qp-tidval">${[10, 15, 20, 30, 45].map((n) => `<option value="${n}" ${n === 20 ? 'selected' : ''}>${n} s</option>`).join('')}</select></label>
+        <button type="button" class="btn primary" id="qp-starta">Starta på tv:n ›</button></div><p class="hint" id="qp-msg"></p></div>
       <p class="hint" id="kahootmsg" role="status"></p>
       <div class="card form quiz-form"><label>Namn<input type="text" id="qnamn" maxlength="100" value="${esc(q.namn)}"></label><p class="hint" id="qstatus" role="status"></p></div>
       <h2>${fragor.length} frågor</h2>
@@ -202,6 +222,11 @@ async function renderQuizRedigera(id) {
       </form>
       <h2>Ta bort</h2>
       <p><button type="button" class="btn fara" id="taBort">Ta bort quizen</button></p>`;
+    document.getElementById('qp-starta').onclick = async () => {
+      const msg = document.getElementById('qp-msg'); msg.textContent = 'Startar …';
+      try { const sp = await startaSpel({ ...q, fragor }, Number(document.getElementById('qp-tidval').value)); location.hash = `#/quizspel/${sp.id}`; }
+      catch (e) { msg.textContent = `Kunde inte starta: ${e.message}`; }
+    };
     document.getElementById('kahoot').onclick = () => {
       const r = laddaNedKahoot(q.namn, fragor);
       const delar = [];
@@ -256,7 +281,7 @@ export async function renderQuizVisa(id) {
   const topp = () => `<div class="qs-topp"><a href="#/admin/quiz/${id}" class="qs-ut">✕ Avsluta</a><span>${esc(q.namn)}</span><button type="button" class="qs-hel" title="Helskärm (F)">⛶</button></div>`;
   const rita = () => {
     if (!lage) {
-      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.38.2" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
+      app.innerHTML = `${topp()}<div class="qs-start"><img src="logo.svg?v=0.39.0" alt="" class="qs-logo"><h1>${esc(q.namn)}</h1><p>${fr.length} frågor</p>
         <div class="qs-val"><button type="button" class="btn primary" data-lage="quiz">Quiz</button><button type="button" class="btn" data-lage="kort">Flashcards</button></div>
         <p class="hint">Mellanslag eller → = nästa steg · ← = tillbaka · F = helskärm</p></div>`;
     } else if (i >= fr.length) {

@@ -1,25 +1,26 @@
-// THT golfapp (v0.38.2) – statistik och inmatning.
+// THT golfapp (v0.39.0) – statistik och inmatning.
 // Statistik läses direkt från Supabase-vyerna utan inloggning. Inmatning kräver THT-koden.
 
-import { api, allaRader, esc, fmt, datum, snittPoang, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.38.2';
-import { renderMata } from './mata.js?v=0.38.2';
-import { renderAdmin } from './admin.js?v=0.38.2';
-import { renderSpelare } from './spelare.js?v=0.38.2';
-import { renderKarta, miniKarta } from './karta.js?v=0.38.2';
-import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.38.2';
-import { renderBetygLank } from './betyg.js?v=0.38.2';
-import { renderNyheter } from './nyheter.js?v=0.38.2';
-import { renderRunda } from './runda.js?v=0.38.2';
-import './kollaps.js?v=0.38.2';
-import { renderRapport } from './rapport.js?v=0.38.2';
-import { renderDuell } from './inbordes.js?v=0.38.2';
-import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.38.2';
-import { renderQuizVisa } from './quiz.js?v=0.38.2';
-import { renderDeltavling } from './deltavling.js?v=0.38.2';
-import { fotoSektion } from './foto.js?v=0.38.2';
-import { hamtaVader, vaderMini } from './vader.js?v=0.38.2';
-import { renderKarusell } from './karusell.js?v=0.38.2';
-import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.38.2';
+import { api, allaRader, esc, fmt, datum, snittPoang, nyNav, nuNav, aktuell, tolkaDatum, uppdateraRoll, kanSe } from './lib.js?v=0.39.0';
+import { renderMata } from './mata.js?v=0.39.0';
+import { renderAdmin } from './admin.js?v=0.39.0';
+import { renderSpelare } from './spelare.js?v=0.39.0';
+import { renderKarta, miniKarta } from './karta.js?v=0.39.0';
+import { renderBana, banTopplista, banLista, stjarnor } from './bana.js?v=0.39.0';
+import { renderBetygLank } from './betyg.js?v=0.39.0';
+import { renderNyheter } from './nyheter.js?v=0.39.0';
+import { renderRunda } from './runda.js?v=0.39.0';
+import './kollaps.js?v=0.39.0';
+import { renderRapport } from './rapport.js?v=0.39.0';
+import { renderDuell } from './inbordes.js?v=0.39.0';
+import { hamtaMinnen, minnenWidget, kanSkriva } from './minnen.js?v=0.39.0';
+import { renderQuizVisa } from './quiz.js?v=0.39.0';
+import { renderDeltavling } from './deltavling.js?v=0.39.0';
+import { fotoSektion } from './foto.js?v=0.39.0';
+import { hamtaVader, vaderMini } from './vader.js?v=0.39.0';
+import { renderQuizSpelTv, renderSpela, hamtaQuizResultat, quizPerSpelare, quizOmgangar } from './quizspel.js?v=0.39.0';
+import { renderKarusell } from './karusell.js?v=0.39.0';
+import { STAT_FLIKAR, renderStatFlik, arsStatistik, renderHal } from './statistik.js?v=0.39.0';
 
 const SERIES = ['#3987e5', '#d95926', '#199e70'];
 const MUTED = 'rgba(242, 232, 213, 0.22)';
@@ -53,6 +54,8 @@ function route() {
   if (page === 'deltavling' && arg) return renderDeltavling(Number(arg)).catch(fel);
   if (page === 'karusell') return renderKarusell(id, arg || null, rest[0] ?? null).catch(fel);
   if (page === 'quiz' && arg) return renderQuizVisa(Number(arg)).catch(fel);
+  if (page === 'quizspel' && arg) return renderQuizSpelTv(Number(arg)).catch(fel);
+  if (page === 'spela') return renderSpela(arg).catch(fel);
   if (page === 'duell' && arg) return renderDuell(Number(arg), rest[0] ? Number(rest[0]) : null).catch(fel);
   if (page === 'rapport' && arg) return renderRapport(Number(arg)).catch(fel);
   if (page === 'ar') return renderYear(arg ? Number(arg) : null).catch(fel);
@@ -408,7 +411,7 @@ async function renderStart(navId) {
 
   app.innerHTML = `
     <section class="hero">
-      <img src="logo.svg?v=0.38.2" alt="" class="hero-logo" aria-hidden="true">
+      <img src="logo.svg?v=0.39.0" alt="" class="hero-logo" aria-hidden="true">
       <h1 class="sr-only">The Helkväll Tour</h1>
       <p class="hero-sub">Sedan ${ar1}${senast ? ` · ${senast.nr} upplagor` : ''}</p>
     </section>
@@ -416,7 +419,8 @@ async function renderStart(navId) {
     ${senastKlar && mastare.length ? `<a class="plakett" href="#/ar/${senastKlar.artal}">
       <span class="plakett-rubrik">Regerande mästare</span>
       <span class="plakett-namn">${mastare.map((m) => esc(m.fornamn)).join(' & ')} <span class="plakett-sep">·</span> ${esc(senastKlar.ort)} ${senastKlar.artal}</span>
-    </a>` : (senast && !pagar ? `<p class="senast">Senast: <a href="#/ar/${senast.artal}">${esc(senast.ort)} ${senast.artal}</a></p>` : '')}`;
+    </a>` : (senast && !pagar ? `<p class="senast">Senast: <a href="#/ar/${senast.artal}">${esc(senast.ort)} ${senast.artal}</a></p>` : '')}
+    <p class="spela-quiz"><a class="btn small ghost" href="#/spela">🎯 Spela quiz</a></p>`;
 
   if (nasta && !pagar) {
     const mal = new Date(nasta.fran + 'T00:00:00').getTime();
@@ -502,7 +506,7 @@ const KOLUMNER = [
 let sortKey = 'segrar', sortAsc = false;
 const PRISKOL = [{ k: 'fornamn', t: 'Spelare', l: true }, { k: 'narmast', t: 'Närmast hål' }, { k: 'longest', t: 'Longest drive' }, { k: 'tot', t: 'Totalt' }];
 const prisSort = { k: 'tot', asc: false };
-// All-time → Vinnare: båda tabellerna sorterbara på alla kolumner (önskemål Henrik 2026-11-10, v0.38.2).
+// All-time → Vinnare: båda tabellerna sorterbara på alla kolumner (önskemål Henrik 2026-11-10, v0.39.0).
 // asc = första tryckets riktning (stigande där lägre är bättre, t.ex. slag och puttar).
 const VINNKOL = [
   { k: 'artal', t: 'År', l: true, v: (x) => `<a href="#/ar/${x.artal}">${x.artal}</a>` },
@@ -547,6 +551,7 @@ const ALLTIME_FLIKAR = [
   { id: 'vinnare', t: 'Vinnare' },
   { id: 'priser', t: 'Priser' },
   { id: 'banor', t: 'Banor' },
+  { id: 'quiz', t: 'Quiz' },
   ...STAT_FLIKAR.filter((f) => f.id !== 'totalt'),
 ];
 const alltimeHuvud = (flik) => `
@@ -561,6 +566,7 @@ async function renderAlltime(flik) {
     await renderStatFlik(flik, el);
     return;
   }
+  if (flik === 'quiz') return renderQuizFlik(myNav);
   if (!aktuell(myNav)) return; app.innerHTML = `<p class="muted center">Laddar …</p>`;
   const [res, rundor, thtKlar, priser, utanKort] = await Promise.all([
     api('v_tht_resultat?select=person_id,fornamn,artal,placering,poang,slag,rundor,puttar_per_hal'),
@@ -687,3 +693,33 @@ ${alltimeHuvud(flik)}
 
 // Sparad inloggning från före rollerna: hämta rollen först (tyst om nätet saknas).
 uppdateraRoll().catch(() => {}).then(route);
+
+// ---------- All-time → Quiz (v0.39.0): resultat från quiz spelade i telefonen ----------
+const quizSort = { k: 'vinster', asc: false };
+const QUIZKOL = [
+  { k: 'fornamn', t: 'Spelare', l: true, asc: true, v: (x) => `<a class="namn" href="#/spelare/${x.id}">${esc(x.fornamn)}</a>` },
+  { k: 'spel', t: 'Quiz', v: (x) => fmt(x.spel) },
+  { k: 'vinster', t: 'Vinster', v: (x) => `<strong>${fmt(x.vinster)}</strong>` },
+  { k: 'andel', t: 'Rätt', title: 'Andel rätt svar', v: (x) => `${fmt(x.andel, 0)} %` },
+  { k: 'snitt', t: 'Poäng/​quiz', sm: true, v: (x) => fmt(x.snitt, 0) },
+  { k: 'basta', t: 'Bästa plac.', asc: true, sm: true, v: (x) => fmt(x.basta) },
+];
+async function renderQuizFlik(myNav) {
+  app.innerHTML = `${alltimeHuvud('quiz')}<p class="muted center">Laddar …</p>`;
+  const rader = await hamtaQuizResultat();
+  if (!aktuell(myNav)) return;
+  const per = quizPerSpelare(rader), omg = quizOmgangar(rader);
+  const rita = () => {
+    app.innerHTML = `${alltimeHuvud('quiz')}
+      ${per.length ? `<div class="tablewrap"><table class="radbryt"><thead><tr>${sortHuvud(QUIZKOL, quizSort, 'qk')}</tr></thead>
+        <tbody>${sorteraPa(per, quizSort, (a, b) => b.vinster - a.vinster || (b.andel ?? 0) - (a.andel ?? 0)).map((x) => sortRad(QUIZKOL, x)).join('')}</tbody></table></div>
+      <p class="hint">Quiz spelade i telefonen. Rätt = andel rätt svar av alla frågor. Tryck på en rubrik för att sortera. Gäster räknas bara i omgångarna nedan.</p>` : '<p class="muted">Inga quiz spelade i telefonen ännu.</p>'}
+      ${omg.length ? `<h2>Omgångar</h2><div class="rounds">${omg.map((o) => `<div class="round"><div><div class="rn">${esc(o.namn)}</div><div class="meta">${o.datum ?? ''} · ${o.n} deltagare · ${o.fragor} frågor</div></div><div class="win"><div class="rn">🏆 ${esc(o.vinnare.join(' & '))}</div></div></div>`).join('')}</div>` : ''}`;
+    app.querySelectorAll('th[data-qk]').forEach((th) => th.onclick = () => {
+      const c = QUIZKOL.find((x) => x.k === th.dataset.qk);
+      if (quizSort.k === c.k) quizSort.asc = !quizSort.asc; else { quizSort.k = c.k; quizSort.asc = !!c.asc; }
+      rita();
+    });
+  };
+  rita();
+}

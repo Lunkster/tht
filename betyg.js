@@ -1,8 +1,9 @@
 // Banbetyg via personlig länk (#/betyg/<kod>) – ingen inloggning, en länk per spelare för alla år.
 // Databasen kontrollerar koden och tar bara emot betyg på banor som spelaren spelade respektive THT.
 // Här skriver spelaren också ETT eget minnesvärt moment per deltävling hen spelat (bara om sig själv, migrering 23).
-import { rpc, esc } from './lib.js?v=0.38.2';
-import { fotoSektion } from './foto.js?v=0.38.2';
+import { rpc, esc } from './lib.js?v=0.39.0';
+import { fotoSektion } from './foto.js?v=0.39.0';
+import { sparaLank } from './quizspel.js?v=0.39.0';
 
 const app = document.getElementById('app');
 
@@ -13,6 +14,7 @@ export async function renderBetygLank(kod) {
     app.innerHTML = '<h1>Banbetyg</h1><div class="card"><p>Länken finns inte eller har tagits bort.</p><p class="hint">Be den som skickade länken om en ny.</p></div>';
     return;
   }
+  sparaLank(kod);   // telefonen kommer ihåg länken – då går man med i quiz direkt (v0.39.0)
   // En nyckel per THT och bana – samma bana kan ha spelats flera år
   const nyckel = (t, b) => `${t.tht_nr}-${b.bana_id}`;
   const valda = {};
@@ -38,6 +40,7 @@ export async function renderBetygLank(kod) {
 
   app.innerHTML = `
     <h1>Banbetyg, minnen och foton</h1>
+    <p class="spela-quiz"><a class="btn small primary" href="#/spela">🎯 Spela quiz som ${esc(info.fornamn)} ›</a></p>
     <div class="card"><p>Hej ${esc(info.fornamn)}! Ge banorna du har spelat på THT ett betyg från 1 till 5 – <strong>5 = bäst</strong>. Betyg du redan har satt syns med guldstjärnor och kan ändras. Tryck på samma stjärna igen för att ta bort ett betyg.</p><p>Under varje år kan du också skriva ett <strong>minnesvärt moment</strong> för varje deltävling du spelade – om dig själv eller om någon annan – och <strong>ladda upp foton</strong>. Det syns på årssidan, under All-time → Minnen och i karusellen på tv:n.</p></div>
     ${info.tht.map((t, i) => `
       <details class="betyg-ar" ${i < 2 ? 'open' : ''}>

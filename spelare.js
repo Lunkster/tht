@@ -1,6 +1,7 @@
 // Personsida: en spelares nyckeltal, resultat per år, snittpoäng över tid och resultatfördelning.
-import { api, allaRader, esc, fmt, nuNav, aktuell, snittPoang } from './lib.js?v=0.38.2';
-import { inbordesSpelare } from './inbordes.js?v=0.38.2';
+import { api, allaRader, esc, fmt, nuNav, aktuell, snittPoang } from './lib.js?v=0.39.0';
+import { inbordesSpelare } from './inbordes.js?v=0.39.0';
+import { hamtaQuizResultat, quizPerSpelare } from './quizspel.js?v=0.39.0';
 
 const app = document.getElementById('app');
 const BLA = '#3987e5';                       // seriefärg 1 (validerad mot mörk yta)
@@ -127,6 +128,7 @@ export async function renderSpelare(pid) {
       <p class="hint">Nyast först. * = inte alla 18 hål inmatade.</p></details>` : ''}
 
     <div id="sp-inbordes"></div>
+    <div id="sp-quiz"></div>
 
     <h2>Resultat per hål</h2>
     <div class="chartcard"><div id="sp-staplar"></div>
@@ -147,6 +149,18 @@ export async function renderSpelare(pid) {
   ritaLage();
   ritaStaplar(fordelning, spelade.length);
   inbordesSpelare(document.getElementById('sp-inbordes'), p.id).catch(() => {});
+  // Quiz i telefonen (v0.39.0): visas bara om spelaren har spelat
+  hamtaQuizResultat().then((rader) => {
+    const mina = rader.filter((r) => r.person_id === p.id), x = quizPerSpelare(mina)[0], el = document.getElementById('sp-quiz');
+    if (!x || !el) return;
+    el.innerHTML = `<h2>Quiz</h2><div class="sp-nyckel">
+      <div class="sp-tile"><div class="sp-v">${fmt(x.spel)}</div><div class="sp-t">Quiz</div><div class="sp-d">spelade i telefonen</div></div>
+      <div class="sp-tile"><div class="sp-v">${fmt(x.vinster)}</div><div class="sp-t">Vinster</div><div class="sp-d">bästa placering ${fmt(x.basta)}</div></div>
+      <div class="sp-tile"><div class="sp-v">${fmt(x.andel, 0)} %</div><div class="sp-t">Rätt svar</div><div class="sp-d">${fmt(x.ratt)} av ${fmt(x.fragor)}</div></div>
+      <div class="sp-tile"><div class="sp-v">${fmt(x.snitt, 0)}</div><div class="sp-t">Poäng/quiz</div><div class="sp-d">i snitt</div></div></div>
+      <ul class="sp-quizlista">${mina.map((r) => `<li><span>${esc(r.namn)} <span class="dim">${r.datum ?? ''}</span></span><b>${r.placering}:a av ${r.antal_deltagare}</b> <span class="dim">${r.ratt}/${r.antal_fragor} rätt · ${fmt(r.poang)} p</span></li>`).join('')}</ul>
+      <p class="hint"><a href="#/alltime/quiz">Alla quizresultat ›</a></p>`;
+  }).catch(() => {});
   window.onresize = () => { if (document.getElementById('sp-linje')) ritaLage(); };
 }
 

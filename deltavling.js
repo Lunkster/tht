@@ -1,8 +1,8 @@
 // Deltävlingssida (#/deltavling/<id>): topplista för rundan, priser, bollar, hål för hål, hålvinster och minnesvärda moment.
-import { api, esc, fmt, datum, nuNav, aktuell, kanSe } from './lib.js?v=0.38.2';
-import { minnenWidget } from './minnen.js?v=0.38.2';
-import { fotoSektion } from './foto.js?v=0.38.2';
-import { hamtaVader, vaderKort } from './vader.js?v=0.38.2';
+import { api, esc, fmt, datum, nuNav, aktuell, kanSe } from './lib.js?v=0.39.0';
+import { minnenWidget } from './minnen.js?v=0.39.0';
+import { fotoSektion } from './foto.js?v=0.39.0';
+import { hamtaVader, vaderKort } from './vader.js?v=0.39.0';
 
 const app = document.getElementById('app');
 const namnLank = (id, n) => `<a class="namn" href="#/spelare/${id}">${esc(n)}</a>`;
